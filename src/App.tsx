@@ -6,7 +6,7 @@ import { CursorHeatmap, CursorHeatmapHandle } from './components/CursorHeatmap';
 //import { RealtimeCursorIndicator } from './components/RealtimeCursorIndicator';
 import { Button } from './components/ui/button';
 import { Card } from './components/ui/card';
-import { MousePointer2, MousePointerClick } from 'lucide-react';
+import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { toCanvas } from 'html-to-image';
 
 const sampleTitle = `A Flowery Past`;
@@ -71,6 +71,7 @@ export default function App() {
   const [cursorHistory, setCursorHistory] = useState<CursorData[]>([]);
   const [showHeatmap, setShowHeatmap] = useState(true);
   const [screenshot, setScreenshot] = useState<string | null>(null);
+  const [showSidebar, setShowSidebar] = useState(false);
   //const [showRealtimeIndicator, setShowRealtimeIndicator] = useState(true);
 
   // 🔹 Ref to control the CursorHeatmap (for saving image)
@@ -163,24 +164,40 @@ export default function App() {
             </p>
           </div>
           
-          <Button
-            variant={trackingEnabled ? 'destructive' : 'default'}
-            size="sm"
-            onClick={handleToggleTracking}
-            className="text-xs"
-          >
-            {trackingEnabled ? (
-              <>
-                <MousePointerClick className="h-4 w-4 mr-1" />
-                Stop Tracking
-              </>
-            ) : (
-              <>
-                <MousePointer2 className="h-4 w-4 mr-1" />
-                Start Cursor Tracking
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={trackingEnabled ? 'destructive' : 'default'}
+              size="sm"
+              onClick={handleToggleTracking}
+              className="text-xs"
+            >
+              {trackingEnabled ? (
+                <>
+                  <MousePointerClick className="h-4 w-4 mr-1" />
+                  Stop Tracking
+                </>
+              ) : (
+                <>
+                  <MousePointer2 className="h-4 w-4 mr-1" />
+                  Start Cursor Tracking
+                </>
+              )}
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSidebar(!showSidebar)}
+              className="text-xs"
+              title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
+            >
+              {showSidebar ? (
+                <PanelRightClose className="h-4 w-4" />
+              ) : (
+                <PanelRightOpen className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
         
         <div className="flex-1 min-h-0 flex gap-3">
@@ -196,20 +213,22 @@ export default function App() {
             />
           </div>
           
-          <div className="w-80 flex-shrink-0">
-            <CursorTrackingData 
-              cursorHistory={cursorHistory}
-              onClear={clearCursorHistory}
-              screenshot={screenshot}
-              showHeatmap={showHeatmap}
-              onToggleHeatmap={() => setShowHeatmap(!showHeatmap)}
-              onSaveHeatmap={() => heatmapRef.current?.saveImage()}
-              onSaveScreenshot={handleCaptureScreenshot}
-              heatmapRef={heatmapRef}
-              title={sampleTitle}
-              passage={samplePassage}
-            />
-          </div>
+          {showSidebar && (
+            <div className="w-80 flex-shrink-0">
+              <CursorTrackingData 
+                cursorHistory={cursorHistory}
+                onClear={clearCursorHistory}
+                screenshot={screenshot}
+                showHeatmap={showHeatmap}
+                onToggleHeatmap={() => setShowHeatmap(!showHeatmap)}
+                onSaveHeatmap={() => heatmapRef.current?.saveImage()}
+                onSaveScreenshot={handleCaptureScreenshot}
+                heatmapRef={heatmapRef}
+                title={sampleTitle}
+                passage={samplePassage}
+              />
+            </div>
+          )}
         </div>
       </div>
 

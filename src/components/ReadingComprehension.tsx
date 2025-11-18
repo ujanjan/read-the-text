@@ -51,7 +51,7 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
       correctlyAnsweredQuestions.length === questions.length;
 
     const handleSubmit = async () => {
-      if (!selectedAnswer) return;
+      if (!selectedAnswer || isLoadingFeedback) return;
 
       const isCorrect = selectedAnswer === currentQuestion?.correctAnswer.toString();
       setCurrentSubmissionCorrect(isCorrect);
@@ -293,7 +293,7 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
                 {!showFeedback ? (
                   <Button
                     onClick={handleSubmit}
-                    disabled={!selectedAnswer}
+                    disabled={!selectedAnswer || isLoadingFeedback}
                     className="flex-1 text-xs py-2"
                   >
                     Submit

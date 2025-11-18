@@ -366,6 +366,16 @@ Just provide the feedback text directly, no prefix or formatting.`;
   } catch (error: any) {
     console.error('Gemini API error:', error);
     
+    // Handle rate limiting specifically
+    if (error.message?.includes('429') || error.message?.includes('Resource exhausted') || error.message?.includes('rate limit')) {
+      return {
+        feedback: isCorrect 
+          ? 'Correct! (Personalized feedback temporarily unavailable due to rate limits. Please wait a moment before submitting again.)' 
+          : 'Try again! Focus on the passage to find the answer. (Personalized feedback temporarily unavailable due to rate limits.)',
+        error: 'Rate limit exceeded. Please wait a moment before submitting again.',
+      };
+    }
+    
     // Fallback to default messages on error
     return {
       feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
