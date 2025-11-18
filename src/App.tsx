@@ -1,0 +1,179 @@
+import { useState, useRef } from 'react';
+import { ReadingComprehension } from './components/ReadingComprehension';
+import { CursorTracker, CursorData } from './components/CursorTracker';
+import { CursorTrackingData } from './components/CursorTrackingData';
+import { CursorHeatmap, CursorHeatmapHandle } from './components/CursorHeatmap';
+//import { RealtimeCursorIndicator } from './components/RealtimeCursorIndicator';
+import { Button } from './components/ui/button';
+import { MousePointer2, MousePointerClick, Flame } from 'lucide-react';
+
+const samplePassage = `A Flowery Past
+
+The traditional way to study ancient vegetation has been to analyze pollen preserved in peat or lake sediments. However, pollen samples are often dominated by wind-pollinated plants with abundant pollen, which means that insect-pollinated species with low pollen production were frequently underestimated.
+
+In recent years, researchers have begun using ancient DNA rather than pollen to reconstruct past ecosystems. In Arctic permafrost, well-preserved plant remains, fossilized feces, and other materials allow genetic information to be extracted. In a study published in Nature, researchers collected sediment samples from 21 Arctic sites. After dating the samples with the carbon-14 method and analyzing their DNA, they could trace how vegetation in the tundra changed over the past 50,000 years.
+
+They found that species diversity used to be much higher than today. For long periods, flowering herbs dominated the Arctic landscape. DNA from the stomach contents of mammals such as mammoth, woolly rhinoceros, bison, and horse showed that these animals preferred protein-rich flowering herbs over grass. Their grazing likely helped maintain species-rich environments similar to traditional meadows.
+
+But toward the last glacial maximum, biodiversity began to decline, and about 10,000 years ago the flowering meadows were replaced by wetter tundra dominated by grasses and sedges. As temperatures rose and ice sheets melted, grasses became more widespread. Because grass is difficult to digest and less nutritious, the populations of large herbivores decreased, breaking the ecological interaction between flowering meadows and grazing megafauna.`;
+
+const sampleQuestions = [
+  {
+    id: 1,
+    question: 'How did the researchers arrive at the described results regarding Arctic vegetation?',
+    choices: [
+      'By using modern genetic techniques to compare ancient pollen with present-day pollen.',
+      'By combining age determination with genetic information.',
+      'By comparing old and new DNA.',
+      'Distrust of traditional pollen analysis'
+    ],
+    correctAnswer: 2
+  },
+  {
+    id: 2,
+    question: 'What causes coral bleaching?',
+    choices: [
+      'Too many fish species',
+      'Rising ocean temperatures',
+      'Excessive rainfall',
+      'Strong ocean currents'
+    ],
+    correctAnswer: 1
+  },
+  {
+    id: 3,
+    question: 'How much coral cover has the Great Barrier Reef lost since 1995?',
+    choices: [
+      'About one-quarter',
+      'Nearly all of it',
+      'About half',
+      'Less than 10%'
+    ],
+    correctAnswer: 2
+  },
+  {
+    id: 4,
+    question: 'Why are coral reefs called the "rainforests of the sea"?',
+    choices: [
+      'They receive a lot of rainfall',
+      'They are located in tropical areas',
+      'They have remarkable biodiversity',
+      'They are green in color'
+    ],
+    correctAnswer: 2
+  }
+];
+
+export default function App() {
+  const [trackingEnabled, setTrackingEnabled] = useState(false);
+  const [cursorHistory, setCursorHistory] = useState<CursorData[]>([]);
+  const [showHeatmap, setShowHeatmap] = useState(true);
+  //const [showRealtimeIndicator, setShowRealtimeIndicator] = useState(true);
+
+  // 🔹 Ref to control the CursorHeatmap (for saving image)
+  const heatmapRef = useRef<CursorHeatmapHandle | null>(null);
+
+  const handleCursorData = (data: CursorData) => {
+    setCursorHistory(prev => [...prev, data]);
+  };
+
+  const clearCursorHistory = () => {
+    setCursorHistory([]);
+  };
+
+  const handleToggleTracking = () => {
+    setTrackingEnabled(!trackingEnabled);
+  };
+
+  return (
+    <div className="h-screen bg-gray-50 p-4 flex flex-col">
+      <div className="max-w-[1600px] mx-auto w-full flex flex-col flex-1 min-h-0">
+        <div className="mb-3 flex items-start justify-between flex-shrink-0">
+          <div>
+            <h1 className="text-gray-900">Reading Comprehension</h1>
+            <p className="text-gray-600 text-sm">
+              Read the passage carefully and answer the questions below.
+            </p>
+          </div>
+          
+          <div className="flex gap-2">
+            {trackingEnabled && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowHeatmap(!showHeatmap)}
+                  className="text-xs"
+                >
+                  <Flame className="h-4 w-4 mr-1" />
+                  {showHeatmap ? 'Hide' : 'Show'} Heatmap
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => heatmapRef.current?.saveImage()}
+                  className="text-xs"
+                  disabled={cursorHistory.length === 0}
+                >
+                  <Flame className="h-4 w-4 mr-1" />
+                  Save Heatmap
+                </Button>
+              </>
+            )}
+            <Button
+              variant={trackingEnabled ? 'destructive' : 'default'}
+              size="sm"
+              onClick={handleToggleTracking}
+              className="text-xs"
+            >
+              {trackingEnabled ? (
+                <>
+                  <MousePointerClick className="h-4 w-4 mr-1" />
+                  Stop Tracking
+                </>
+              ) : (
+                <>
+                  <MousePointer2 className="h-4 w-4 mr-1" />
+                  Start Cursor Tracking
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+        
+        <div className="flex-1 min-h-0 flex gap-3">
+          <div className="flex-1 min-h-0">
+            <ReadingComprehension 
+              passage={samplePassage} 
+              questions={sampleQuestions}
+            />
+          </div>
+          
+          {trackingEnabled && (
+            <div className="w-56 flex-shrink-0">
+              <CursorTrackingData 
+                cursorHistory={cursorHistory}
+                onClear={clearCursorHistory}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <CursorTracker 
+        onCursorData={handleCursorData}
+        enabled={trackingEnabled}
+      />
+
+      {trackingEnabled && showHeatmap && (
+        <CursorHeatmap 
+          ref={heatmapRef}
+          cursorHistory={cursorHistory}
+          opacity={0.6}
+          radius={40}
+        />
+      )}
+    </div>
+  );
+}
