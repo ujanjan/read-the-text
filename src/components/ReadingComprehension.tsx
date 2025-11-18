@@ -142,9 +142,9 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
     };
 
     return (
-      <div className="flex gap-4 h-full">
-        {/* Reading Passage - Takes remaining width */}
-        <Card ref={ref} className="flex-1 p-6 overflow-hidden flex flex-col">
+      <div className="flex gap-4 h-full min-w-0 w-full">
+        {/* Reading Passage - 60% width */}
+        <Card ref={ref} className="p-6 overflow-hidden flex flex-col min-w-0" style={{ flex: '3 1 0%' }}>
           <h2 className="mb-3 text-lg">Reading Passage</h2>
           <div
             ref={passageRef}
@@ -171,8 +171,8 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
           </div>
         </Card>
 
-        {/* Questions Section - Fixed width to match Controls */}
-        <Card className="w-80 flex-shrink-0 p-4 flex flex-col">
+        {/* Questions Section - 40% width */}
+        <Card className="p-4 flex flex-col min-w-0 overflow-hidden" style={{ flex: '2 1 0%' }}>
           <div className="mb-3">
             <div className="flex justify-between items-center mb-1">
               <h2 className="text-lg">Questions</h2>
@@ -186,22 +186,24 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
           </div>
 
           {!allQuestionsAnswered ? (
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="flex-1 overflow-y-auto">
-                <p className="mb-3 text-sm">
+            <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+              <div className="flex-1 overflow-y-auto min-w-0">
+                <p className="mb-3 text-sm break-words min-w-0 max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                   {currentQuestion.question}
                 </p>
 
-                <RadioGroup
-                  value={selectedAnswer}
-                  onValueChange={setSelectedAnswer}
-                  disabled={showFeedback}
-                >
+                <div className="min-w-0">
+                  <RadioGroup
+                    value={selectedAnswer}
+                    onValueChange={setSelectedAnswer}
+                    disabled={showFeedback}
+                    className="min-w-0"
+                  >
                   {currentQuestion.choices.map(
                     (choice, index) => (
                       <div
                         key={index}
-                        className={`flex items-center space-x-2 p-2 rounded-md mb-2 text-sm ${
+                        className={`flex items-center space-x-2 p-2 rounded-md mb-2 text-sm min-w-0 ${
                           showFeedback && isCurrentQuestionCorrectlyAnswered
                             ? index ===
                               currentQuestion.correctAnswer
@@ -221,7 +223,8 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
                         />
                         <Label
                           htmlFor={`choice-${index}`}
-                          className="flex-1 cursor-pointer text-sm"
+                          className="flex-1 cursor-pointer text-sm break-words min-w-0 max-w-full"
+                          style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
                         >
                           {choice}
                         </Label>
@@ -249,10 +252,11 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
                     ),
                   )}
                 </RadioGroup>
+                </div>
 
                 {showFeedback && (
                   <div
-                    className={`p-3 rounded-md mt-3 text-sm ${
+                    className={`p-3 rounded-md mt-3 text-sm min-w-0 max-w-full ${
                       currentSubmissionCorrect
                         ? "bg-green-50 text-green-800"
                         : "bg-red-50 text-red-800"
@@ -266,13 +270,13 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
                         </span>
                       </div>
                     ) : (
-                      <div className={`flex items-start gap-2 ${currentSubmissionCorrect ? 'items-center' : ''}`}>
+                      <div className={`flex items-start gap-2 min-w-0 w-full ${currentSubmissionCorrect ? 'items-center' : ''}`}>
                         {currentSubmissionCorrect ? (
                           <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
                         ) : (
                           <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                         )}
-                        <span className="text-xs">
+                        <span className="text-xs break-words min-w-0 max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                           {feedbackText || (currentSubmissionCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.')}
                         </span>
                       </div>

@@ -200,8 +200,8 @@ export default function App() {
           </div>
         </div>
         
-        <div className="flex-1 min-h-0 flex gap-3">
-          <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 flex gap-3 min-w-0">
+          <div className="flex-1 min-h-0 min-w-0">
             <ReadingComprehension 
               ref={passageRef}
               title={sampleTitle}
