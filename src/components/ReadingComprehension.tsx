@@ -78,8 +78,8 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
 
     return (
       <div className="flex gap-4 h-full">
-        {/* Reading Passage - Takes most of the width */}
-        <Card ref={ref} className="flex-[3] p-6 overflow-hidden flex flex-col">
+        {/* Reading Passage - Takes remaining width */}
+        <Card ref={ref} className="flex-1 p-6 overflow-hidden flex flex-col">
           <h2 className="mb-3 text-lg">Reading Passage</h2>
           <div
             ref={passageRef}
@@ -96,8 +96,8 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
           </div>
         </Card>
 
-        {/* Questions Section - Minimized width */}
-        <Card className="w-80 p-4 flex flex-col">
+        {/* Questions Section - Fixed width to match Controls */}
+        <Card className="w-80 flex-shrink-0 p-4 flex flex-col">
           <div className="mb-3">
             <div className="flex justify-between items-center mb-1">
               <h2 className="text-lg">Questions</h2>

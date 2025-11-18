@@ -5,6 +5,7 @@ import { CursorTrackingData } from './components/CursorTrackingData';
 import { CursorHeatmap, CursorHeatmapHandle } from './components/CursorHeatmap';
 //import { RealtimeCursorIndicator } from './components/RealtimeCursorIndicator';
 import { Button } from './components/ui/button';
+import { Card } from './components/ui/card';
 import { MousePointer2, MousePointerClick } from 'lucide-react';
 import { toCanvas } from 'html-to-image';
 
@@ -179,8 +180,8 @@ export default function App() {
             />
           </div>
           
-          {trackingEnabled && (
-            <div className="w-72 flex-shrink-0">
+          <div className="w-80 flex-shrink-0">
+            {trackingEnabled ? (
               <CursorTrackingData 
                 cursorHistory={cursorHistory}
                 onClear={clearCursorHistory}
@@ -191,8 +192,14 @@ export default function App() {
                 onSaveScreenshot={handleCaptureScreenshot}
                 heatmapRef={heatmapRef}
               />
-            </div>
-          )}
+            ) : (
+              <Card className="h-full flex items-center justify-center p-4">
+                <p className="text-sm text-gray-500 text-center">
+                  Start cursor tracking to view controls and data
+                </p>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
 
