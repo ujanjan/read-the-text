@@ -96,10 +96,13 @@ export default function App() {
     }
 
     try {
+      const pixelRatio = window.devicePixelRatio || 1;
+      const rect = passageRef.current.getBoundingClientRect();
+      
       // Capture using html-to-image (supports oklch natively)
       const canvas = await toCanvas(passageRef.current, {
         backgroundColor: '#ffffff',
-        pixelRatio: window.devicePixelRatio || 1,
+        pixelRatio: pixelRatio,
       });
 
       // If heatmap is visible, composite it onto the screenshot
@@ -108,8 +111,16 @@ export default function App() {
         if (heatmapCanvas) {
           const ctx = canvas.getContext('2d');
           if (ctx) {
-            // Get the bounding rect of the passage container
-            const rect = passageRef.current.getBoundingClientRect();
+            // The heatmap canvas is already sized to match the container exactly
+            // and contains only container-relative coordinates (0,0 to width,height)
+            // So we can draw it directly without cropping
+            
+            // However, we need to account for pixel ratio differences
+            // The screenshot canvas might be at a different scale than the heatmap canvas
+            const screenshotWidth = canvas.width;
+            const screenshotHeight = canvas.height;
+            const heatmapWidth = heatmapCanvas.width;
+            const heatmapHeight = heatmapCanvas.height;
             
             // Save the current context state
             ctx.save();
@@ -117,12 +128,12 @@ export default function App() {
             // Apply the heatmap opacity (0.6) when compositing
             ctx.globalAlpha = 0.6;
             
-            // Draw the heatmap canvas onto the passage screenshot
-            // The heatmap is full viewport, so we need to crop to the passage area
+            // Draw the entire heatmap canvas onto the screenshot
+            // Scale it to match the screenshot dimensions exactly
             ctx.drawImage(
               heatmapCanvas,
-              rect.left, rect.top, rect.width, rect.height, // Source: crop heatmap to passage area
-              0, 0, canvas.width, canvas.height // Destination: full canvas
+              0, 0, heatmapWidth, heatmapHeight, // Source: entire heatmap canvas
+              0, 0, screenshotWidth, screenshotHeight // Destination: full screenshot canvas
             );
             
             // Restore the context state
@@ -182,25 +193,17 @@ export default function App() {
           </div>
           
           <div className="w-80 flex-shrink-0">
-            {trackingEnabled ? (
-              <CursorTrackingData 
-                cursorHistory={cursorHistory}
-                onClear={clearCursorHistory}
-                screenshot={screenshot}
-                showHeatmap={showHeatmap}
-                onToggleHeatmap={() => setShowHeatmap(!showHeatmap)}
-                onSaveHeatmap={() => heatmapRef.current?.saveImage()}
-                onSaveScreenshot={handleCaptureScreenshot}
-                heatmapRef={heatmapRef}
-                passage={samplePassage}
-              />
-            ) : (
-              <Card className="h-full flex items-center justify-center p-4">
-                <p className="text-sm text-gray-500 text-center">
-                  Start cursor tracking to view controls and data
-                </p>
-              </Card>
-            )}
+            <CursorTrackingData 
+              cursorHistory={cursorHistory}
+              onClear={clearCursorHistory}
+              screenshot={screenshot}
+              showHeatmap={showHeatmap}
+              onToggleHeatmap={() => setShowHeatmap(!showHeatmap)}
+              onSaveHeatmap={() => heatmapRef.current?.saveImage()}
+              onSaveScreenshot={handleCaptureScreenshot}
+              heatmapRef={heatmapRef}
+              passage={samplePassage}
+            />
           </div>
         </div>
       </div>

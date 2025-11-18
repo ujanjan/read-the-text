@@ -144,25 +144,6 @@ export function CursorTrackingData({
     URL.revokeObjectURL(url);
   };
 
-  const downloadCSV = () => {
-    const csv = [
-      ['Timestamp', 'X', 'Y', 'Time (ISO)'],
-      ...cursorHistory.map(d => [
-        d.timestamp,
-        d.x.toFixed(2),
-        d.y.toFixed(2),
-        new Date(d.timestamp).toISOString()
-      ])
-    ].map(row => row.join(',')).join('\n');
-
-    const dataBlob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `cursor-tracking-data-${new Date().toISOString()}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
 
   const getDataSummary = () => {
     if (cursorHistory.length === 0) return null;
@@ -251,91 +232,69 @@ export function CursorTrackingData({
 
   return (
     <Card className="p-3 h-full flex flex-col">
-      {/* Controls Section */}
+      {/* Visualization Controls */}
       <div className="mb-3 pb-3 border-b border-gray-200 flex-shrink-0">
-        <h3 className="text-sm font-semibold mb-2 text-gray-700">Controls</h3>
-        <div className="flex flex-col gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onToggleHeatmap}
-            className="text-xs w-full justify-start"
-          >
-            <Flame className="h-4 w-4 mr-2" />
-            {showHeatmap ? 'Hide' : 'Show'} Heatmap
-          </Button>
+        <h3 className="text-sm font-semibold mb-2 text-gray-700">Visualization</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onToggleHeatmap}
+          className="text-xs w-full justify-start"
+          disabled={cursorHistory.length === 0}
+        >
+          <Flame className="h-4 w-4 mr-2" />
+          {showHeatmap ? 'Hide' : 'Show'} Heatmap
+        </Button>
+      </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onSaveHeatmap}
-            className="text-xs w-full justify-start"
-            disabled={cursorHistory.length === 0}
-          >
-            <Flame className="h-4 w-4 mr-2" />
-            Save Heatmap
-          </Button>
-
-          {showHeatmap && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                await onSaveScreenshot();
-              }}
-              className="text-xs w-full justify-start"
-            >
-              <Camera className="h-4 w-4 mr-2" />
-              Save Screenshot
-            </Button>
+      {/* Analysis Section */}
+      <div className="mb-3 pb-3 border-b border-gray-200 flex-shrink-0">
+        <h3 className="text-sm font-semibold mb-2 text-gray-700">Analysis</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleAnalyzeWithGemini}
+          className="text-xs w-full justify-start"
+          disabled={isAnalyzing || cursorHistory.length === 0 || !passage}
+        >
+          {isAnalyzing ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              {analysisStage === 'capturing-screenshot' && 'Capturing screenshot...'}
+              {analysisStage === 'preparing-json' && 'Preparing JSON data...'}
+              {analysisStage === 'analyzing' && 'Analyzing with Gemini...'}
+              {analysisStage === 'idle' && 'Processing...'}
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Analyze Reading Behavior
+            </>
           )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAnalyzeWithGemini}
-            className="text-xs w-full justify-start"
-            disabled={isAnalyzing || cursorHistory.length === 0 || !passage}
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {analysisStage === 'capturing-screenshot' && 'Capturing screenshot...'}
-                {analysisStage === 'preparing-json' && 'Preparing JSON data...'}
-                {analysisStage === 'analyzing' && 'Analyzing with Gemini...'}
-                {analysisStage === 'idle' && 'Processing...'}
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Analyze with Gemini
-              </>
+        </Button>
+        
+        {isAnalyzing && (
+          <div className="text-xs text-gray-600 mt-2 space-y-1">
+            {analysisStage === 'capturing-screenshot' && (
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                <span>Capturing screenshot with heatmap...</span>
+              </div>
             )}
-          </Button>
-          
-          {isAnalyzing && (
-            <div className="text-xs text-gray-600 mt-2 space-y-1">
-              {analysisStage === 'capturing-screenshot' && (
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
-                  <span>Capturing screenshot with heatmap...</span>
-                </div>
-              )}
-              {analysisStage === 'preparing-json' && (
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                  <span>Preparing cursor tracking data...</span>
-                </div>
-              )}
-              {analysisStage === 'analyzing' && (
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
-                  <span>Sending data to Gemini API...</span>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            {analysisStage === 'preparing-json' && (
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                <span>Preparing cursor tracking data...</span>
+              </div>
+            )}
+            {analysisStage === 'analyzing' && (
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
+                <span>Sending data to Gemini API...</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Reading Tips Section */}
@@ -358,37 +317,81 @@ export function CursorTrackingData({
         </div>
       )}
 
+      {/* Export Section */}
+      <div className="mb-3 pb-3 border-b border-gray-200 flex-shrink-0">
+        <h3 className="text-sm font-semibold mb-2 text-gray-700">Export</h3>
+        <div className="flex flex-col gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onSaveHeatmap}
+            className="text-xs w-full justify-start"
+            disabled={cursorHistory.length === 0 || !showHeatmap}
+          >
+            <Flame className="h-4 w-4 mr-2" />
+            Save Heatmap Image
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              await onSaveScreenshot();
+            }}
+            className="text-xs w-full justify-start"
+            disabled={cursorHistory.length === 0 || !showHeatmap}
+          >
+            <Camera className="h-4 w-4 mr-2" />
+            Save Passage with Heatmap
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={downloadData}
+            className="text-xs w-full justify-start"
+            disabled={cursorHistory.length === 0}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Download JSON Data
+          </Button>
+        </div>
+      </div>
+
       {/* Cursor Data Section */}
       <div className="flex items-center justify-between mb-2 flex-shrink-0">
         <div className="flex items-center gap-2">
           <MousePointer2 className="h-4 w-4 text-blue-600" />
-          <h3 className="text-sm font-semibold text-gray-700">Cursor Data</h3>
+          <h3 className="text-sm font-semibold text-gray-700">Tracking Data</h3>
         </div>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setShowData(!showData)}
           className="h-7 w-7 p-0"
+          disabled={cursorHistory.length === 0}
         >
           {showData ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
         </Button>
       </div>
 
       <div className="space-y-2 flex-1 min-h-0 flex flex-col">
-        {summary && (
+        {summary ? (
           <div className="text-xs text-gray-600 space-y-0.5 flex-shrink-0">
-            <div>Hover points: {summary.totalPoints}</div>
+            <div>Points: {summary.totalPoints}</div>
             <div>Duration: {summary.duration}s</div>
             <div className="pt-1 border-t border-gray-200 space-y-0.5">
               <div>Start: {summary.startTime}</div>
               <div>End: {summary.endTime}</div>
             </div>
           </div>
+        ) : (
+          <div className="text-xs text-gray-400 italic flex-shrink-0">
+            No tracking data yet. Start tracking to see statistics.
+          </div>
         )}
 
         {screenshot && (
           <div className="flex-shrink-0 pt-2 border-t border-gray-200">
-            <div className="text-xs text-gray-600 mb-2">Screenshot</div>
+            <div className="text-xs text-gray-600 mb-2">Screenshot Preview</div>
             <div
               onClick={() => setShowScreenshotDialog(true)}
               className="cursor-pointer rounded border border-gray-300 overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
@@ -424,35 +427,16 @@ export function CursorTrackingData({
           </div>
         )}
 
-        <div className="flex gap-1.5 flex-shrink-0">
-          <Button
-            onClick={downloadCSV}
-            size="sm"
-            disabled={cursorHistory.length === 0}
-            className="flex-1 text-[11px] h-7 px-2"
-          >
-            <Download className="h-3 w-3 mr-1" />
-            CSV
-          </Button>
-          <Button
-            onClick={downloadData}
-            size="sm"
-            disabled={cursorHistory.length === 0}
-            className="flex-1 text-[11px] h-7 px-2"
-          >
-            <Download className="h-3 w-3 mr-1" />
-            JSON
-          </Button>
-          <Button
-            onClick={onClear}
-            variant="destructive"
-            size="sm"
-            disabled={cursorHistory.length === 0}
-            className="text-[11px] h-7 px-2"
-          >
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
+        <Button
+          onClick={onClear}
+          variant="destructive"
+          size="sm"
+          disabled={cursorHistory.length === 0}
+          className="text-xs w-full mt-auto flex-shrink-0"
+        >
+          <Trash2 className="h-3 w-3 mr-2" />
+          Clear All Data
+        </Button>
       </div>
 
       <Dialog open={showScreenshotDialog} onOpenChange={setShowScreenshotDialog}>

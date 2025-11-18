@@ -78,18 +78,25 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
         };
       }
 
-      canvas.width = containerBounds.width;
-      canvas.height = containerBounds.height;
+      // Use device pixel ratio for accurate rendering and screenshot compositing
+      const pixelRatio = window.devicePixelRatio || 1;
+      canvas.width = containerBounds.width * pixelRatio;
+      canvas.height = containerBounds.height * pixelRatio;
 
+      // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (cursorHistory.length === 0) return;
 
+      // Create temp canvas at device pixel resolution
       const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = canvas.width;
-      tempCanvas.height = canvas.height;
+      tempCanvas.width = containerBounds.width * pixelRatio;
+      tempCanvas.height = containerBounds.height * pixelRatio;
       const tempCtx = tempCanvas.getContext('2d');
       if (!tempCtx) return;
+
+      // Scale the temp context so we can work in CSS pixels
+      tempCtx.scale(pixelRatio, pixelRatio);
 
       // Filter cursor points to only those within the container bounds
       const pointsInBounds = cursorHistory.filter(point => {
@@ -118,6 +125,7 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
         tempCtx.fillRect(relativeX - radius, relativeY - radius, radius * 2, radius * 2);
       });
 
+      // Get image data at device pixel resolution
       const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
       const data = imageData.data;
 
@@ -162,6 +170,7 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
         }
       }
 
+      // Put image data directly (at device pixel resolution)
       ctx.putImageData(imageData, 0, 0);
 
     }, [cursorHistory, radius, containerRef]);
@@ -188,8 +197,10 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
           };
         }
 
-        canvas.width = containerBounds.width;
-        canvas.height = containerBounds.height;
+        // Use device pixel ratio for accurate rendering
+        const pixelRatio = window.devicePixelRatio || 1;
+        canvas.width = containerBounds.width * pixelRatio;
+        canvas.height = containerBounds.height * pixelRatio;
 
         // Update canvas style position
         setCanvasStyle({

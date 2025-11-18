@@ -83,7 +83,7 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
           <h2 className="mb-3 text-lg">Reading Passage</h2>
           <div
             ref={passageRef}
-            className="prose max-w-none overflow-y-auto flex-1 pr-2 text-sm"
+            className="prose max-w-none overflow-y-auto flex-1 pr-2 text-base"
           >
             {passage.split("\n\n").map((paragraph, index) => (
               <p
