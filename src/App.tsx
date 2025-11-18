@@ -33,36 +33,36 @@ const sampleQuestions = [
   },
   {
     id: 2,
-    question: 'What causes coral bleaching?',
+    question: 'What was the main limitation of the traditional pollen analysis method mentioned in the passage?',
     choices: [
-      'Too many fish species',
-      'Rising ocean temperatures',
-      'Excessive rainfall',
-      'Strong ocean currents'
+      'It could not extract DNA from preserved samples.',
+      'It often underestimated insect-pollinated species with low pollen production.',
+      'It required samples from 21 different sites.',
+      'It could not determine the age of samples accurately.'
     ],
     correctAnswer: 1
   },
   {
     id: 3,
-    question: 'How much coral cover has the Great Barrier Reef lost since 1995?',
+    question: 'What did the researchers discover about Arctic vegetation in the past compared to today?',
     choices: [
-      'About one-quarter',
-      'Nearly all of it',
-      'About half',
-      'Less than 10%'
+      'Species diversity was much lower in the past.',
+      'Grasses and sedges dominated the landscape for 50,000 years.',
+      'Species diversity used to be much higher than today.',
+      'Flowering herbs were never common in the Arctic.'
     ],
     correctAnswer: 2
   },
   {
     id: 4,
-    question: 'Why are coral reefs called the "rainforests of the sea"?',
+    question: 'According to the passage, why did large herbivore populations decrease about 10,000 years ago?',
     choices: [
-      'They receive a lot of rainfall',
-      'They are located in tropical areas',
-      'They have remarkable biodiversity',
-      'They are green in color'
+      'Because flowering herbs became less nutritious.',
+      'Because grasses became more widespread and are difficult to digest and less nutritious.',
+      'Because the Arctic became too cold for large mammals.',
+      'Because there were no more flowering meadows available.'
     ],
-    correctAnswer: 2
+    correctAnswer: 1
   }
 ];
 
@@ -189,6 +189,8 @@ export default function App() {
               ref={passageRef}
               passage={samplePassage} 
               questions={sampleQuestions}
+              cursorHistory={cursorHistory}
+              screenshot={screenshot}
             />
           </div>
           

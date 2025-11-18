@@ -3,7 +3,8 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { getPersonalizedQuestionFeedback, CursorData } from "../services/geminiService";
 
 interface Question {
   id: number;
@@ -15,54 +16,86 @@ interface Question {
 interface ReadingComprehensionProps {
   passage: string;
   questions: Question[];
+  cursorHistory?: CursorData[];
+  screenshot?: string | null;
 }
 
 export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehensionProps>(
   function ReadingComprehension({
     passage,
     questions,
+    cursorHistory = [],
+    screenshot = null,
   }, ref) {
     const [currentQuestionIndex, setCurrentQuestionIndex] =
       useState(0);
     const [selectedAnswer, setSelectedAnswer] =
       useState<string>("");
     const [showFeedback, setShowFeedback] = useState(false);
+    const [feedbackText, setFeedbackText] = useState<string>("");
+    const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
+    const [currentSubmissionCorrect, setCurrentSubmissionCorrect] = useState<boolean>(false);
     const [score, setScore] = useState(0);
-    const [answeredQuestions, setAnsweredQuestions] = useState<
+    const [correctlyAnsweredQuestions, setCorrectlyAnsweredQuestions] = useState<
       number[]
     >([]);
     const passageRef = useRef<HTMLDivElement>(null);
 
     const currentQuestion = questions[currentQuestionIndex];
-    const isCorrect =
-      selectedAnswer ===
-      currentQuestion?.correctAnswer.toString();
+    const isCurrentQuestionCorrectlyAnswered = correctlyAnsweredQuestions.includes(currentQuestion.id);
     const allQuestionsAnswered =
-      answeredQuestions.length === questions.length;
+      correctlyAnsweredQuestions.length === questions.length;
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
       if (!selectedAnswer) return;
 
+      const isCorrect = selectedAnswer === currentQuestion?.correctAnswer.toString();
+      setCurrentSubmissionCorrect(isCorrect);
       setShowFeedback(true);
+      setIsLoadingFeedback(true);
 
-      if (
-        isCorrect &&
-        !answeredQuestions.includes(currentQuestion.id)
-      ) {
-        setScore(score + 1);
+      // Get personalized feedback
+      try {
+        const selectedAnswerText = currentQuestion.choices[parseInt(selectedAnswer)];
+        const correctAnswerText = currentQuestion.choices[currentQuestion.correctAnswer];
+        
+        const result = await getPersonalizedQuestionFeedback(
+          passage,
+          screenshot,
+          cursorHistory,
+          currentQuestion.question,
+          selectedAnswerText,
+          correctAnswerText,
+          isCorrect
+        );
+        
+        setFeedbackText(result.feedback);
+      } catch (error) {
+        console.error('Failed to get personalized feedback:', error);
+        // Fallback to default messages
+        setFeedbackText(isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.');
+      } finally {
+        setIsLoadingFeedback(false);
       }
 
-      if (!answeredQuestions.includes(currentQuestion.id)) {
-        setAnsweredQuestions([
-          ...answeredQuestions,
-          currentQuestion.id,
-        ]);
+      // Only update score and mark as answered if correct
+      if (isCorrect) {
+        if (!correctlyAnsweredQuestions.includes(currentQuestion.id)) {
+          setScore(score + 1);
+          setCorrectlyAnsweredQuestions([
+            ...correctlyAnsweredQuestions,
+            currentQuestion.id,
+          ]);
+        }
       }
     };
 
     const handleNext = () => {
       setShowFeedback(false);
+      setFeedbackText("");
       setSelectedAnswer("");
+      setIsLoadingFeedback(false);
+      setCurrentSubmissionCorrect(false);
       if (currentQuestionIndex < questions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       }
@@ -70,10 +103,21 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
 
     const handlePrevious = () => {
       setShowFeedback(false);
+      setFeedbackText("");
       setSelectedAnswer("");
+      setIsLoadingFeedback(false);
+      setCurrentSubmissionCorrect(false);
       if (currentQuestionIndex > 0) {
         setCurrentQuestionIndex(currentQuestionIndex - 1);
       }
+    };
+
+    const handleTryAgain = () => {
+      setShowFeedback(false);
+      setFeedbackText("");
+      setSelectedAnswer("");
+      setIsLoadingFeedback(false);
+      setCurrentSubmissionCorrect(false);
     };
 
     return (
@@ -127,7 +171,7 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
                       <div
                         key={index}
                         className={`flex items-center space-x-2 p-2 rounded-md mb-2 text-sm ${
-                          showFeedback
+                          showFeedback && isCurrentQuestionCorrectlyAnswered
                             ? index ===
                               currentQuestion.correctAnswer
                               ? "bg-green-50 border-2 border-green-500"
@@ -135,6 +179,8 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
                                   index.toString()
                                 ? "bg-red-50 border-2 border-red-500"
                                 : "bg-gray-50"
+                            : showFeedback && !isCurrentQuestionCorrectlyAnswered && selectedAnswer === index.toString()
+                            ? "bg-red-50 border-2 border-red-500"
                             : "bg-gray-50 hover:bg-gray-100"
                         }`}
                       >
@@ -149,11 +195,20 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
                           {choice}
                         </Label>
                         {showFeedback &&
+                          isCurrentQuestionCorrectlyAnswered &&
                           index ===
                             currentQuestion.correctAnswer && (
                             <CheckCircle2 className="h-4 w-4 text-green-600" />
                           )}
                         {showFeedback &&
+                          !isCurrentQuestionCorrectlyAnswered &&
+                          selectedAnswer === index.toString() &&
+                          index !==
+                            currentQuestion.correctAnswer && (
+                            <XCircle className="h-4 w-4 text-red-600" />
+                          )}
+                        {showFeedback &&
+                          isCurrentQuestionCorrectlyAnswered &&
                           selectedAnswer === index.toString() &&
                           index !==
                             currentQuestion.correctAnswer && (
@@ -167,23 +222,27 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
                 {showFeedback && (
                   <div
                     className={`p-3 rounded-md mt-3 text-sm ${
-                      isCorrect
+                      currentSubmissionCorrect
                         ? "bg-green-50 text-green-800"
                         : "bg-red-50 text-red-800"
                     }`}
                   >
-                    {isCorrect ? (
+                    {isLoadingFeedback ? (
                       <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                         <span className="text-xs">
-                          Correct! I love you.
+                          Generating personalized feedback...
                         </span>
                       </div>
                     ) : (
-                      <div className="flex items-start gap-2">
-                        <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      <div className={`flex items-start gap-2 ${currentSubmissionCorrect ? 'items-center' : ''}`}>
+                        {currentSubmissionCorrect ? (
+                          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        )}
                         <span className="text-xs">
-                          Incorrect. Git gud or git out.
+                          {feedbackText || (currentSubmissionCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.')}
                         </span>
                       </div>
                     )}
@@ -208,7 +267,7 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
                   >
                     Submit
                   </Button>
-                ) : (
+                ) : isCurrentQuestionCorrectlyAnswered ? (
                   <Button
                     onClick={handleNext}
                     disabled={
@@ -218,6 +277,13 @@ export const ReadingComprehension = forwardRef<HTMLDivElement, ReadingComprehens
                     className="flex-1 text-xs py-2"
                   >
                     Next
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleTryAgain}
+                    className="flex-1 text-xs py-2"
+                  >
+                    Try Again
                   </Button>
                 )}
               </div>

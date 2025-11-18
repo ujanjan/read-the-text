@@ -20,6 +20,11 @@ export interface AnalysisResult {
   error?: string;
 }
 
+export interface QuestionFeedbackResult {
+  feedback: string;
+  error?: string;
+}
+
 /**
  * Converts a base64 data URL to a format suitable for Gemini API
  */
@@ -186,6 +191,136 @@ Example format:
     return {
       tips: '',
       error: errorMessage,
+    };
+  }
+}
+
+/**
+ * Provides personalized feedback for quiz question answers based on reading behavior
+ */
+export async function getPersonalizedQuestionFeedback(
+  passage: string,
+  screenshot: string | null,
+  cursorHistory: CursorData[],
+  question: string,
+  selectedAnswer: string,
+  correctAnswer: string,
+  isCorrect: boolean
+): Promise<QuestionFeedbackResult> {
+  if (!model) {
+    return {
+      feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
+      error: 'Gemini API key is not configured. Using default feedback.',
+    };
+  }
+
+  if (!passage) {
+    return {
+      feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
+      error: 'Reading passage is required for personalized feedback.',
+    };
+  }
+
+  // Prepare tracking data summary
+  const trackingDataSummary = cursorHistory.length > 0 ? {
+    totalPoints: cursorHistory.length,
+    duration: (cursorHistory[cursorHistory.length - 1].timestamp - cursorHistory[0].timestamp) / 1000,
+    coordinateRange: {
+      minX: Math.min(...cursorHistory.map(d => d.x)),
+      maxX: Math.max(...cursorHistory.map(d => d.x)),
+      minY: Math.min(...cursorHistory.map(d => d.y)),
+      maxY: Math.max(...cursorHistory.map(d => d.y)),
+    }
+  } : null;
+
+  // Prepare JSON data sample (first 30 and last 30 points for context)
+  const jsonSample = cursorHistory.length > 60
+    ? [
+        ...cursorHistory.slice(0, 30),
+        { note: '... (middle data omitted) ...' },
+        ...cursorHistory.slice(-30),
+      ]
+    : cursorHistory;
+
+  const prompt = `You are an expert reading comprehension tutor. Analyze a student's reading behavior and provide personalized feedback for their quiz answer.
+
+**READING PASSAGE:**
+${passage}
+
+**QUESTION:**
+${question}
+
+**STUDENT'S ANSWER:**
+${selectedAnswer}
+
+**ANSWER STATUS:** ${isCorrect ? 'CORRECT' : 'INCORRECT'}
+
+${isCorrect ? `**CORRECT ANSWER:** ${correctAnswer}` : ''}
+
+**READING BEHAVIOR DATA:**
+${trackingDataSummary ? `
+- Total cursor points: ${trackingDataSummary.totalPoints}
+- Reading duration: ${trackingDataSummary.duration.toFixed(1)} seconds
+- Coordinate range: X: ${trackingDataSummary.coordinateRange.minX.toFixed(0)}-${trackingDataSummary.coordinateRange.maxX.toFixed(0)}, Y: ${trackingDataSummary.coordinateRange.minY.toFixed(0)}-${trackingDataSummary.coordinateRange.maxY.toFixed(0)}
+` : '- No cursor tracking data available'}
+
+**CURSOR TRACKING DATA (sample):**
+\`\`\`json
+${JSON.stringify(jsonSample, null, 2)}
+\`\`\`
+
+**YOUR TASK:**
+
+Provide personalized, encouraging feedback based on:
+1. Whether the answer was correct or incorrect
+2. The student's reading patterns (from cursor data and heatmap)
+3. How their reading behavior relates to finding the answer in the passage
+
+**OUTPUT REQUIREMENTS:**
+- Keep it SHORT: Maximum 2 sentences (20-30 words total)
+- Be encouraging and constructive
+- Reference specific reading behavior if data is available (e.g., "You spent time on the key paragraph" or "The answer was in the section you skimmed")
+- For CORRECT answers: Celebrate and connect it to their reading approach
+- For INCORRECT answers: ${isCorrect ? 'N/A' : 'Give hints about what part of the passage to focus on (e.g., "Focus on the second paragraph where the method is explained" or "Look for information about how researchers conducted the study"). DO NOT reveal the correct answer. Guide them to reread the relevant section so they can discover it themselves.'}
+- No verbose explanations - be concise and direct
+
+**OUTPUT FORMAT:**
+Just provide the feedback text directly, no prefix or formatting.`;
+
+  try {
+    const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+      { text: prompt },
+    ];
+
+    // Add screenshot if available
+    if (screenshot) {
+      try {
+        const imageData = base64ToGeminiFormat(screenshot);
+        parts.push({
+          inlineData: {
+            mimeType: imageData.mimeType,
+            data: imageData.data,
+          },
+        });
+      } catch (error) {
+        console.warn('Failed to process screenshot for Gemini:', error);
+      }
+    }
+
+    const result = await model.generateContent(parts);
+    const response = await result.response;
+    const text = response.text().trim();
+
+    return {
+      feedback: text || (isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.'),
+    };
+  } catch (error: any) {
+    console.error('Gemini API error:', error);
+    
+    // Fallback to default messages on error
+    return {
+      feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
+      error: 'Failed to generate personalized feedback. Using default.',
     };
   }
 }
