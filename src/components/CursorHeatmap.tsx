@@ -9,6 +9,7 @@ interface CursorHeatmapProps {
 
 export interface CursorHeatmapHandle {
   saveImage: () => void;
+  getCanvas: () => HTMLCanvasElement | null;
 }
 
 export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>(
@@ -35,6 +36,9 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
 
           URL.revokeObjectURL(url);
         }, 'image/png');
+      },
+      getCanvas() {
+        return canvasRef.current;
       }
     }));
 

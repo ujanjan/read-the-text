@@ -3,14 +3,23 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Download, Eye, EyeOff, Trash2, MousePointer2 } from 'lucide-react';
 import { CursorData } from './CursorTracker';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from './ui/dialog';
 
 interface CursorTrackingDataProps {
   cursorHistory: CursorData[];
   onClear: () => void;
+  screenshot: string | null;
 }
 
-export function CursorTrackingData({ cursorHistory, onClear }: CursorTrackingDataProps) {
+export function CursorTrackingData({ cursorHistory, onClear, screenshot }: CursorTrackingDataProps) {
   const [showData, setShowData] = useState(false);
+  const [showScreenshotDialog, setShowScreenshotDialog] = useState(false);
 
   const downloadData = () => {
     const dataStr = JSON.stringify(cursorHistory, null, 2);
@@ -58,6 +67,17 @@ export function CursorTrackingData({ cursorHistory, onClear }: CursorTrackingDat
     };
   };
 
+  const downloadScreenshot = () => {
+    if (!screenshot) return;
+
+    const link = document.createElement('a');
+    link.href = screenshot;
+    link.download = `reading-passage-screenshot-${new Date().toISOString()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const summary = getDataSummary();
 
   return (
@@ -85,6 +105,23 @@ export function CursorTrackingData({ cursorHistory, onClear }: CursorTrackingDat
             <div className="pt-1 border-t border-gray-200 space-y-0.5">
               <div>Start: {summary.startTime}</div>
               <div>End: {summary.endTime}</div>
+            </div>
+          </div>
+        )}
+
+        {screenshot && (
+          <div className="flex-shrink-0 pt-2 border-t border-gray-200">
+            <div className="text-xs text-gray-600 mb-2">Screenshot</div>
+            <div
+              onClick={() => setShowScreenshotDialog(true)}
+              className="cursor-pointer rounded border border-gray-300 overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              <img
+                src={screenshot}
+                alt="Reading passage screenshot"
+                className="w-full h-auto"
+                style={{ maxHeight: '120px', objectFit: 'contain' }}
+              />
             </div>
           </div>
         )}
@@ -140,6 +177,29 @@ export function CursorTrackingData({ cursorHistory, onClear }: CursorTrackingDat
           </Button>
         </div>
       </div>
+
+      <Dialog open={showScreenshotDialog} onOpenChange={setShowScreenshotDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Reading Passage Screenshot</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto max-h-[70vh] flex justify-center">
+            {screenshot && (
+              <img
+                src={screenshot}
+                alt="Reading passage screenshot"
+                className="max-w-full h-auto"
+              />
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={downloadScreenshot} disabled={!screenshot}>
+              <Download className="h-4 w-4 mr-2" />
+              Download Screenshot
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

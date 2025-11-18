@@ -5,7 +5,8 @@ import { CursorTrackingData } from './components/CursorTrackingData';
 import { CursorHeatmap, CursorHeatmapHandle } from './components/CursorHeatmap';
 //import { RealtimeCursorIndicator } from './components/RealtimeCursorIndicator';
 import { Button } from './components/ui/button';
-import { MousePointer2, MousePointerClick, Flame } from 'lucide-react';
+import { MousePointer2, MousePointerClick, Flame, Camera } from 'lucide-react';
+import { toCanvas } from 'html-to-image';
 
 const samplePassage = `A Flowery Past
 
@@ -68,10 +69,13 @@ export default function App() {
   const [trackingEnabled, setTrackingEnabled] = useState(false);
   const [cursorHistory, setCursorHistory] = useState<CursorData[]>([]);
   const [showHeatmap, setShowHeatmap] = useState(true);
+  const [screenshot, setScreenshot] = useState<string | null>(null);
   //const [showRealtimeIndicator, setShowRealtimeIndicator] = useState(true);
 
   // 🔹 Ref to control the CursorHeatmap (for saving image)
   const heatmapRef = useRef<CursorHeatmapHandle | null>(null);
+  // 🔹 Ref to the passage container for screenshot capture
+  const passageRef = useRef<HTMLDivElement>(null);
 
   const handleCursorData = (data: CursorData) => {
     setCursorHistory(prev => [...prev, data]);
@@ -83,6 +87,56 @@ export default function App() {
 
   const handleToggleTracking = () => {
     setTrackingEnabled(!trackingEnabled);
+  };
+
+  const handleCaptureScreenshot = async () => {
+    if (!passageRef.current) {
+      return;
+    }
+
+    try {
+      // Capture using html-to-image (supports oklch natively)
+      const canvas = await toCanvas(passageRef.current, {
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        pixelRatio: window.devicePixelRatio || 1,
+      });
+
+      // If heatmap is visible, composite it onto the screenshot
+      if (showHeatmap && heatmapRef.current) {
+        const heatmapCanvas = heatmapRef.current.getCanvas();
+        if (heatmapCanvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            // Get the bounding rect of the passage container
+            const rect = passageRef.current.getBoundingClientRect();
+            
+            // Save the current context state
+            ctx.save();
+            
+            // Apply the heatmap opacity (0.6) when compositing
+            ctx.globalAlpha = 0.6;
+            
+            // Draw the heatmap canvas onto the passage screenshot
+            // The heatmap is full viewport, so we need to crop to the passage area
+            ctx.drawImage(
+              heatmapCanvas,
+              rect.left, rect.top, rect.width, rect.height, // Source: crop heatmap to passage area
+              0, 0, canvas.width, canvas.height // Destination: full canvas
+            );
+            
+            // Restore the context state
+            ctx.restore();
+          }
+        }
+      }
+
+      const dataUrl = canvas.toDataURL('image/png');
+      setScreenshot(dataUrl);
+    } catch (error) {
+      console.error('Failed to capture screenshot:', error);
+      alert('Failed to capture screenshot. Check console for details.');
+    }
   };
 
   return (
@@ -119,6 +173,18 @@ export default function App() {
                   <Flame className="h-4 w-4 mr-1" />
                   Save Heatmap
                 </Button>
+
+                {showHeatmap && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCaptureScreenshot}
+                    className="text-xs"
+                  >
+                    <Camera className="h-4 w-4 mr-1" />
+                    Save Screenshot
+                  </Button>
+                )}
               </>
             )}
             <Button
@@ -145,6 +211,7 @@ export default function App() {
         <div className="flex-1 min-h-0 flex gap-3">
           <div className="flex-1 min-h-0">
             <ReadingComprehension 
+              ref={passageRef}
               passage={samplePassage} 
               questions={sampleQuestions}
             />
@@ -155,6 +222,7 @@ export default function App() {
               <CursorTrackingData 
                 cursorHistory={cursorHistory}
                 onClear={clearCursorHistory}
+                screenshot={screenshot}
               />
             </div>
           )}
