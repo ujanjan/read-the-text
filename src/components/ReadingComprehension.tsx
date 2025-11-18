@@ -21,6 +21,7 @@ interface ReadingComprehensionProps {
   screenshot?: string | null;
   onCaptureScreenshot?: () => Promise<string | null>;
   onQuizComplete?: () => void;
+  trackingEnabled?: boolean;
 }
 
 export interface ReadingComprehensionHandle {
@@ -38,6 +39,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     screenshot = null,
     onCaptureScreenshot,
     onQuizComplete,
+    trackingEnabled = false,
   }, ref) {
     const [currentQuestionIndex, setCurrentQuestionIndex] =
       useState(0);
@@ -237,14 +239,11 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         {/* Questions Section - 40% width */}
         <Card className="p-4 flex flex-col min-w-0 overflow-hidden" style={{ flex: '2 1 0%' }}>
           <div className="mb-3">
-            <div className="flex justify-between items-center mb-1">
+            <div className="flex justify-between items-center">
               <h2 className="text-lg">Questions</h2>
               <div className="text-xs text-gray-600">
-                {score} / {questions.length}
+                {currentQuestionIndex + 1} / {questions.length}
               </div>
-            </div>
-            <div className="text-xs text-gray-600">
-              Q {currentQuestionIndex + 1} of {questions.length}
             </div>
           </div>
 
@@ -256,10 +255,17 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                 </p>
 
                 <div className="min-w-0">
+                  {!trackingEnabled && (
+                    <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <p className="text-xs text-yellow-800">
+                        Please click "Start The Quiz" to begin answering questions.
+                      </p>
+                    </div>
+                  )}
                   <RadioGroup
                     value={selectedAnswer}
                     onValueChange={setSelectedAnswer}
-                    disabled={showFeedback}
+                    disabled={showFeedback || !trackingEnabled}
                     className="min-w-0"
                   >
                   {currentQuestion.choices.map(
@@ -277,6 +283,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                                 : "bg-gray-50"
                             : showFeedback && !isCurrentQuestionCorrectlyAnswered && selectedAnswer === index.toString()
                             ? "bg-red-50 border-2 border-red-500"
+                            : !trackingEnabled
+                            ? "bg-gray-50 opacity-50 cursor-not-allowed"
                             : "bg-gray-50 hover:bg-gray-100"
                         }`}
                       >
@@ -352,7 +360,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                 <Button
                   onClick={handlePrevious}
                   variant="outline"
-                  disabled={currentQuestionIndex === 0}
+                  disabled={currentQuestionIndex === 0 || !trackingEnabled}
                   className="flex-1 text-xs py-2"
                 >
                   Previous
@@ -360,7 +368,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                 {!showFeedback ? (
                   <Button
                     onClick={handleSubmit}
-                    disabled={!selectedAnswer || isLoadingFeedback}
+                    disabled={!selectedAnswer || isLoadingFeedback || !trackingEnabled}
                     className="flex-1 text-xs py-2"
                   >
                     Submit

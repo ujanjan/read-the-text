@@ -99,7 +99,13 @@ export default function App() {
   });
 
   const handleToggleTracking = () => {
-    setTrackingEnabled(!trackingEnabled);
+    if (trackingEnabled) {
+      // When stopping, just stop tracking (button will show "Restart The Quiz")
+      setTrackingEnabled(false);
+    } else {
+      // When starting fresh
+      setTrackingEnabled(true);
+    }
   };
 
   const handleRestartQuiz = () => {
@@ -109,12 +115,12 @@ export default function App() {
     }
     // Clear cursor history
     setCursorHistory([]);
-    // Reset tracking
-    setTrackingEnabled(false);
     // Reset quiz completion state
     setQuizComplete(false);
     // Clear screenshot
     setScreenshot(null);
+    // Start tracking again
+    setTrackingEnabled(true);
     // Update passageRef after reset
     setTimeout(() => {
       const element = readingComprehensionRef.current?.getPassageElement();
@@ -211,20 +217,20 @@ export default function App() {
           
           <div className="flex items-center gap-2">
             <Button
-              variant={trackingEnabled ? 'destructive' : quizComplete ? 'default' : 'default'}
+              variant={trackingEnabled ? 'outline' : 'default'}
               size="sm"
-              onClick={quizComplete ? handleRestartQuiz : handleToggleTracking}
+              onClick={trackingEnabled ? handleToggleTracking : ((quizComplete || cursorHistory.length > 0) ? handleRestartQuiz : handleToggleTracking)}
               className="text-xs"
             >
-              {quizComplete ? (
-                <>
-                  <MousePointer2 className="h-4 w-4 mr-1" />
-                  Restart The Quiz
-                </>
-              ) : trackingEnabled ? (
+              {trackingEnabled ? (
                 <>
                   <MousePointerClick className="h-4 w-4 mr-1" />
                   Stop The Quiz
+                </>
+              ) : (quizComplete || cursorHistory.length > 0) ? (
+                <>
+                  <MousePointer2 className="h-4 w-4 mr-1" />
+                  Restart The Quiz
                 </>
               ) : (
                 <>
@@ -264,6 +270,7 @@ export default function App() {
                 setTrackingEnabled(false);
                 setQuizComplete(true);
               }}
+              trackingEnabled={trackingEnabled}
             />
           </div>
           
