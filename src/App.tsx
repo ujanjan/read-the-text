@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { ReadingComprehension } from './components/ReadingComprehension';
 import { CursorTracker, CursorData } from './components/CursorTracker';
 import { CursorTrackingData } from './components/CursorTrackingData';
@@ -90,16 +90,15 @@ export default function App() {
     setTrackingEnabled(!trackingEnabled);
   };
 
-  const handleCaptureScreenshot = async () => {
+  const handleCaptureScreenshot = async (): Promise<string | null> => {
     if (!passageRef.current) {
-      return;
+      return null;
     }
 
     try {
       // Capture using html-to-image (supports oklch natively)
       const canvas = await toCanvas(passageRef.current, {
         backgroundColor: '#ffffff',
-        useCORS: true,
         pixelRatio: window.devicePixelRatio || 1,
       });
 
@@ -134,9 +133,11 @@ export default function App() {
 
       const dataUrl = canvas.toDataURL('image/png');
       setScreenshot(dataUrl);
+      return dataUrl;
     } catch (error) {
       console.error('Failed to capture screenshot:', error);
       alert('Failed to capture screenshot. Check console for details.');
+      return null;
     }
   };
 
@@ -191,6 +192,7 @@ export default function App() {
                 onSaveHeatmap={() => heatmapRef.current?.saveImage()}
                 onSaveScreenshot={handleCaptureScreenshot}
                 heatmapRef={heatmapRef}
+                passage={samplePassage}
               />
             ) : (
               <Card className="h-full flex items-center justify-center p-4">

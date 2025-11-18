@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Download, Eye, EyeOff, Trash2, MousePointer2, Flame, Camera } from 'lucide-react';
+import { Download, Eye, EyeOff, Trash2, MousePointer2, Flame, Camera, Sparkles, Loader2 } from 'lucide-react';
 import { CursorData } from './CursorTracker';
 import { CursorHeatmapHandle } from './CursorHeatmap';
+import { analyzeReadingBehavior } from '../services/geminiService';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,96 @@ import {
   DialogFooter,
 } from './ui/dialog';
 
+// Component to format tips with markdown support
+function FormattedTips({ text }: { text: string }) {
+  // Split by double newlines to create paragraphs
+  const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
+  
+  const formatText = (text: string): (string | JSX.Element)[] => {
+    const parts: (string | JSX.Element)[] = [];
+    let lastIndex = 0;
+    const boldRegex = /\*\*(.+?)\*\*/g;
+    let match;
+    let keyCounter = 0;
+    const matches: Array<{ index: number; length: number; text: string }> = [];
+
+    // Collect all bold matches first
+    while ((match = boldRegex.exec(text)) !== null) {
+      matches.push({
+        index: match.index,
+        length: match[0].length,
+        text: match[1],
+      });
+    }
+
+    // Process text with bold formatting and newlines
+    if (matches.length === 0) {
+      // No bold formatting, just handle newlines
+      const lines = text.split('\n');
+      lines.forEach((line, lineIdx) => {
+        if (lineIdx > 0) {
+          parts.push(<br key={`br-${keyCounter++}`} />);
+        }
+        parts.push(line);
+      });
+    } else {
+      // Process with bold formatting
+      matches.forEach((boldMatch, matchIdx) => {
+        // Add text before this bold match
+        if (boldMatch.index > lastIndex) {
+          const beforeText = text.substring(lastIndex, boldMatch.index);
+          const lines = beforeText.split('\n');
+          lines.forEach((line, lineIdx) => {
+            if (lineIdx > 0) {
+              parts.push(<br key={`br-${keyCounter++}`} />);
+            }
+            if (line) {
+              parts.push(line);
+            }
+          });
+        }
+        // Add bold text
+        parts.push(
+          <strong key={`bold-${keyCounter++}`} className="font-semibold text-gray-900">
+            {boldMatch.text}
+          </strong>
+        );
+        lastIndex = boldMatch.index + boldMatch.length;
+      });
+
+      // Add remaining text after last bold match
+      if (lastIndex < text.length) {
+        const remainingText = text.substring(lastIndex);
+        const lines = remainingText.split('\n');
+        lines.forEach((line, lineIdx) => {
+          if (lineIdx > 0) {
+            parts.push(<br key={`br-${keyCounter++}`} />);
+          }
+          if (line) {
+            parts.push(line);
+          }
+        });
+      }
+    }
+
+    return parts.length > 0 ? parts : [text];
+  };
+  
+  return (
+    <div className="space-y-3">
+      {paragraphs.map((paragraph, idx) => {
+        const content = formatText(paragraph);
+
+        return (
+          <p key={idx} className="leading-relaxed">
+            {content}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 interface CursorTrackingDataProps {
   cursorHistory: CursorData[];
   onClear: () => void;
@@ -19,8 +110,9 @@ interface CursorTrackingDataProps {
   showHeatmap: boolean;
   onToggleHeatmap: () => void;
   onSaveHeatmap: () => void;
-  onSaveScreenshot: () => void;
+  onSaveScreenshot: () => Promise<string | null>;
   heatmapRef: React.RefObject<CursorHeatmapHandle | null>;
+  passage: string;
 }
 
 export function CursorTrackingData({ 
@@ -31,10 +123,15 @@ export function CursorTrackingData({
   onToggleHeatmap,
   onSaveHeatmap,
   onSaveScreenshot,
-  heatmapRef
+  heatmapRef,
+  passage
 }: CursorTrackingDataProps) {
   const [showData, setShowData] = useState(false);
   const [showScreenshotDialog, setShowScreenshotDialog] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [tips, setTips] = useState<string>('');
+  const [analysisError, setAnalysisError] = useState<string>('');
+  const [analysisStage, setAnalysisStage] = useState<'idle' | 'capturing-screenshot' | 'preparing-json' | 'analyzing'>('idle');
 
   const downloadData = () => {
     const dataStr = JSON.stringify(cursorHistory, null, 2);
@@ -93,6 +190,63 @@ export function CursorTrackingData({
     document.body.removeChild(link);
   };
 
+  const handleAnalyzeWithGemini = async () => {
+    // Validate required data
+    if (!passage) {
+      setAnalysisError('Reading passage is required for analysis.');
+      return;
+    }
+
+    if (cursorHistory.length === 0) {
+      setAnalysisError('No cursor tracking data available. Please start tracking your cursor movements.');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAnalysisError('');
+    setTips('');
+    setAnalysisStage('idle');
+
+    try {
+      let currentScreenshot = screenshot;
+
+      // Step 1: Capture screenshot if not available
+      if (!currentScreenshot && showHeatmap) {
+        setAnalysisStage('capturing-screenshot');
+        currentScreenshot = await onSaveScreenshot();
+        // Small delay to show the stage
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      // Step 2: Prepare JSON data
+      setAnalysisStage('preparing-json');
+      // JSON is already prepared (cursorHistory), but we show the stage
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Step 3: Analyze with Gemini
+      setAnalysisStage('analyzing');
+      const result = await analyzeReadingBehavior(
+        passage,
+        currentScreenshot,
+        cursorHistory
+      );
+
+      if (result.error) {
+        setAnalysisError(result.error);
+        setTips('');
+      } else {
+        setTips(result.tips);
+        setAnalysisError('');
+      }
+    } catch (error: any) {
+      setAnalysisError(error.message || 'Failed to analyze reading behavior.');
+      setTips('');
+    } finally {
+      setIsAnalyzing(false);
+      setAnalysisStage('idle');
+    }
+  };
+
   const summary = getDataSummary();
 
   return (
@@ -126,15 +280,83 @@ export function CursorTrackingData({
             <Button
               variant="outline"
               size="sm"
-              onClick={onSaveScreenshot}
+              onClick={async () => {
+                await onSaveScreenshot();
+              }}
               className="text-xs w-full justify-start"
             >
               <Camera className="h-4 w-4 mr-2" />
               Save Screenshot
             </Button>
           )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAnalyzeWithGemini}
+            className="text-xs w-full justify-start"
+            disabled={isAnalyzing || cursorHistory.length === 0 || !passage}
+          >
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {analysisStage === 'capturing-screenshot' && 'Capturing screenshot...'}
+                {analysisStage === 'preparing-json' && 'Preparing JSON data...'}
+                {analysisStage === 'analyzing' && 'Analyzing with Gemini...'}
+                {analysisStage === 'idle' && 'Processing...'}
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Analyze with Gemini
+              </>
+            )}
+          </Button>
+          
+          {isAnalyzing && (
+            <div className="text-xs text-gray-600 mt-2 space-y-1">
+              {analysisStage === 'capturing-screenshot' && (
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                  <span>Capturing screenshot with heatmap...</span>
+                </div>
+              )}
+              {analysisStage === 'preparing-json' && (
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                  <span>Preparing cursor tracking data...</span>
+                </div>
+              )}
+              {analysisStage === 'analyzing' && (
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-pulse" />
+                  <span>Sending data to Gemini API...</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Reading Tips Section */}
+      {(tips || analysisError) && (
+        <div className="mb-3 pb-3 border-b border-gray-200 flex-shrink-0">
+          <h3 className="text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-purple-600" />
+            Reading Tips
+          </h3>
+          {analysisError && (
+            <div className="text-xs text-red-600 bg-red-50 p-2 rounded mb-2">
+              {analysisError}
+            </div>
+          )}
+          {tips && (
+            <div className="text-xs text-gray-700 bg-purple-50 p-3 rounded">
+              <FormattedTips text={tips} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Cursor Data Section */}
       <div className="flex items-center justify-between mb-2 flex-shrink-0">
