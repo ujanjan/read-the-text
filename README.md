@@ -129,4 +129,4 @@ The production build will be created in the `dist/` directory.
 
 ## License
 
-This project is part of the DD2730 course at KTH Royal Institute of Technology.
+This project is part of the DM2730 course at KTH Royal Institute of Technology.
