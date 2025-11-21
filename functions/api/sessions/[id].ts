@@ -28,10 +28,17 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     passageResults.results.map(async (result: any) => {
       let screenshot = null;
       if (result.screenshot_r2_key) {
-        const obj = await storage.get(result.screenshot_r2_key);
-        if (obj) {
-          const buffer = await obj.arrayBuffer();
-          screenshot = `data:image/jpeg;base64,${arrayBufferToBase64(buffer)}`;
+        console.log('Fetching screenshot:', result.screenshot_r2_key);
+        try {
+          const obj = await storage.get(result.screenshot_r2_key);
+          console.log('R2 get result:', obj ? 'found' : 'null');
+          if (obj) {
+            const buffer = await obj.arrayBuffer();
+            screenshot = `data:image/jpeg;base64,${arrayBufferToBase64(buffer)}`;
+            console.log('Screenshot loaded, size:', buffer.byteLength);
+          }
+        } catch (err) {
+          console.error('R2 get error:', err);
         }
       }
       return { ...result, screenshot };
