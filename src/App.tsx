@@ -6,7 +6,7 @@ import { CursorHeatmap, CursorHeatmapHandle } from './components/CursorHeatmap';
 //import { RealtimeCursorIndicator } from './components/RealtimeCursorIndicator';
 import { Button } from './components/ui/button';
 import { Card } from './components/ui/card';
-import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Trophy, Target, Zap } from 'lucide-react';
 import { toCanvas } from 'html-to-image';
 import { getPassages } from './services/passageService';
 import { Passage } from './types/passage';
@@ -331,102 +331,180 @@ export default function App() {
 
   // Summary screen
   if (showSummary) {
-    // Calculate total time
+    // Calculate statistics
     const totalTime = passages.reduce((total, _, index) => {
       return total + (passageData[index]?.timeSpent || 0);
     }, 0);
+    const perfectPassages = passages.filter((_, index) =>
+      (passageData[index]?.wrongAttempts || 0) === 0
+    ).length;
+    const accuracyRate = Math.round((perfectPassages / passages.length) * 100);
+    const avgTimePerPassage = totalTime / passages.length;
 
     return (
-      <div className="h-screen bg-gray-50 p-4 flex flex-col">
-        <div className="max-w-4xl mx-auto w-full flex flex-col flex-1">
-          <Card className="p-8 flex-1 overflow-y-auto">
-            <div className="text-center mb-8">
-              <div className="text-6xl mb-4">🎉</div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Quiz Complete!</h1>
-              <p className="text-gray-600">You've completed all {passages.length} passages.</p>
-              <div className="mt-4 inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg">
-                <Clock className="h-5 w-5" />
-                <span className="font-medium">Total Time: {formatTime(totalTime)}</span>
+      <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 flex flex-col overflow-hidden">
+        <div className="max-w-5xl mx-auto w-full flex flex-col flex-1 min-h-0">
+          {/* Header */}
+          <div className="text-center py-6 flex-shrink-0">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
+              <Trophy className="h-8 w-8 text-yellow-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Quiz Complete!</h1>
+            <p className="text-gray-600">Great job completing all {passages.length} passages</p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-3 gap-4 mb-6 flex-shrink-0">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <Clock className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Total Time</p>
+                  <p className="text-lg font-bold text-gray-900">{formatTime(totalTime)}</p>
+                </div>
               </div>
             </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <Target className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Accuracy</p>
+                  <p className="text-lg font-bold text-gray-900">{accuracyRate}%</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <Zap className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Time</p>
+                  <p className="text-lg font-bold text-gray-900">{formatTime(avgTimePerPassage)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            <div className="space-y-4 mb-8">
-              <h2 className="text-lg font-semibold text-gray-900">Results by Passage</h2>
+          {/* Passage Results */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 sticky top-0 bg-gradient-to-br from-gray-50 to-gray-100 py-2">
+              Reading Pattern Analysis
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
               {passages.map((passage, index) => {
                 const data = passageData[index];
                 const attempts = data?.wrongAttempts || 0;
                 const screenshot = data?.screenshot;
                 const timeSpent = data?.timeSpent || 0;
+                const isPerfect = attempts === 0;
+
                 return (
                   <div
                     key={passage.id}
-                    className={`flex items-start gap-3 p-4 rounded-lg border ${
-                      attempts === 0
-                        ? 'bg-green-50 border-green-200'
-                        : 'bg-yellow-50 border-yellow-200'
-                    }`}
+                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
                   >
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white flex items-center justify-center font-semibold text-sm">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 mb-1">{passage.title}</p>
-                      <div className="flex items-center gap-2 mb-2">
-                        {attempts === 0 ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Correct on first try
+                    {/* Heatmap Preview */}
+                    {screenshot && (
+                      <div
+                        className="relative cursor-pointer group"
+                        onClick={() => setSelectedScreenshot(screenshot)}
+                      >
+                        <img
+                          src={screenshot}
+                          alt={`Reading heatmap for ${passage.title}`}
+                          className="w-full h-32 object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                          <span className="opacity-0 group-hover:opacity-100 text-white bg-black/50 px-3 py-1 rounded-full text-xs font-medium transition-opacity">
+                            Click to enlarge
                           </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-yellow-700">
-                            <XCircle className="h-3.5 w-3.5" />
-                            {attempts} wrong {attempts === 1 ? 'attempt' : 'attempts'}
-                          </span>
-                        )}
-                        <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                          <Clock className="h-3 w-3" />
-                          {formatTime(timeSpent)}
-                        </span>
-                      </div>
-                      {screenshot && (
-                        <div
-                          className="cursor-pointer rounded border border-gray-300 overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors inline-block"
-                          onClick={() => setSelectedScreenshot(screenshot)}
-                        >
-                          <img
-                            src={screenshot}
-                            alt={`Heatmap for ${passage.title}`}
-                            className="w-48 h-auto"
-                            style={{ maxHeight: '120px', objectFit: 'contain' }}
-                          />
                         </div>
-                      )}
+                        {/* Performance badge */}
+                        <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${
+                          isPerfect
+                            ? 'bg-green-500 text-white'
+                            : 'bg-yellow-500 text-white'
+                        }`}>
+                          {isPerfect ? 'Perfect' : `${attempts} retry`}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Passage Info */}
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
+                          isPerfect
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 text-sm leading-tight mb-2 line-clamp-2">
+                            {passage.title}
+                          </h3>
+                          <div className="flex items-center gap-3 text-xs">
+                            <span className={`inline-flex items-center gap-1 ${
+                              isPerfect ? 'text-green-600' : 'text-yellow-600'
+                            }`}>
+                              {isPerfect ? (
+                                <CheckCircle2 className="h-3.5 w-3.5" />
+                              ) : (
+                                <XCircle className="h-3.5 w-3.5" />
+                              )}
+                              {isPerfect ? '1st try' : `${attempts + 1} tries`}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-gray-500">
+                              <Clock className="h-3.5 w-3.5" />
+                              {formatTime(timeSpent)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
+          </div>
 
-            <div className="text-center">
-              <Button onClick={handleRestartQuiz} size="lg">
-                Restart Quiz
-              </Button>
-            </div>
-          </Card>
+          {/* Footer */}
+          <div className="pt-4 pb-2 flex-shrink-0">
+            <Button onClick={handleRestartQuiz} size="lg" className="w-full">
+              Start New Quiz
+            </Button>
+          </div>
         </div>
 
         {/* Full-size screenshot modal */}
         {selectedScreenshot && (
           <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={() => setSelectedScreenshot(null)}
           >
-            <div className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-auto p-4">
-              <img
-                src={selectedScreenshot}
-                alt="Heatmap screenshot"
-                className="max-w-full h-auto"
-              />
+            <div className="bg-white rounded-xl max-w-4xl max-h-[90vh] overflow-auto shadow-2xl">
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900">Reading Heatmap</h3>
+                <button
+                  className="text-gray-500 hover:text-gray-700 text-sm"
+                  onClick={() => setSelectedScreenshot(null)}
+                >
+                  Close
+                </button>
+              </div>
+              <div className="p-4">
+                <img
+                  src={selectedScreenshot}
+                  alt="Heatmap screenshot"
+                  className="max-w-full h-auto rounded-lg"
+                />
+              </div>
             </div>
           </div>
         )}
