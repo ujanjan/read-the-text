@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ReadingComprehension, ReadingComprehensionHandle } from './components/ReadingComprehension';
 import { CursorTracker, CursorData } from './components/CursorTracker';
 import { CursorTrackingData } from './components/CursorTrackingData';
@@ -22,6 +23,7 @@ interface PassageData {
 }
 
 export default function App() {
+  const navigate = useNavigate();
   const [passages, setPassages] = useState<Passage[]>([]);
   const [currentPassageIndex, setCurrentPassageIndex] = useState(0);
   const [trackingEnabled, setTrackingEnabled] = useState(false);
@@ -291,7 +293,7 @@ export default function App() {
     if (allComplete) {
       setTrackingEnabled(false);
 
-      // Mark session complete in cloud
+      // Mark session complete in cloud and redirect to results
       if (sessionId) {
         const totalTime = Object.values(passageData).reduce(
           (sum, data) => sum + (data?.timeSpent || 0), 0
@@ -299,12 +301,17 @@ export default function App() {
 
         try {
           await apiService.completeSession(sessionId, totalTime);
+          // Redirect to results page
+          navigate(`/results/${sessionId}`);
         } catch (err) {
           console.error('Failed to complete session:', err);
+          // Still redirect even if API fails - data is saved
+          navigate(`/results/${sessionId}`);
         }
+      } else {
+        // No session - show local summary (fallback)
+        setShowSummary(true);
       }
-
-      setShowSummary(true);
     }
   };
 
