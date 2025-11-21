@@ -1,7 +1,7 @@
 # Cloudflare Workers configuration
 name = "read-the-text"
 compatibility_date = "2025-11-18"
-main = "functions/_worker.js"
+main = "functions/_worker.ts"
 
 # Static assets directory
 [assets]

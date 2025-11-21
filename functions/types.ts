@@ -3,6 +3,7 @@
 export interface Env {
   read_the_text_db: D1Database;
   read_the_text_storage: R2Bucket;
+  ASSETS: Fetcher;
 }
 
 // Helper functions

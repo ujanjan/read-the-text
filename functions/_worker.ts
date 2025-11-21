@@ -1,8 +1,20 @@
 // Main Worker entry point for routing
 // This handles routing between static assets and API functions
 
+import type { Env } from './types';
+
+// Import all handlers
+import { onRequestPost as sessionsCheckPost } from './api/sessions/check';
+import { onRequestPost as sessionsCreatePost } from './api/sessions/index';
+import { onRequestGet as sessionGet, onRequestDelete as sessionDelete } from './api/sessions/[id]';
+import { onRequestPost as sessionCompletePost } from './api/sessions/[id]/complete';
+import { onRequestPut as passageResultPut } from './api/passages/[sessionId]/[passageIndex]';
+import { onRequestPost as passageAttemptPost } from './api/passages/[sessionId]/[passageIndex]/attempts';
+import { onRequestGet as adminSessionsGet } from './api/admin/sessions';
+import { onRequestGet as adminSessionGet, onRequestDelete as adminSessionDelete } from './api/admin/sessions/[id]';
+
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     
     // Route API requests to Functions
@@ -16,13 +28,13 @@ export default {
 };
 
 // API Router - maps routes to function handlers
-async function handleApiRequest(request, env, ctx) {
+async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
   const method = request.method;
 
   // Create context object compatible with Pages Functions
-  const createContext = (params = {}) => ({
+  const createContext = (params: Record<string, string> = {}): any => ({
     request,
     env,
     params,
@@ -36,13 +48,11 @@ async function handleApiRequest(request, env, ctx) {
   try {
     // Sessions routes
     if (path === '/api/sessions/check' && method === 'POST') {
-      const { onRequestPost } = await import('./api/sessions/check.ts');
-      return await onRequestPost(createContext());
+      return await sessionsCheckPost(createContext());
     }
     
     if (path === '/api/sessions' && method === 'POST') {
-      const { onRequestPost } = await import('./api/sessions/index.ts');
-      return await onRequestPost(createContext());
+      return await sessionsCreatePost(createContext());
     }
     
     // Session by ID - GET/DELETE
@@ -50,12 +60,10 @@ async function handleApiRequest(request, env, ctx) {
     if (sessionIdMatch) {
       const sessionId = sessionIdMatch[1];
       if (method === 'GET') {
-        const { onRequestGet } = await import('./api/sessions/[id].ts');
-        return await onRequestGet(createContext({ id: sessionId }));
+        return await sessionGet(createContext({ id: sessionId }));
       }
       if (method === 'DELETE') {
-        const { onRequestDelete } = await import('./api/sessions/[id].ts');
-        return await onRequestDelete(createContext({ id: sessionId }));
+        return await sessionDelete(createContext({ id: sessionId }));
       }
     }
     
@@ -63,53 +71,51 @@ async function handleApiRequest(request, env, ctx) {
     const completeMatch = path.match(/^\/api\/sessions\/([^\/]+)\/complete$/);
     if (completeMatch && method === 'POST') {
       const sessionId = completeMatch[1];
-      const { onRequestPost } = await import('./api/sessions/[id]/complete.ts');
-      return await onRequestPost(createContext({ id: sessionId }));
+      return await sessionCompletePost(createContext({ id: sessionId }));
     }
     
     // Passage result - PUT
     const passageMatch = path.match(/^\/api\/passages\/([^\/]+)\/(\d+)$/);
     if (passageMatch && method === 'PUT') {
       const [, sessionId, passageIndex] = passageMatch;
-      const { onRequestPut } = await import('./api/passages/[sessionId]/[passageIndex].ts');
-      return await onRequestPut(createContext({ sessionId, passageIndex }));
+      return await passageResultPut(createContext({ sessionId, passageIndex }));
     }
     
     // Passage attempts - POST
     const attemptMatch = path.match(/^\/api\/passages\/([^\/]+)\/(\d+)\/attempts$/);
     if (attemptMatch && method === 'POST') {
       const [, sessionId, passageIndex] = attemptMatch;
-      const { onRequestPost } = await import('./api/passages/[sessionId]/[passageIndex]/attempts.ts');
-      return await onRequestPost(createContext({ sessionId, passageIndex }));
+      return await passageAttemptPost(createContext({ sessionId, passageIndex }));
     }
     
     // Admin routes
     if (path === '/api/admin/sessions' && method === 'GET') {
-      const { onRequestGet } = await import('./api/admin/sessions.ts');
-      return await onRequestGet(createContext());
+      return await adminSessionsGet(createContext());
     }
     
     const adminSessionMatch = path.match(/^\/api\/admin\/sessions\/([^\/]+)$/);
     if (adminSessionMatch) {
       const sessionId = adminSessionMatch[1];
       if (method === 'GET') {
-        const { onRequestGet } = await import('./api/admin/sessions/[id].ts');
-        return await onRequestGet(createContext({ id: sessionId }));
+        return await adminSessionGet(createContext({ id: sessionId }));
       }
       if (method === 'DELETE') {
-        const { onRequestDelete } = await import('./api/admin/sessions/[id].ts');
-        return await onRequestDelete(createContext({ id: sessionId }));
+        return await adminSessionDelete(createContext({ id: sessionId }));
       }
     }
     
     // No matching route
     return new Response('Not Found', { status: 404 });
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('API Error:', error);
-    return new Response(JSON.stringify({ error: error.message, stack: error.stack }), {
+    return new Response(JSON.stringify({ 
+      error: error.message, 
+      stack: error.stack 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
   }
 }
+
