@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Download, Eye, EyeOff, Trash2, MousePointer2, Flame, Camera, Sparkles, Loader2, Bug } from 'lucide-react';
+import { Download, Eye, EyeOff, Trash2, MousePointer2, Flame, Camera, Sparkles, Loader2 } from 'lucide-react';
 import { CursorData } from './CursorTracker';
 import { CursorHeatmapHandle } from './CursorHeatmap';
 import { analyzeReadingBehavior } from '../services/geminiService';
@@ -246,12 +246,15 @@ export function CursorTrackingData({
             className="text-xs w-full justify-start"
             disabled={cursorHistory.length === 0}
           >
-            <Bug className="h-4 w-4 mr-2" />
-            Debug Mode {debugMode ? 'ON' : 'OFF'}
+            {debugMode ? (
+              <><EyeOff className="h-4 w-4 mr-2" />Hide Heatmap</>
+            ) : (
+              <><Eye className="h-4 w-4 mr-2" />Show Heatmap</>
+            )}
           </Button>
           {!debugMode && (
             <p className="text-xs text-gray-500 italic">
-              Heatmap is hidden from view but included in screenshots
+              Heatmap is currently hidden but will be included in screenshots
             </p>
           )}
         </div>
