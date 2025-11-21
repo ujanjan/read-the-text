@@ -1,9 +1,17 @@
 # Cloudflare Pages configuration
-# This file is optional but helpful for local development and deployment
-
 name = "read-the-text"
 compatibility_date = "2025-11-18"
 
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "read-the-text-db"
+database_id = "<run: npx wrangler d1 create read-the-text-db>"
+
+# R2 Bucket binding
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "read-the-text-storage"
+
 [env.production]
 # Production environment settings
-
