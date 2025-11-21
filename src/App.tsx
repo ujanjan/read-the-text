@@ -395,7 +395,7 @@ export default function App() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4 sticky top-0 bg-gradient-to-br from-gray-50 to-gray-100 py-2">
               Reading Pattern Analysis
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pb-4">
               {passages.map((passage, index) => {
                 const data = passageData[index];
                 const attempts = data?.wrongAttempts || 0;
@@ -406,39 +406,39 @@ export default function App() {
                 return (
                   <div
                     key={passage.id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                    className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
                   >
                     {/* Heatmap Preview */}
                     {screenshot && (
                       <div
-                        className="relative cursor-pointer group"
+                        className="relative cursor-pointer group aspect-[4/3]"
                         onClick={() => setSelectedScreenshot(screenshot)}
                       >
                         <img
                           src={screenshot}
                           alt={`Reading heatmap for ${passage.title}`}
-                          className="w-full h-32 object-cover"
+                          className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                          <span className="opacity-0 group-hover:opacity-100 text-white bg-black/50 px-3 py-1 rounded-full text-xs font-medium transition-opacity">
-                            Click to enlarge
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                          <span className="opacity-0 group-hover:opacity-100 text-white bg-black/60 px-2 py-0.5 rounded text-[10px] font-medium transition-opacity">
+                            Enlarge
                           </span>
                         </div>
                         {/* Performance badge */}
-                        <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${
+                        <div className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${
                           isPerfect
                             ? 'bg-green-500 text-white'
                             : 'bg-yellow-500 text-white'
                         }`}>
-                          {isPerfect ? 'Perfect' : `${attempts} retry`}
+                          {isPerfect ? 'Perfect' : `${attempts}x`}
                         </div>
                       </div>
                     )}
 
                     {/* Passage Info */}
-                    <div className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${
+                    <div className="p-2.5">
+                      <div className="flex items-start gap-2">
+                        <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                           isPerfect
                             ? 'bg-green-100 text-green-700'
                             : 'bg-yellow-100 text-yellow-700'
@@ -446,22 +446,22 @@ export default function App() {
                           {index + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-medium text-gray-900 text-sm leading-tight mb-2 line-clamp-2">
+                          <h3 className="font-medium text-gray-900 text-xs leading-tight mb-1.5 line-clamp-2">
                             {passage.title}
                           </h3>
-                          <div className="flex items-center gap-3 text-xs">
-                            <span className={`inline-flex items-center gap-1 ${
+                          <div className="flex items-center gap-2 text-[10px]">
+                            <span className={`inline-flex items-center gap-0.5 ${
                               isPerfect ? 'text-green-600' : 'text-yellow-600'
                             }`}>
                               {isPerfect ? (
-                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                <CheckCircle2 className="h-3 w-3" />
                               ) : (
-                                <XCircle className="h-3.5 w-3.5" />
+                                <XCircle className="h-3 w-3" />
                               )}
-                              {isPerfect ? '1st try' : `${attempts + 1} tries`}
+                              {isPerfect ? '1st' : `${attempts + 1}x`}
                             </span>
-                            <span className="inline-flex items-center gap-1 text-gray-500">
-                              <Clock className="h-3.5 w-3.5" />
+                            <span className="inline-flex items-center gap-0.5 text-gray-500">
+                              <Clock className="h-3 w-3" />
                               {formatTime(timeSpent)}
                             </span>
                           </div>
