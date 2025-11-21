@@ -27,6 +27,7 @@ export default function App() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [debugMode, setDebugMode] = useState(false); // Debug mode to show heatmap to user
+  const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null); // For viewing full-size screenshots
   //const [showRealtimeIndicator, setShowRealtimeIndicator] = useState(true);
 
   // Per-passage data storage
@@ -148,11 +149,16 @@ export default function App() {
   };
 
   // Handle passage completion (correct answer)
-  const handlePassageComplete = (wrongAttempts: number) => {
+  const handlePassageComplete = async (wrongAttempts: number) => {
+    // Capture screenshot with heatmap before marking complete
+    await handleCaptureScreenshot();
+
     setPassageData(prev => ({
       ...prev,
       [currentPassageIndex]: {
-        ...currentData,
+        ...prev[currentPassageIndex],
+        cursorHistory: prev[currentPassageIndex]?.cursorHistory || currentData.cursorHistory,
+        screenshot: prev[currentPassageIndex]?.screenshot || null,
         isComplete: true,
         wrongAttempts
       }
@@ -267,7 +273,7 @@ export default function App() {
   if (showSummary) {
     return (
       <div className="h-screen bg-gray-50 p-4 flex flex-col">
-        <div className="max-w-2xl mx-auto w-full flex flex-col flex-1">
+        <div className="max-w-4xl mx-auto w-full flex flex-col flex-1">
           <Card className="p-8 flex-1 overflow-y-auto">
             <div className="text-center mb-8">
               <div className="text-6xl mb-4">🎉</div>
@@ -280,6 +286,7 @@ export default function App() {
               {passages.map((passage, index) => {
                 const data = passageData[index];
                 const attempts = data?.wrongAttempts || 0;
+                const screenshot = data?.screenshot;
                 return (
                   <div
                     key={passage.id}
@@ -294,7 +301,7 @@ export default function App() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-gray-900 mb-1">{passage.title}</p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 mb-2">
                         {attempts === 0 ? (
                           <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
                             <CheckCircle2 className="h-3.5 w-3.5" />
@@ -307,6 +314,19 @@ export default function App() {
                           </span>
                         )}
                       </div>
+                      {screenshot && (
+                        <div
+                          className="cursor-pointer rounded border border-gray-300 overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors inline-block"
+                          onClick={() => setSelectedScreenshot(screenshot)}
+                        >
+                          <img
+                            src={screenshot}
+                            alt={`Heatmap for ${passage.title}`}
+                            className="w-48 h-auto"
+                            style={{ maxHeight: '120px', objectFit: 'contain' }}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -320,6 +340,22 @@ export default function App() {
             </div>
           </Card>
         </div>
+
+        {/* Full-size screenshot modal */}
+        {selectedScreenshot && (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => setSelectedScreenshot(null)}
+          >
+            <div className="bg-white rounded-lg max-w-4xl max-h-[90vh] overflow-auto p-4">
+              <img
+                src={selectedScreenshot}
+                alt="Heatmap screenshot"
+                className="max-w-full h-auto"
+              />
+            </div>
+          </div>
+        )}
       </div>
     );
   }
