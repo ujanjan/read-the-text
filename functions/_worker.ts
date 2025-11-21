@@ -22,8 +22,22 @@ export default {
       return handleApiRequest(request, env, ctx);
     }
     
-    // Serve static assets from /dist
-    return env.ASSETS.fetch(request);
+    // Try to serve static asset
+    const assetResponse = await env.ASSETS.fetch(request);
+    
+    // If asset not found (404) and it's not a file request (no extension or is an HTML route)
+    // serve index.html for SPA client-side routing
+    if (assetResponse.status === 404) {
+      const hasFileExtension = /\.[a-zA-Z0-9]+$/.test(url.pathname);
+      
+      // If no file extension or explicitly an HTML-like path, serve index.html
+      if (!hasFileExtension || url.pathname.endsWith('.html')) {
+        const indexRequest = new Request(new URL('/', request.url), request);
+        return env.ASSETS.fetch(indexRequest);
+      }
+    }
+    
+    return assetResponse;
   }
 };
 
