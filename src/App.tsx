@@ -6,7 +6,7 @@ import { CursorHeatmap, CursorHeatmapHandle } from './components/CursorHeatmap';
 //import { RealtimeCursorIndicator } from './components/RealtimeCursorIndicator';
 import { Button } from './components/ui/button';
 import { Card } from './components/ui/card';
-import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
+import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { toCanvas } from 'html-to-image';
 import { getPassages } from './services/passageService';
 import { Passage } from './types/passage';
@@ -17,6 +17,7 @@ interface PassageData {
   screenshot: string | null;
   isComplete: boolean;
   wrongAttempts: number;
+  timeSpent: number; // Total time spent in milliseconds
 }
 
 export default function App() {
@@ -38,7 +39,8 @@ export default function App() {
     cursorHistory: [],
     screenshot: null,
     isComplete: false,
-    wrongAttempts: 0
+    wrongAttempts: 0,
+    timeSpent: 0
   };
 
   // 🔹 Ref to control the CursorHeatmap (for saving image)
@@ -47,6 +49,8 @@ export default function App() {
   const readingComprehensionRef = useRef<ReadingComprehensionHandle | null>(null);
   // 🔹 Ref to the passage container for CursorHeatmap
   const passageRef = useRef<HTMLDivElement | null>(null);
+  // 🔹 Ref to track when user started viewing current passage
+  const passageStartTimeRef = useRef<number | null>(null);
 
   const handleCursorData = (data: CursorData) => {
     setPassageData(prev => ({
@@ -68,6 +72,36 @@ export default function App() {
     }));
   };
 
+  // Helper function to accumulate time spent on current passage
+  const accumulateTimeForCurrentPassage = () => {
+    if (passageStartTimeRef.current && !currentData.isComplete) {
+      const elapsed = Date.now() - passageStartTimeRef.current;
+      setPassageData(prev => ({
+        ...prev,
+        [currentPassageIndex]: {
+          ...prev[currentPassageIndex],
+          cursorHistory: prev[currentPassageIndex]?.cursorHistory || [],
+          screenshot: prev[currentPassageIndex]?.screenshot || null,
+          isComplete: prev[currentPassageIndex]?.isComplete || false,
+          wrongAttempts: prev[currentPassageIndex]?.wrongAttempts || 0,
+          timeSpent: (prev[currentPassageIndex]?.timeSpent || 0) + elapsed
+        }
+      }));
+      passageStartTimeRef.current = null;
+    }
+  };
+
+  // Helper function to format time in seconds or minutes
+  const formatTime = (ms: number): string => {
+    const seconds = Math.round(ms / 1000);
+    if (seconds < 60) {
+      return `${seconds}s`;
+    }
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+
   // Load passages on mount
   useEffect(() => {
     getPassages().then(setPassages);
@@ -83,10 +117,12 @@ export default function App() {
 
   const handleToggleTracking = () => {
     if (trackingEnabled) {
-      // When stopping, just stop tracking (button will show "Restart The Quiz")
+      // When stopping, accumulate time and stop tracking
+      accumulateTimeForCurrentPassage();
       setTrackingEnabled(false);
     } else {
-      // When starting fresh
+      // When starting fresh, start timer
+      passageStartTimeRef.current = Date.now();
       setTrackingEnabled(true);
     }
   };
@@ -104,6 +140,8 @@ export default function App() {
     setShowSummary(false);
     // Start tracking again
     setTrackingEnabled(true);
+    // Start timer for first passage
+    passageStartTimeRef.current = Date.now();
     // Update passageRef after reset
     setTimeout(() => {
       const element = readingComprehensionRef.current?.getPassageElement();
@@ -116,11 +154,18 @@ export default function App() {
   // Navigation between passages
   const handlePreviousPassage = () => {
     if (currentPassageIndex > 0) {
+      // Accumulate time for current passage before leaving
+      accumulateTimeForCurrentPassage();
       // Reset the component for the new passage
       if (readingComprehensionRef.current) {
         readingComprehensionRef.current.reset();
       }
       setCurrentPassageIndex(currentPassageIndex - 1);
+      // Start timer for new passage (only if it's not complete)
+      const prevPassageData = passageData[currentPassageIndex - 1];
+      if (!prevPassageData?.isComplete) {
+        passageStartTimeRef.current = Date.now();
+      }
       // Update passageRef after navigation
       setTimeout(() => {
         const element = readingComprehensionRef.current?.getPassageElement();
@@ -133,11 +178,18 @@ export default function App() {
 
   const handleNextPassage = () => {
     if (currentPassageIndex < passages.length - 1) {
+      // Accumulate time for current passage before leaving
+      accumulateTimeForCurrentPassage();
       // Reset the component for the new passage
       if (readingComprehensionRef.current) {
         readingComprehensionRef.current.reset();
       }
       setCurrentPassageIndex(currentPassageIndex + 1);
+      // Start timer for new passage (only if it's not complete)
+      const nextPassageData = passageData[currentPassageIndex + 1];
+      if (!nextPassageData?.isComplete) {
+        passageStartTimeRef.current = Date.now();
+      }
       // Update passageRef after navigation
       setTimeout(() => {
         const element = readingComprehensionRef.current?.getPassageElement();
@@ -153,6 +205,13 @@ export default function App() {
     // Capture screenshot with heatmap before marking complete
     await handleCaptureScreenshot();
 
+    // Calculate final time for this passage
+    let finalTimeSpent = passageData[currentPassageIndex]?.timeSpent || 0;
+    if (passageStartTimeRef.current) {
+      finalTimeSpent += Date.now() - passageStartTimeRef.current;
+      passageStartTimeRef.current = null; // Stop timer
+    }
+
     setPassageData(prev => ({
       ...prev,
       [currentPassageIndex]: {
@@ -160,7 +219,8 @@ export default function App() {
         cursorHistory: prev[currentPassageIndex]?.cursorHistory || currentData.cursorHistory,
         screenshot: prev[currentPassageIndex]?.screenshot || null,
         isComplete: true,
-        wrongAttempts
+        wrongAttempts,
+        timeSpent: finalTimeSpent
       }
     }));
 
@@ -271,6 +331,11 @@ export default function App() {
 
   // Summary screen
   if (showSummary) {
+    // Calculate total time
+    const totalTime = passages.reduce((total, _, index) => {
+      return total + (passageData[index]?.timeSpent || 0);
+    }, 0);
+
     return (
       <div className="h-screen bg-gray-50 p-4 flex flex-col">
         <div className="max-w-4xl mx-auto w-full flex flex-col flex-1">
@@ -279,6 +344,10 @@ export default function App() {
               <div className="text-6xl mb-4">🎉</div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Quiz Complete!</h1>
               <p className="text-gray-600">You've completed all {passages.length} passages.</p>
+              <div className="mt-4 inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-lg">
+                <Clock className="h-5 w-5" />
+                <span className="font-medium">Total Time: {formatTime(totalTime)}</span>
+              </div>
             </div>
 
             <div className="space-y-4 mb-8">
@@ -287,6 +356,7 @@ export default function App() {
                 const data = passageData[index];
                 const attempts = data?.wrongAttempts || 0;
                 const screenshot = data?.screenshot;
+                const timeSpent = data?.timeSpent || 0;
                 return (
                   <div
                     key={passage.id}
@@ -313,6 +383,10 @@ export default function App() {
                             {attempts} wrong {attempts === 1 ? 'attempt' : 'attempts'}
                           </span>
                         )}
+                        <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                          <Clock className="h-3 w-3" />
+                          {formatTime(timeSpent)}
+                        </span>
                       </div>
                       {screenshot && (
                         <div
