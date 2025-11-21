@@ -6,7 +6,7 @@ import { CursorHeatmap, CursorHeatmapHandle } from './components/CursorHeatmap';
 //import { RealtimeCursorIndicator } from './components/RealtimeCursorIndicator';
 import { Button } from './components/ui/button';
 import { Card } from './components/ui/card';
-import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle } from 'lucide-react';
+import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Trophy, Target, Zap } from 'lucide-react';
 import { toCanvas } from 'html-to-image';
 import { getPassages } from './services/passageService';
 import { Passage } from './types/passage';
@@ -17,6 +17,7 @@ interface PassageData {
   screenshot: string | null;
   isComplete: boolean;
   wrongAttempts: number;
+  timeSpent: number; // Total time spent in milliseconds
 }
 
 export default function App() {
@@ -24,9 +25,10 @@ export default function App() {
   const [currentPassageIndex, setCurrentPassageIndex] = useState(0);
   const currentPassage = passages[currentPassageIndex];
   const [trackingEnabled, setTrackingEnabled] = useState(false);
-  const [showHeatmap, setShowHeatmap] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [debugMode, setDebugMode] = useState(false); // Debug mode to show heatmap to user
+  const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null); // For viewing full-size screenshots
   //const [showRealtimeIndicator, setShowRealtimeIndicator] = useState(true);
 
   // Per-passage data storage
@@ -37,7 +39,8 @@ export default function App() {
     cursorHistory: [],
     screenshot: null,
     isComplete: false,
-    wrongAttempts: 0
+    wrongAttempts: 0,
+    timeSpent: 0
   };
 
   // 🔹 Ref to control the CursorHeatmap (for saving image)
@@ -46,6 +49,8 @@ export default function App() {
   const readingComprehensionRef = useRef<ReadingComprehensionHandle | null>(null);
   // 🔹 Ref to the passage container for CursorHeatmap
   const passageRef = useRef<HTMLDivElement | null>(null);
+  // 🔹 Ref to track when user started viewing current passage
+  const passageStartTimeRef = useRef<number | null>(null);
 
   const handleCursorData = (data: CursorData) => {
     setPassageData(prev => ({
@@ -67,6 +72,36 @@ export default function App() {
     }));
   };
 
+  // Helper function to accumulate time spent on current passage
+  const accumulateTimeForCurrentPassage = () => {
+    if (passageStartTimeRef.current && !currentData.isComplete) {
+      const elapsed = Date.now() - passageStartTimeRef.current;
+      setPassageData(prev => ({
+        ...prev,
+        [currentPassageIndex]: {
+          ...prev[currentPassageIndex],
+          cursorHistory: prev[currentPassageIndex]?.cursorHistory || [],
+          screenshot: prev[currentPassageIndex]?.screenshot || null,
+          isComplete: prev[currentPassageIndex]?.isComplete || false,
+          wrongAttempts: prev[currentPassageIndex]?.wrongAttempts || 0,
+          timeSpent: (prev[currentPassageIndex]?.timeSpent || 0) + elapsed
+        }
+      }));
+      passageStartTimeRef.current = null;
+    }
+  };
+
+  // Helper function to format time in seconds or minutes
+  const formatTime = (ms: number): string => {
+    const seconds = Math.round(ms / 1000);
+    if (seconds < 60) {
+      return `${seconds}s`;
+    }
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}m ${remainingSeconds}s`;
+  };
+
   // Load passages on mount
   useEffect(() => {
     getPassages().then(setPassages);
@@ -82,10 +117,12 @@ export default function App() {
 
   const handleToggleTracking = () => {
     if (trackingEnabled) {
-      // When stopping, just stop tracking (button will show "Restart The Quiz")
+      // When stopping, accumulate time and stop tracking
+      accumulateTimeForCurrentPassage();
       setTrackingEnabled(false);
     } else {
-      // When starting fresh
+      // When starting fresh, start timer
+      passageStartTimeRef.current = Date.now();
       setTrackingEnabled(true);
     }
   };
@@ -103,6 +140,8 @@ export default function App() {
     setShowSummary(false);
     // Start tracking again
     setTrackingEnabled(true);
+    // Start timer for first passage
+    passageStartTimeRef.current = Date.now();
     // Update passageRef after reset
     setTimeout(() => {
       const element = readingComprehensionRef.current?.getPassageElement();
@@ -115,11 +154,18 @@ export default function App() {
   // Navigation between passages
   const handlePreviousPassage = () => {
     if (currentPassageIndex > 0) {
+      // Accumulate time for current passage before leaving
+      accumulateTimeForCurrentPassage();
       // Reset the component for the new passage
       if (readingComprehensionRef.current) {
         readingComprehensionRef.current.reset();
       }
       setCurrentPassageIndex(currentPassageIndex - 1);
+      // Start timer for new passage (only if it's not complete)
+      const prevPassageData = passageData[currentPassageIndex - 1];
+      if (!prevPassageData?.isComplete) {
+        passageStartTimeRef.current = Date.now();
+      }
       // Update passageRef after navigation
       setTimeout(() => {
         const element = readingComprehensionRef.current?.getPassageElement();
@@ -132,11 +178,18 @@ export default function App() {
 
   const handleNextPassage = () => {
     if (currentPassageIndex < passages.length - 1) {
+      // Accumulate time for current passage before leaving
+      accumulateTimeForCurrentPassage();
       // Reset the component for the new passage
       if (readingComprehensionRef.current) {
         readingComprehensionRef.current.reset();
       }
       setCurrentPassageIndex(currentPassageIndex + 1);
+      // Start timer for new passage (only if it's not complete)
+      const nextPassageData = passageData[currentPassageIndex + 1];
+      if (!nextPassageData?.isComplete) {
+        passageStartTimeRef.current = Date.now();
+      }
       // Update passageRef after navigation
       setTimeout(() => {
         const element = readingComprehensionRef.current?.getPassageElement();
@@ -148,13 +201,26 @@ export default function App() {
   };
 
   // Handle passage completion (correct answer)
-  const handlePassageComplete = (wrongAttempts: number) => {
+  const handlePassageComplete = async (wrongAttempts: number) => {
+    // Capture screenshot with heatmap before marking complete
+    await handleCaptureScreenshot();
+
+    // Calculate final time for this passage
+    let finalTimeSpent = passageData[currentPassageIndex]?.timeSpent || 0;
+    if (passageStartTimeRef.current) {
+      finalTimeSpent += Date.now() - passageStartTimeRef.current;
+      passageStartTimeRef.current = null; // Stop timer
+    }
+
     setPassageData(prev => ({
       ...prev,
       [currentPassageIndex]: {
-        ...currentData,
+        ...prev[currentPassageIndex],
+        cursorHistory: prev[currentPassageIndex]?.cursorHistory || currentData.cursorHistory,
+        screenshot: prev[currentPassageIndex]?.screenshot || null,
         isComplete: true,
-        wrongAttempts
+        wrongAttempts,
+        timeSpent: finalTimeSpent
       }
     }));
 
@@ -189,8 +255,8 @@ export default function App() {
         pixelRatio: pixelRatio,
       });
 
-      // If heatmap is visible, composite it onto the screenshot
-      if (showHeatmap && heatmapRef.current) {
+      // Composite heatmap onto the screenshot (heatmap is always enabled when tracking)
+      if (heatmapRef.current) {
         const heatmapCanvas = heatmapRef.current.getCanvas();
         if (heatmapCanvas) {
           const ctx = canvas.getContext('2d');
@@ -265,61 +331,183 @@ export default function App() {
 
   // Summary screen
   if (showSummary) {
-    return (
-      <div className="h-screen bg-gray-50 p-4 flex flex-col">
-        <div className="max-w-2xl mx-auto w-full flex flex-col flex-1">
-          <Card className="p-8 flex-1 overflow-y-auto">
-            <div className="text-center mb-8">
-              <div className="text-6xl mb-4">🎉</div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Quiz Complete!</h1>
-              <p className="text-gray-600">You've completed all {passages.length} passages.</p>
-            </div>
+    // Calculate statistics
+    const totalTime = passages.reduce((total, _, index) => {
+      return total + (passageData[index]?.timeSpent || 0);
+    }, 0);
+    const perfectPassages = passages.filter((_, index) =>
+      (passageData[index]?.wrongAttempts || 0) === 0
+    ).length;
+    const accuracyRate = Math.round((perfectPassages / passages.length) * 100);
+    const avgTimePerPassage = totalTime / passages.length;
 
-            <div className="space-y-4 mb-8">
-              <h2 className="text-lg font-semibold text-gray-900">Results by Passage</h2>
+    return (
+      <div className="h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 flex flex-col overflow-hidden">
+        <div className="max-w-5xl mx-auto w-full flex flex-col flex-1 min-h-0">
+          {/* Header */}
+          <div className="text-center py-6 flex-shrink-0">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
+              <Trophy className="h-8 w-8 text-yellow-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Quiz Complete!</h1>
+            <p className="text-gray-600">Great job completing all {passages.length} passages</p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-3 gap-4 mb-6 flex-shrink-0">
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 rounded-lg">
+                  <Clock className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Total Time</p>
+                  <p className="text-lg font-bold text-gray-900">{formatTime(totalTime)}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-50 rounded-lg">
+                  <Target className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Accuracy</p>
+                  <p className="text-lg font-bold text-gray-900">{accuracyRate}%</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-50 rounded-lg">
+                  <Zap className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Time</p>
+                  <p className="text-lg font-bold text-gray-900">{formatTime(avgTimePerPassage)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Passage Results */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 sticky top-0 bg-gradient-to-br from-gray-50 to-gray-100 py-2">
+              Reading Pattern Analysis
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pb-4">
               {passages.map((passage, index) => {
                 const data = passageData[index];
                 const attempts = data?.wrongAttempts || 0;
+                const screenshot = data?.screenshot;
+                const timeSpent = data?.timeSpent || 0;
+                const isPerfect = attempts === 0;
+
                 return (
                   <div
                     key={passage.id}
-                    className={`flex items-start gap-3 p-4 rounded-lg border ${
-                      attempts === 0
-                        ? 'bg-green-50 border-green-200'
-                        : 'bg-yellow-50 border-yellow-200'
-                    }`}
+                    className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
                   >
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white flex items-center justify-center font-semibold text-sm">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 mb-1">{passage.title}</p>
-                      <div className="flex items-center gap-2">
-                        {attempts === 0 ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Correct on first try
+                    {/* Heatmap Preview */}
+                    {screenshot && (
+                      <div
+                        className="relative cursor-pointer group aspect-[4/3]"
+                        onClick={() => setSelectedScreenshot(screenshot)}
+                      >
+                        <img
+                          src={screenshot}
+                          alt={`Reading heatmap for ${passage.title}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                          <span className="opacity-0 group-hover:opacity-100 text-white bg-black/60 px-2 py-0.5 rounded text-[10px] font-medium transition-opacity">
+                            Enlarge
                           </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-yellow-700">
-                            <XCircle className="h-3.5 w-3.5" />
-                            {attempts} wrong {attempts === 1 ? 'attempt' : 'attempts'}
-                          </span>
-                        )}
+                        </div>
+                        {/* Performance badge */}
+                        <div className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                          isPerfect
+                            ? 'bg-green-500 text-white'
+                            : 'bg-yellow-500 text-white'
+                        }`}>
+                          {isPerfect ? 'Perfect' : `${attempts}x`}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Passage Info */}
+                    <div className="p-2.5">
+                      <div className="flex items-start gap-2">
+                        <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                          isPerfect
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 text-xs leading-tight mb-1.5 line-clamp-2">
+                            {passage.title}
+                          </h3>
+                          <div className="flex items-center gap-2 text-[10px]">
+                            <span className={`inline-flex items-center gap-0.5 ${
+                              isPerfect ? 'text-green-600' : 'text-yellow-600'
+                            }`}>
+                              {isPerfect ? (
+                                <CheckCircle2 className="h-3 w-3" />
+                              ) : (
+                                <XCircle className="h-3 w-3" />
+                              )}
+                              {isPerfect ? '1st' : `${attempts + 1}x`}
+                            </span>
+                            <span className="inline-flex items-center gap-0.5 text-gray-500">
+                              <Clock className="h-3 w-3" />
+                              {formatTime(timeSpent)}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 );
               })}
             </div>
+          </div>
 
-            <div className="text-center">
-              <Button onClick={handleRestartQuiz} size="lg">
-                Restart Quiz
-              </Button>
-            </div>
-          </Card>
+          {/* Footer */}
+          <div className="pt-4 pb-2 flex-shrink-0">
+            <Button onClick={handleRestartQuiz} size="lg" className="w-full">
+              Start New Quiz
+            </Button>
+          </div>
         </div>
+
+        {/* Full-size screenshot modal */}
+        {selectedScreenshot && (
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setSelectedScreenshot(null)}
+          >
+            <div className="bg-white rounded-xl max-w-4xl max-h-[90vh] overflow-auto shadow-2xl">
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900">Reading Heatmap</h3>
+                <button
+                  className="text-gray-500 hover:text-gray-700 text-sm"
+                  onClick={() => setSelectedScreenshot(null)}
+                >
+                  Close
+                </button>
+              </div>
+              <div className="p-4">
+                <img
+                  src={selectedScreenshot}
+                  alt="Heatmap screenshot"
+                  className="max-w-full h-auto rounded-lg"
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -417,13 +605,13 @@ export default function App() {
                 cursorHistory={currentData.cursorHistory}
                 onClear={clearCursorHistory}
                 screenshot={currentData.screenshot}
-                showHeatmap={showHeatmap}
-                onToggleHeatmap={() => setShowHeatmap(!showHeatmap)}
                 onSaveHeatmap={() => heatmapRef.current?.saveImage()}
                 onSaveScreenshot={handleCaptureScreenshot}
                 heatmapRef={heatmapRef}
                 title={currentPassage.title}
                 passage={currentPassage.text}
+                debugMode={debugMode}
+                onToggleDebugMode={() => setDebugMode(!debugMode)}
               />
             </div>
           )}
@@ -435,13 +623,14 @@ export default function App() {
         enabled={trackingEnabled}
       />
 
-      {trackingEnabled && showHeatmap && (
+      {trackingEnabled && (
         <CursorHeatmap
           ref={heatmapRef}
           cursorHistory={currentData.cursorHistory}
           opacity={0.6}
           radius={40}
           containerRef={passageRef}
+          visible={debugMode}
         />
       )}
     </div>

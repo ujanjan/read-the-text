@@ -6,6 +6,7 @@ interface CursorHeatmapProps {
   opacity?: number;
   radius?: number;
   containerRef?: React.RefObject<HTMLElement>;
+  visible?: boolean; // Controls whether heatmap is visible to user (default true)
 }
 
 export interface CursorHeatmapHandle {
@@ -14,7 +15,7 @@ export interface CursorHeatmapHandle {
 }
 
 export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>(
-  function CursorHeatmap({ cursorHistory, opacity = 0.6, radius = 40, containerRef }, ref) {
+  function CursorHeatmap({ cursorHistory, opacity = 0.6, radius = 40, containerRef, visible = true }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [canvasStyle, setCanvasStyle] = useState<React.CSSProperties>({
       position: 'fixed',
@@ -203,6 +204,7 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
         canvas.height = containerBounds.height * pixelRatio;
 
         // Update canvas style position
+        // When not visible, use opacity 0 to hide from user but keep rendering for screenshots
         setCanvasStyle({
           position: 'fixed',
           top: containerBounds.top,
@@ -211,7 +213,7 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
           height: containerBounds.height,
           pointerEvents: 'none',
           zIndex: 9998,
-          opacity: opacity
+          opacity: visible ? opacity : 0
         });
       };
 
@@ -244,7 +246,7 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
           resizeObserver.disconnect();
         }
       };
-    }, [containerRef, opacity]);
+    }, [containerRef, opacity, visible]);
 
     return (
       <canvas
