@@ -423,6 +423,11 @@ export default function App() {
   // Check if any passage has been started
   const hasStarted = Object.keys(passageData).length > 0;
 
+  // Check if all passages are complete
+  const allPassagesComplete = passages.length > 0 && passages.every((_, index) =>
+    passageData[index]?.isComplete === true
+  );
+
   // Summary screen
   if (showSummary) {
     // Calculate statistics
@@ -666,29 +671,41 @@ export default function App() {
               <ChevronRight className="h-4 w-4" />
             </Button>
 
-            <Button
-              variant={trackingEnabled ? 'outline' : 'default'}
-              size="sm"
-              onClick={trackingEnabled ? handleToggleTracking : (hasStarted ? handleRestartQuiz : handleToggleTracking)}
-              className="text-xs"
-            >
-              {trackingEnabled ? (
-                <>
-                  <MousePointerClick className="h-4 w-4 mr-1" />
-                  Stop The Quiz
-                </>
-              ) : hasStarted ? (
-                <>
-                  <MousePointer2 className="h-4 w-4 mr-1" />
-                  Restart The Quiz
-                </>
-              ) : (
-                <>
-                  <MousePointer2 className="h-4 w-4 mr-1" />
-                  Start The Quiz
-                </>
-              )}
-            </Button>
+            {allPassagesComplete ? (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => sessionId && navigate(`/results/${sessionId}`)}
+                className="text-xs bg-green-600 hover:bg-green-700"
+              >
+                <Trophy className="h-4 w-4 mr-1" />
+                See Results
+              </Button>
+            ) : (
+              <Button
+                variant={trackingEnabled ? 'outline' : 'default'}
+                size="sm"
+                onClick={trackingEnabled ? handleToggleTracking : (hasStarted ? handleRestartQuiz : handleToggleTracking)}
+                className="text-xs"
+              >
+                {trackingEnabled ? (
+                  <>
+                    <MousePointerClick className="h-4 w-4 mr-1" />
+                    Stop The Quiz
+                  </>
+                ) : hasStarted ? (
+                  <>
+                    <MousePointer2 className="h-4 w-4 mr-1" />
+                    Restart The Quiz
+                  </>
+                ) : (
+                  <>
+                    <MousePointer2 className="h-4 w-4 mr-1" />
+                    Start The Quiz
+                  </>
+                )}
+              </Button>
+            )}
 
             <Button
               variant="outline"

@@ -15,29 +15,42 @@ import { onRequestGet as adminSessionGet, onRequestDelete as adminSessionDelete 
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-    const url = new URL(request.url);
-    
-    // Route API requests to Functions
-    if (url.pathname.startsWith('/api/')) {
-      return handleApiRequest(request, env, ctx);
-    }
-    
-    // Try to serve static asset
-    const assetResponse = await env.ASSETS.fetch(request);
-    
-    // If asset not found (404) and it's not a file request (no extension or is an HTML route)
-    // serve index.html for SPA client-side routing
-    if (assetResponse.status === 404) {
-      const hasFileExtension = /\.[a-zA-Z0-9]+$/.test(url.pathname);
-      
-      // If no file extension or explicitly an HTML-like path, serve index.html
-      if (!hasFileExtension || url.pathname.endsWith('.html')) {
-        const indexRequest = new Request(new URL('/', request.url), request);
-        return env.ASSETS.fetch(indexRequest);
+    try {
+      const url = new URL(request.url);
+
+      // Route API requests to Functions
+      if (url.pathname.startsWith('/api/')) {
+        return handleApiRequest(request, env, ctx);
       }
+
+      // Try to serve static asset
+      const assetResponse = await env.ASSETS.fetch(request);
+
+      // If asset not found (404) and it's not a file request (no extension or is an HTML route)
+      // serve index.html for SPA client-side routing
+      if (assetResponse.status === 404) {
+        const hasFileExtension = /\.[a-zA-Z0-9]+$/.test(url.pathname);
+
+        // If no file extension or explicitly an HTML-like path, serve index.html
+        if (!hasFileExtension || url.pathname.endsWith('.html')) {
+          // Create a simple GET request for index.html
+          const indexUrl = new URL('/', url.origin);
+          const indexRequest = new Request(indexUrl.toString(), {
+            method: 'GET',
+            headers: request.headers
+          });
+          return env.ASSETS.fetch(indexRequest);
+        }
+      }
+
+      return assetResponse;
+    } catch (error: any) {
+      console.error('Worker error:', error);
+      return new Response(`Internal Server Error: ${error.message}`, {
+        status: 500,
+        headers: { 'Content-Type': 'text/plain' }
+      });
     }
-    
-    return assetResponse;
   }
 };
 
