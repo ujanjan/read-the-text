@@ -63,6 +63,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
 
     // Reset state when props change (navigating between passages)
     useEffect(() => {
+      console.log(`🔄 [Passage Change] Switching to passage ${currentPassageIndex}`);
+      console.log(`   └─ Cursor history for this passage: ${cursorHistory?.length || 0} points`);
       setSelectedAnswer(initialSelectedAnswer);
       setShowFeedback(initialIsComplete);
       setFeedbackText(initialFeedback);
@@ -70,6 +72,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       setIsComplete(initialIsComplete);
       setWrongAttempts(0);
       setIsLoadingFeedback(false);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPassageIndex, initialIsComplete, initialSelectedAnswer, initialFeedback]);
 
     // Only use first question
@@ -129,6 +132,21 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       try {
         const selectedAnswerText = currentQuestion.choices[parseInt(selectedAnswer)];
         const correctAnswerText = currentQuestion.choices[currentQuestion.correctAnswer];
+
+        // LOG DATA BEING SENT TO GEMINI
+        const screenshotSizeKB = currentScreenshot ? Math.round((currentScreenshot.length * 0.75) / 1024) : 0;
+        const passageLength = passage.length;
+        const cursorPoints = cursorHistory.length;
+        console.log('═══════════════════════════════════════════════════════');
+        console.log('📤 [GEMINI API CALL] Personalized Question Feedback');
+        console.log('═══════════════════════════════════════════════════════');
+        console.log(`📍 Passage Index: ${currentPassageIndex}`);
+        console.log(`📊 Cursor History: ${cursorPoints} points`);
+        console.log(`📸 Screenshot: ${currentScreenshot ? `Yes (${screenshotSizeKB} KB)` : 'No'}`);
+        console.log(`📝 Passage Length: ${passageLength} characters`);
+        console.log(`✅ Answer Correct: ${isCorrect}`);
+        console.log(`🔢 Attempt Number: ${wrongAttempts + 1}`);
+        console.log('═══════════════════════════════════════════════════════');
 
         const result = await getPersonalizedQuestionFeedback(
           title || '',

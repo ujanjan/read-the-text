@@ -69,6 +69,10 @@ export default function App() {
   const passageStartTimeRef = useRef<number | null>(null);
 
   const handleCursorData = (data: CursorData) => {
+    const newLength = currentData.cursorHistory.length + 1;
+    if (newLength % 100 === 0 || newLength === 1) {
+      console.log(`📊 [Passage ${currentPassageIndex}] Cursor history size: ${newLength} points`);
+    }
     setPassageData(prev => ({
       ...prev,
       [currentPassageIndex]: {
@@ -246,10 +250,13 @@ export default function App() {
     if (currentPassageIndex > 0) {
       // Accumulate time for current passage before leaving
       accumulateTimeForCurrentPassage();
+      console.log(`🔄 [Navigation] Leaving Passage ${currentPassageIndex} (${currentData.cursorHistory.length} cursor points) → Going to Passage ${currentPassageIndex - 1}`);
       // Reset the component for the new passage
       if (readingComprehensionRef.current) {
         readingComprehensionRef.current.reset();
       }
+      const targetPassageData = passageData[currentPassageIndex - 1];
+      console.log(`🔄 [Navigation] Passage ${currentPassageIndex - 1} currently has ${targetPassageData?.cursorHistory?.length || 0} cursor points`);
       setCurrentPassageIndex(currentPassageIndex - 1);
       // Start timer for new passage (only if it's not complete)
       const prevPassageData = passageData[currentPassageIndex - 1];
@@ -270,10 +277,13 @@ export default function App() {
     if (currentPassageIndex < passages.length - 1) {
       // Accumulate time for current passage before leaving
       accumulateTimeForCurrentPassage();
+      console.log(`🔄 [Navigation] Leaving Passage ${currentPassageIndex} (${currentData.cursorHistory.length} cursor points) → Going to Passage ${currentPassageIndex + 1}`);
       // Reset the component for the new passage
       if (readingComprehensionRef.current) {
         readingComprehensionRef.current.reset();
       }
+      const targetPassageData = passageData[currentPassageIndex + 1];
+      console.log(`🔄 [Navigation] Passage ${currentPassageIndex + 1} currently has ${targetPassageData?.cursorHistory?.length || 0} cursor points`);
       setCurrentPassageIndex(currentPassageIndex + 1);
       // Start timer for new passage (only if it's not complete)
       const nextPassageData = passageData[currentPassageIndex + 1];
