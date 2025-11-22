@@ -1493,6 +1493,13 @@ html {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+.tip-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
 .requirements-box,
 .data-notice-box {
   background: #f8fafc;

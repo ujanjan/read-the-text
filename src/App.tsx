@@ -13,6 +13,9 @@ import { apiService } from './services/apiService';
 import { Passage } from './types/passage';
 import type { SessionData } from './types/session';
 
+// Session storage key for persisting quiz state on refresh
+const SESSION_STORAGE_KEY = 'quiz_session_state';
+
 // Per-passage data storage
 interface PassageData {
   cursorHistory: CursorData[];
@@ -120,6 +123,39 @@ export default function App() {
     getPassages().then(setPassages);
   }, []);
 
+  // Restore quiz state from sessionStorage on mount
+  useEffect(() => {
+    const savedState = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        setSessionId(state.sessionId);
+        setPassageOrder(state.passageOrder);
+        setCurrentPassageIndex(state.currentPassageIndex);
+        setPassageData(state.passageData || {});
+        setShowLanding(false);
+        setTrackingEnabled(true);
+        passageStartTimeRef.current = Date.now();
+      } catch (err) {
+        console.error('Failed to restore session from storage:', err);
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      }
+    }
+  }, []);
+
+  // Save quiz state to sessionStorage whenever it changes
+  useEffect(() => {
+    if (sessionId && !showLanding) {
+      const state = {
+        sessionId,
+        passageOrder,
+        currentPassageIndex,
+        passageData
+      };
+      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state));
+    }
+  }, [sessionId, passageOrder, currentPassageIndex, passageData, showLanding]);
+
   // Handle starting quiz from landing page
   const handleStartQuiz = (
     newSessionId: string,
@@ -199,6 +235,8 @@ export default function App() {
     setTrackingEnabled(false);
     setSessionId(null);
     setPassageOrder([]);
+    // Clear session storage
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
     // Go back to landing
     setShowLanding(true);
   };
@@ -311,10 +349,14 @@ export default function App() {
 
         try {
           await apiService.completeSession(sessionId, totalTime);
+          // Clear session storage on completion
+          sessionStorage.removeItem(SESSION_STORAGE_KEY);
           // Redirect to results page
           navigate(`/results/${sessionId}`);
         } catch (err) {
           console.error('Failed to complete session:', err);
+          // Clear session storage on completion
+          sessionStorage.removeItem(SESSION_STORAGE_KEY);
           // Still redirect even if API fails - data is saved
           navigate(`/results/${sessionId}`);
         }

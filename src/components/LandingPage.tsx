@@ -102,6 +102,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
               required
               disabled={loading}
             />
+            <p className="tip-text">
+              Tip: You can continue a past session or view your results by entering your previous nickname.
+            </p>
           </div>
 
           <div className="requirements-box">
