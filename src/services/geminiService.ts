@@ -109,6 +109,9 @@ export async function analyzeReadingBehavior(
     }
     
     jsonSample = sampledPoints;
+    console.log(`🔽 [SAMPLING - Reading Behavior] Reduced cursor data from ${cursorHistory.length} to ${jsonSample.length} points`);
+  } else {
+    console.log(`✅ [NO SAMPLING - Reading Behavior] Cursor data size (${cursorHistory.length}) is under threshold, sending all points`);
   }
 
   const prompt = `You are an expert in reading comprehension and learning analytics. Analyze the following data from a student reading session and provide actionable feedback tips.
@@ -267,6 +270,9 @@ export async function getPersonalizedQuestionFeedback(
     }
     
     jsonData = sampledPoints;
+    console.log(`🔽 [SAMPLING] Reduced cursor data from ${cursorHistory.length} to ${jsonData.length} points`);
+  } else {
+    console.log(`✅ [NO SAMPLING] Cursor data size (${cursorHistory.length}) is under threshold, sending all points`);
   }
 
   const prompt = `You are an expert reading comprehension tutor. Analyze a student's reading behavior and provide personalized feedback for their quiz answer.
