@@ -1,6 +1,6 @@
 export interface Session {
   id: string;
-  nickname: string;
+  email: string;
   status: 'in_progress' | 'completed';
   current_passage_index: number;
   passageOrder: number[];
@@ -59,7 +59,7 @@ export interface SessionData {
 
 export interface AdminSession {
   id: string;
-  nickname: string;
+  email: string;
   status: 'in_progress' | 'completed';
   current_passage_index: number;
   total_passages: number;

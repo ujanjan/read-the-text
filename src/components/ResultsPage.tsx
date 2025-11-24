@@ -63,7 +63,7 @@ export const ResultsPage: React.FC = () => {
     <div className="results-page">
       <div className="results-container">
         <h1>Quiz Results</h1>
-        <p className="nickname-display">Participant: {session.nickname}</p>
+        <p className="email-display">Participant: {session.email}</p>
 
         <div className="stats-summary">
           <div className="stat-card">

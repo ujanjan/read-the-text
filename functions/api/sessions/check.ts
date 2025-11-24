@@ -1,12 +1,12 @@
 import type { Env } from '../../types';
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { nickname } = await context.request.json() as { nickname: string };
+  const { email } = await context.request.json() as { email: string };
   const db = context.env.read_the_text_db;
 
   const session = await db.prepare(
-    'SELECT id, status, current_passage_index, passage_order, total_passages FROM sessions WHERE nickname = ? ORDER BY created_at DESC LIMIT 1'
-  ).bind(nickname).first();
+    'SELECT id, status, current_passage_index, passage_order, total_passages FROM sessions WHERE email = ? ORDER BY created_at DESC LIMIT 1'
+  ).bind(email).first();
 
   if (!session) {
     return Response.json({ exists: false });

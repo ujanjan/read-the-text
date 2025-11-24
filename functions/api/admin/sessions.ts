@@ -7,7 +7,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   let query = `
     SELECT
-      s.id, s.nickname, s.status, s.current_passage_index,
+      s.id, s.email, s.status, s.current_passage_index,
       s.total_passages, s.created_at, s.completed_at, s.total_time_ms,
       (SELECT COUNT(*) FROM passage_results pr WHERE pr.session_id = s.id AND pr.is_complete = 1) as completed_passages
     FROM sessions s

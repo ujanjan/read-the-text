@@ -9,20 +9,20 @@ const API_BASE = '/api';
 
 export const apiService = {
   // Sessions
-  async checkNickname(nickname: string): Promise<SessionCheckResponse> {
+  async checkEmail(email: string): Promise<SessionCheckResponse> {
     const res = await fetch(`${API_BASE}/sessions/check`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname })
+      body: JSON.stringify({ email })
     });
     return res.json();
   },
 
-  async createSession(nickname: string): Promise<SessionCreateResponse> {
+  async createSession(email: string): Promise<SessionCreateResponse> {
     const res = await fetch(`${API_BASE}/sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname })
+      body: JSON.stringify({ email })
     });
     return res.json();
   },
