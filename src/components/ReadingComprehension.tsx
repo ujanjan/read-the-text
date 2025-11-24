@@ -160,7 +160,10 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         );
 
         feedback = result.feedback;
+        console.log('🤖 [GEMINI RESPONSE]:', feedback);
+        console.log('🤖 [GEMINI RESPONSE LENGTH]:', feedback.length);
         setFeedbackText(feedback);
+        console.log('✅ [STATE UPDATE] setFeedbackText called with:', feedback.substring(0, 50) + '...');
 
         // Record attempt in cloud if we have a session
         if (sessionId) {

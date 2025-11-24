@@ -397,6 +397,14 @@ Just provide the feedback text directly, no prefix or formatting.`;
     const response = await result.response;
     const text = response.text().trim();
 
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('📥 [GEMINI RAW RESPONSE]');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('Raw text length:', response.text().length);
+    console.log('Trimmed text length:', text.length);
+    console.log('First 200 chars:', text.substring(0, 200));
+    console.log('═══════════════════════════════════════════════════════');
+
     return {
       feedback: text || (isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.'),
     };
