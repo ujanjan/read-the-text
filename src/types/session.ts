@@ -32,6 +32,8 @@ export interface PassageAttempt {
   selected_answer: string;
   is_correct: number;
   gemini_response?: string;
+  screenshot_r2_key?: string;
+  screenshot?: string; // base64 when fetched
   created_at: string;
 }
 

@@ -138,6 +138,13 @@ export const ResultsPage: React.FC = () => {
                         {attempt.is_correct ? 'Correct' : 'Wrong'}
                       </span>
                     </div>
+                    {attempt.screenshot && (
+                      <img
+                        src={attempt.screenshot}
+                        alt={`Attempt ${attempt.attempt_number} heatmap`}
+                        className="attempt-screenshot"
+                      />
+                    )}
                     <p><strong>Selected:</strong> {attempt.selected_answer}</p>
                     {attempt.gemini_response && (
                       <div className="gemini-feedback">
