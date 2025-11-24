@@ -378,22 +378,18 @@ export default function App() {
   };
 
   const handleCaptureScreenshot = async (): Promise<string | null> => {
-    const passageElement = readingComprehensionRef.current?.getPassageElement();
-    if (!passageElement) {
-      return null;
-    }
-
     try {
       // OPTIMIZATION: Limit pixel ratio to reduce image size
       // Use max 1.5x instead of full device pixel ratio (which can be 2-3x on retina)
       // This significantly reduces file size while maintaining readability
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
-      const rect = passageElement.getBoundingClientRect();
-      
-      // Capture using html-to-image (supports oklch natively)
-      const canvas = await toCanvas(passageElement, {
+
+      // Capture the full screen (document body)
+      const canvas = await toCanvas(document.body, {
         backgroundColor: '#ffffff',
         pixelRatio: pixelRatio,
+        width: window.innerWidth,
+        height: window.innerHeight,
       });
 
       // Composite heatmap onto the screenshot (heatmap is always enabled when tracking)
@@ -825,7 +821,6 @@ export default function App() {
           cursorHistory={currentData.cursorHistory}
           opacity={0.6}
           radius={40}
-          containerRef={passageRef}
           visible={debugMode}
         />
       )}
