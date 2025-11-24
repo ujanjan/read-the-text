@@ -23,7 +23,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     'SELECT * FROM passage_attempts WHERE session_id = ? ORDER BY passage_index, attempt_number'
   ).bind(sessionId).all();
 
-  // Get screenshots from R2
+  // Get screenshots from R2 for passage results
   const resultsWithScreenshots = await Promise.all(
     passageResults.results.map(async (result: any) => {
       let screenshot = null;
@@ -45,13 +45,32 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     })
   );
 
+  // Get screenshots from R2 for attempts
+  const attemptsWithScreenshots = await Promise.all(
+    attempts.results.map(async (attempt: any) => {
+      let screenshot = null;
+      if (attempt.screenshot_r2_key) {
+        try {
+          const obj = await storage.get(attempt.screenshot_r2_key);
+          if (obj) {
+            const buffer = await obj.arrayBuffer();
+            screenshot = `data:image/jpeg;base64,${arrayBufferToBase64(buffer)}`;
+          }
+        } catch (err) {
+          console.error('R2 get error for attempt screenshot:', err);
+        }
+      }
+      return { ...attempt, screenshot };
+    })
+  );
+
   return Response.json({
     session: {
       ...session,
       passageOrder: JSON.parse(session.passage_order as string)
     },
     passageResults: resultsWithScreenshots,
-    attempts: attempts.results
+    attempts: attemptsWithScreenshots
   });
 };
 
@@ -61,9 +80,14 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   const db = context.env.read_the_text_db;
   const storage = context.env.read_the_text_storage;
 
-  // Get all R2 keys
+  // Get all R2 keys from passage_results
   const results = await db.prepare(
     'SELECT screenshot_r2_key, cursor_history_r2_key FROM passage_results WHERE session_id = ?'
+  ).bind(sessionId).all();
+
+  // Get all R2 keys from passage_attempts
+  const attempts = await db.prepare(
+    'SELECT screenshot_r2_key FROM passage_attempts WHERE session_id = ?'
   ).bind(sessionId).all();
 
   // Delete from R2
@@ -73,6 +97,13 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
     }
     if (result.cursor_history_r2_key) {
       await storage.delete(result.cursor_history_r2_key);
+    }
+  }
+
+  // Delete attempt screenshots from R2
+  for (const attempt of attempts.results as any[]) {
+    if (attempt.screenshot_r2_key) {
+      await storage.delete(attempt.screenshot_r2_key);
     }
   }
 

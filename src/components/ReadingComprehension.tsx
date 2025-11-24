@@ -178,7 +178,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
             await apiService.recordAttempt(sessionId, currentPassageIndex, {
               selectedAnswer: selectedAnswerText,
               isCorrect,
-              geminiResponse: feedback
+              geminiResponse: feedback,
+              screenshot: currentScreenshot || undefined
             });
           } catch (err) {
             console.error('Failed to record attempt:', err);

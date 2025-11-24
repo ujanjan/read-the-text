@@ -76,6 +76,7 @@ export const apiService = {
       selectedAnswer: string;
       isCorrect: boolean;
       geminiResponse: string;
+      screenshot?: string;
     }
   ): Promise<{ success: boolean; attemptNumber: number }> {
     const res = await fetch(`${API_BASE}/passages/${sessionId}/${passageIndex}/attempts`, {
