@@ -50,7 +50,8 @@ export async function getPersonalizedQuestionFeedback(
   question: string,
   selectedAnswer: string,
   correctAnswer: string,
-  isCorrect: boolean
+  isCorrect: boolean,
+  readingSummaryJson?: string
 ): Promise<QuestionFeedbackResult> {
   if (!model) {
     return {
@@ -86,6 +87,24 @@ ${isCorrect ? `**CORRECT ANSWER:** ${correctAnswer}` : ''}
 ${screenshot ? `
 **HEATMAP IMAGE:** A visual heatmap is attached showing where the cursor spent time during reading. Bright/green areas indicate more time spent. Dark areas indicate less or no time spent. This shows which sections of the passage the student focused on.
 ` : '**HEATMAP IMAGE:** Not available - provide general feedback without reading behavior analysis.'}
+
+${readingSummaryJson ? `
+**SENTENCE-LEVEL READING SUMMARY (JSON):**
+
+This JSON describes, for each sentence in the passage:
+- its index and text
+- total dwell time in milliseconds (\`dwell_ms\`)
+- how many separate visits there were (\`visits\`)
+- the order in which it was first visited (\`first_visit_order\`, where 0 = first sentence the student looked at).
+
+Use this to reason precisely about which sentences the student focused on or skipped.
+
+\`\`\`json
+${readingSummaryJson}
+\`\`\`
+` : `
+**SENTENCE-LEVEL READING SUMMARY:** Not available for this session.
+`}
 
 **CRITICAL INSTRUCTIONS FOR READING BEHAVIOR ANALYSIS:**
 

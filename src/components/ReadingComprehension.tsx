@@ -6,6 +6,7 @@ import { Label } from "./ui/label";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { getPersonalizedQuestionFeedback, CursorData } from "../services/geminiService";
 import { apiService } from "../services/apiService";
+import { ReadingSummary, summarizeCursorSession, computeSentenceRects } from "../summarizeCursor";
 
 interface Question {
   id: number;
@@ -35,6 +36,20 @@ export interface ReadingComprehensionHandle {
   isComplete: () => boolean;
   getPassageElement: () => HTMLDivElement | null;
 }
+
+const renderSentences = (text: string, nextId: () => number) => {
+  const sentences = text.match(/[^.!?]+[.!?]+|\S+/g) ?? [];
+  const id: number = nextId();
+  return sentences.map((sentence) => (
+    <span
+      key={id}
+      data-sentence-id={id}
+      style={{ display: "inline" }}
+    >
+      {sentence + " "}
+    </span>
+  ));
+};
 
 export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, ReadingComprehensionProps>(
   function ReadingComprehension({
@@ -154,6 +169,18 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         console.log(`✅ Answer Correct: ${isCorrect}`);
         console.log(`🔢 Attempt Number: ${wrongAttempts + 1}`);
         console.log('═══════════════════════════════════════════════════════');
+        
+        const container = passageRef.current;
+        let readingSummaryJson: string | undefined = undefined;
+
+        if (container && cursorHistory.length > 0) {
+          const sentenceRects = computeSentenceRects(container, "[data-sentence-id]");
+          const readingSummary: ReadingSummary = summarizeCursorSession(
+            cursorHistory,
+            sentenceRects
+          );
+          readingSummaryJson = JSON.stringify(readingSummary);
+        }
 
         const result = await getPersonalizedQuestionFeedback(
           title || '',
@@ -162,7 +189,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
           currentQuestion.question,
           selectedAnswerText,
           correctAnswerText,
-          isCorrect
+          isCorrect,
+          readingSummaryJson
         );
 
         feedback = result.feedback;
@@ -211,6 +239,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       setCurrentSubmissionCorrect(false);
     };
 
+    let globalSentenceId: number = 0
     return (
       <div className="flex gap-4 h-full min-w-0 w-full">
         {/* Reading Passage - 60% width */}
@@ -234,7 +263,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                   key={index}
                   className="mb-3 text-gray-700 leading-relaxed"
                 >
-                  {paragraph}
+                  {renderSentences(paragraph, () => globalSentenceId++)}
                 </p>
               ))}
             </div>
