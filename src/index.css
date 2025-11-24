@@ -1458,149 +1458,14 @@ html {
   background: white;
   border-radius: 1rem;
   padding: 2rem;
-  max-width: 600px;
+  max-width: 500px;
   width: 100%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-/* Landing Page Header */
-.landing-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.landing-header h1 {
-  color: #1a1a1a;
-  margin-bottom: 1rem;
-}
-
-.course-info {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-top: 0.5rem;
-}
-
-.course-info p {
-  margin: 0.25rem 0;
-}
-
-.course-info a {
-  color: #3b82f6;
-  text-decoration: none;
-}
-
-.course-info a:hover {
-  text-decoration: underline;
-}
-
-/* Contact Info */
-.contact-info {
-  background: #eff6ff;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  font-size: 0.875rem;
-}
-
-.contact-info p {
-  margin: 0;
-  color: #1e40af;
-}
-
-.contact-info strong {
-  font-weight: 600;
-}
-
-/* About Section */
-.about-section {
-  background: #f8fafc;
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.about-section h2 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: #1a1a1a;
-}
-
-.about-section p {
-  margin-bottom: 0.5rem;
-  color: #374151;
-  font-weight: 500;
-}
-
-.about-section ul {
-  list-style: disc;
-  padding-left: 1.5rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.about-section ul li {
-  margin-bottom: 0.25rem;
-}
-
-/* Important Tip */
-.important-tip {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-left: 4px solid #f59e0b;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-top: 1rem;
-}
-
-.important-tip p {
-  margin: 0;
-  color: #78350f;
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.important-tip p:first-child {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-/* Landing Footer */
-.landing-footer {
-  text-align: center;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
-  font-size: 0.75rem;
-  color: #9ca3af;
-}
-
-.landing-footer p {
-  margin: 0.25rem 0;
-}
-
-.landing-footer a {
-  color: #3b82f6;
-  text-decoration: none;
-}
-
-.landing-footer a:hover {
-  text-decoration: underline;
 }
 
 .landing-container h1 {
   text-align: center;
   margin-bottom: 1.5rem;
-  color: #1a1a1a;
-}
-
-.landing-container h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 1.5rem 0 1rem 0;
   color: #1a1a1a;
 }
 
@@ -1612,68 +1477,23 @@ html {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #374151;
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #e0e0e0;
   border-radius: 0.5rem;
   font-size: 1rem;
+  background-color: white;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group select:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Radio Group Styles */
-.radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.radio-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
-  font-weight: normal;
-}
-
-.radio-label:hover {
-  background-color: #f9fafb;
-}
-
-.radio-label input[type="radio"] {
-  width: auto;
-  margin: 0;
-  cursor: pointer;
-}
-
-.radio-label input[type="radio"]:checked {
-  accent-color: #3b82f6;
-}
-
-.radio-label:has(input[type="radio"]:checked) {
-  background-color: #eff6ff;
-  border-color: #3b82f6;
-}
-
-/* Help Text */
-.help-text {
-  font-size: 0.75rem;
-  color: #9ca3af;
-  margin-top: 0.25rem;
-  margin-bottom: 0.5rem;
-  font-style: italic;
 }
 
 .tip-text {
@@ -1713,11 +1533,6 @@ html {
   margin-bottom: 0.5rem;
 }
 
-.data-notice-box p strong {
-  color: #374151;
-  font-weight: 600;
-}
-
 .consent-checkbox {
   margin-bottom: 1.5rem;
 }
@@ -1728,12 +1543,10 @@ html {
   gap: 0.5rem;
   font-size: 0.875rem;
   cursor: pointer;
-  line-height: 1.5;
 }
 
 .consent-checkbox input {
   margin-top: 0.25rem;
-  flex-shrink: 0;
 }
 
 .error-message {
@@ -1755,7 +1568,6 @@ html {
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
-  font-size: 1rem;
 }
 
 .start-button:hover:not(:disabled) {
@@ -1874,48 +1686,6 @@ html {
   text-align: center;
   color: #6b7280;
   margin-bottom: 2rem;
-}
-
-/* Demographics Card */
-.demographics-card {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.demographics-card h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  color: #1a1a1a;
-}
-
-.demographics-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.demo-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.demo-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #9ca3af;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.demo-value {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #1a1a1a;
 }
 
 .stats-summary {
