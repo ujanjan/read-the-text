@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
-import type { AdminSession } from '../types/session';
+import type { AdminSession, SessionData, PassageAttempt } from '../types/session';
 
 export const AdminPage: React.FC = () => {
-  const navigate = useNavigate();
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('');
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [sessionDetail, setSessionDetail] = useState<SessionData | null>(null);
+  const [selectedPassage, setSelectedPassage] = useState<number | null>(null);
 
   useEffect(() => {
     fetchSessions();
@@ -37,10 +38,26 @@ export const AdminPage: React.FC = () => {
     }
   };
 
-  const handleViewDetails = (sessionId: string) => {
-    // Navigate to the results page for this session
-    navigate(`/results/${sessionId}`);
+  const handleViewDetails = async (sessionId: string) => {
+    try {
+      const data = await apiService.getAdminSessionDetail(sessionId);
+      setSessionDetail(data);
+      setSelectedSession(sessionId);
+    } catch (err) {
+      console.error('Failed to fetch session details:', err);
+    }
   };
+
+  // Group attempts by passage for detail view
+  const attemptsByPassage: Record<number, PassageAttempt[]> = {};
+  if (sessionDetail) {
+    sessionDetail.attempts.forEach((attempt) => {
+      if (!attemptsByPassage[attempt.passage_index]) {
+        attemptsByPassage[attempt.passage_index] = [];
+      }
+      attemptsByPassage[attempt.passage_index].push(attempt);
+    });
+  }
 
   return (
     <div className="admin-page">
@@ -98,6 +115,77 @@ export const AdminPage: React.FC = () => {
               ))}
             </tbody>
           </table>
+        )}
+
+        {/* Session detail modal */}
+        {selectedSession && sessionDetail && (
+          <div className="modal-overlay" onClick={() => {
+            setSelectedSession(null);
+            setSelectedPassage(null);
+          }}>
+            <div className="modal large" onClick={(e) => e.stopPropagation()}>
+              <h2>{sessionDetail.session.nickname}'s Session</h2>
+
+              <div className="session-stats">
+                <p><strong>Status:</strong> {sessionDetail.session.status}</p>
+                <p><strong>Total Time:</strong> {formatTime(sessionDetail.session.total_time_ms)}</p>
+                <p><strong>Created:</strong> {new Date(sessionDetail.session.created_at).toLocaleString()}</p>
+              </div>
+
+              <h3>Passages</h3>
+              <div className="passage-list">
+                {sessionDetail.session.passageOrder.map((passageId: number, index: number) => {
+                  const result = sessionDetail.passageResults.find((r) => r.passage_index === index);
+
+                  return (
+                    <div
+                      key={index}
+                      className={`passage-item ${result?.is_complete ? 'complete' : 'incomplete'}`}
+                      onClick={() => setSelectedPassage(selectedPassage === index ? null : index)}
+                    >
+                      <div className="passage-header">
+                        <span>Passage {index + 1}</span>
+                        {result?.is_complete && (
+                          <span className="passage-stats">
+                            {result.wrong_attempts} wrong | {formatTime(result.time_spent_ms)}
+                          </span>
+                        )}
+                      </div>
+
+                      {selectedPassage === index && (
+                        <div className="passage-details">
+                          {result?.screenshot && (
+                            <img src={result.screenshot} alt="Heatmap" className="detail-screenshot" />
+                          )}
+                          <div className="attempts-section">
+                            <h4>Attempts</h4>
+                            {attemptsByPassage[index]?.map((attempt, idx) => (
+                              <div key={idx} className={`attempt-item ${attempt.is_correct ? 'correct' : 'wrong'}`}>
+                                <p><strong>#{attempt.attempt_number}:</strong> {attempt.selected_answer}</p>
+                                {attempt.gemini_response && (
+                                  <p className="feedback">{attempt.gemini_response}</p>
+                                )}
+                              </div>
+                            )) || <p>No attempts</p>}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => {
+                  setSelectedSession(null);
+                  setSelectedPassage(null);
+                }}
+                className="close-button"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
