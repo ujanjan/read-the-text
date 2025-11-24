@@ -7,7 +7,7 @@ interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
-  const [nickname, setNickname] = useState('');
+  const [email, setEmail] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,13 +20,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nickname.trim() || !agreed) return;
+    if (!email.trim() || !agreed) return;
 
     setLoading(true);
     setError('');
 
     try {
-      const checkResult = await apiService.checkNickname(nickname.trim());
+      const checkResult = await apiService.checkEmail(email.trim());
 
       if (checkResult.exists) {
         if (checkResult.status === 'completed') {
@@ -44,7 +44,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
         }
       } else {
         // Create new session
-        const newSession = await apiService.createSession(nickname.trim());
+        const newSession = await apiService.createSession(email.trim());
         onStartQuiz(newSession.sessionId, newSession.passageOrder, false);
       }
     } catch (err) {
@@ -77,7 +77,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
     try {
       // Delete old session and create new
       await apiService.deleteSession(existingSession.sessionId);
-      const newSession = await apiService.createSession(nickname.trim());
+      const newSession = await apiService.createSession(email.trim());
       onStartQuiz(newSession.sessionId, newSession.passageOrder, false);
       setShowResumeModal(false);
     } catch (err) {
@@ -92,18 +92,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
 
         <form onSubmit={handleSubmit}>
           <div className="input-group">
-            <label htmlFor="nickname">Enter your nickname:</label>
+            <label htmlFor="email">Enter your email:</label>
             <input
-              id="nickname"
-              type="text"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              placeholder="e.g., JohnDoe123"
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="e.g., john@example.com"
               required
               disabled={loading}
             />
             <p className="tip-text">
-              Tip: You can continue a past session or view your results by entering your previous nickname.
+              Tip: You can continue a past session or view your results by entering your previous email.
             </p>
           </div>
 
@@ -143,7 +143,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
 
           <button
             type="submit"
-            disabled={!nickname.trim() || !agreed || loading}
+            disabled={!email.trim() || !agreed || loading}
             className="start-button"
           >
             {loading ? 'Loading...' : 'Start Quiz'}

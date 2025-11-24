@@ -1,7 +1,7 @@
 -- Sessions table
 CREATE TABLE sessions (
   id TEXT PRIMARY KEY,
-  nickname TEXT NOT NULL,
+  email TEXT NOT NULL,
   status TEXT DEFAULT 'in_progress' CHECK(status IN ('in_progress', 'completed')),
   current_passage_index INTEGER DEFAULT 0,
   passage_order TEXT NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE passage_attempts (
 );
 
 -- Indexes
-CREATE INDEX idx_sessions_nickname ON sessions(nickname);
+CREATE INDEX idx_sessions_email ON sessions(email);
 CREATE INDEX idx_sessions_status ON sessions(status);
 CREATE INDEX idx_passage_results_session ON passage_results(session_id);
 CREATE INDEX idx_passage_attempts_session ON passage_attempts(session_id);

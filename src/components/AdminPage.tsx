@@ -83,7 +83,7 @@ export const AdminPage: React.FC = () => {
           <table className="sessions-table">
             <thead>
               <tr>
-                <th>Nickname</th>
+                <th>Email</th>
                 <th>Status</th>
                 <th>Progress</th>
                 <th>Created</th>
@@ -94,7 +94,7 @@ export const AdminPage: React.FC = () => {
             <tbody>
               {sessions.map((session) => (
                 <tr key={session.id} onClick={() => handleViewDetails(session.id)}>
-                  <td>{session.nickname}</td>
+                  <td>{session.email}</td>
                   <td>
                     <span className={`status-badge ${session.status}`}>
                       {session.status === 'in_progress' ? 'In Progress' : 'Completed'}
@@ -124,7 +124,7 @@ export const AdminPage: React.FC = () => {
             setSelectedPassage(null);
           }}>
             <div className="modal large" onClick={(e) => e.stopPropagation()}>
-              <h2>{sessionDetail.session.nickname}'s Session</h2>
+              <h2>{sessionDetail.session.email}'s Session</h2>
 
               <div className="session-stats">
                 <p><strong>Status:</strong> {sessionDetail.session.status}</p>
