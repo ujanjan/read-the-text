@@ -65,9 +65,16 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     useEffect(() => {
       console.log(`🔄 [Passage Change] Switching to passage ${currentPassageIndex}`);
       console.log(`   └─ Cursor history for this passage: ${cursorHistory?.length || 0} points`);
+      
+      // Don't reset feedback if we're on the same passage and just completed it
+      // This preserves the Gemini feedback that was just generated
+      const shouldPreserveFeedback = isComplete && initialIsComplete;
+      
       setSelectedAnswer(initialSelectedAnswer);
       setShowFeedback(initialIsComplete);
-      setFeedbackText(initialFeedback);
+      if (!shouldPreserveFeedback) {
+        setFeedbackText(initialFeedback);
+      }
       setCurrentSubmissionCorrect(initialIsComplete);
       setIsComplete(initialIsComplete);
       setWrongAttempts(0);
