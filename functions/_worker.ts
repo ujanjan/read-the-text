@@ -5,7 +5,22 @@
 import type { Env } from './types';
 
 // Placeholder for index.html - will be replaced during build
-const INDEX_HTML_PLACEHOLDER = '__INDEX_HTML_CONTENT__';
+const INDEX_HTML_PLACEHOLDER = `
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Reading Comprehension App</title>
+      <script type="module" crossorigin src="/assets/index-DSUld5uO.js"></script>
+      <link rel="stylesheet" crossorigin href="/assets/index-DUeRTjyq.css">
+    </head>
+
+    <body>
+      <div id="root"></div>
+    </body>
+  </html>
+  `;
 
 // Import all handlers
 import { onRequestPost as sessionsCheckPost } from './api/sessions/check';
@@ -16,6 +31,8 @@ import { onRequestPut as passageResultPut } from './api/passages/[sessionId]/[pa
 import { onRequestPost as passageAttemptPost } from './api/passages/[sessionId]/[passageIndex]/attempts';
 import { onRequestGet as adminSessionsGet } from './api/admin/sessions';
 import { onRequestGet as adminSessionGet, onRequestDelete as adminSessionDelete } from './api/admin/sessions/[id]';
+import { onRequestPost as sendLinkPost } from './api/send-link';
+import { onRequestPost as sendWelcomePost } from './api/send-welcome';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -167,6 +184,16 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
       if (method === 'DELETE') {
         return await adminSessionDelete(createContext({ id: sessionId }));
       }
+    }
+
+    // Send link (email) route
+    if (path === '/api/send-link' && method === 'POST') {
+      return await sendLinkPost(createContext());
+    }
+
+    // Send welcome (confirmation email) route
+    if (path === '/api/send-welcome' && method === 'POST') {
+      return await sendWelcomePost(createContext());
     }
     
     // No matching route

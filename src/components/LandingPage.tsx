@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { apiService } from '../services/apiService';
 import type { SessionData, UserDemographics } from '../types/session';
+import { useIsMobile } from './ui/use-mobile';
 
 interface LandingPageProps {
   onStartQuiz: (sessionId: string, passageOrder: number[], isResume: boolean, resumeData?: SessionData) => void;
@@ -23,6 +24,51 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
     passageOrder: number[];
   } | null>(null);
   const [showDataDetails, setShowDataDetails] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [mobileEmail, setMobileEmail] = useState('');
+  const [mobileEmailSent, setMobileEmailSent] = useState(false);
+  const [mobileEmailLoading, setMobileEmailLoading] = useState(false);
+  const [mobileEmailError, setMobileEmailError] = useState('');
+  const isMobile = useIsMobile();
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 3000);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = window.location.href;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 3000);
+    }
+  };
+
+  const handleSendLinkToEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mobileEmail.trim()) return;
+
+    setMobileEmailLoading(true);
+    setMobileEmailError('');
+
+    try {
+      const result = await apiService.sendStudyLink(mobileEmail.trim());
+      if (result.success) {
+        setMobileEmailSent(true);
+      } else {
+        setMobileEmailError(result.error || 'Failed to send email. Please try again.');
+      }
+    } catch (err) {
+      setMobileEmailError('Failed to send email. Please try again.');
+    } finally {
+      setMobileEmailLoading(false);
+    }
+  };
 
   // Validation
   const isFormValid = () => {
@@ -70,6 +116,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
           completedSwesat: swesat as 'yes' | 'no' | 'unsure'
         };
         const newSession = await apiService.createSession(email.trim(), demographics);
+        
+        // Send welcome/confirmation email (fire and forget - don't block the quiz start)
+        apiService.sendWelcomeEmail(email.trim()).catch(err => {
+          console.warn('Failed to send welcome email:', err);
+        });
+        
         onStartQuiz(newSession.sessionId, newSession.passageOrder, false);
       }
     } catch (err) {
@@ -110,12 +162,112 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
         completedSwesat: swesat as 'yes' | 'no' | 'unsure'
       };
       const newSession = await apiService.createSession(email.trim(), demographics);
+      
+      // Send welcome/confirmation email (fire and forget - don't block the quiz start)
+      apiService.sendWelcomeEmail(email.trim()).catch(err => {
+        console.warn('Failed to send welcome email:', err);
+      });
+      
       onStartQuiz(newSession.sessionId, newSession.passageOrder, false);
       setShowResumeModal(false);
     } catch (err) {
       setError('Failed to create new session.');
     }
   };
+
+  // Show mobile warning modal
+  if (isMobile) {
+    return (
+      <div className="mobile-warning-overlay">
+        <div className="mobile-warning-modal">
+          <div className="mobile-warning-icon">💻</div>
+          <h1>Desktop Required</h1>
+          <p className="mobile-warning-text">
+            This reading comprehension study requires a <strong>desktop or laptop computer</strong> with a mouse.
+          </p>
+          <div className="mobile-warning-reasons">
+            <div className="reason-item">
+              <span className="reason-icon">🖱️</span>
+              <span>We track cursor movement as a proxy for eye-tracking</span>
+            </div>
+            <div className="reason-item">
+              <span className="reason-icon">📐</span>
+              <span>The interface is optimized for larger screens</span>
+            </div>
+            <div className="reason-item">
+              <span className="reason-icon">📊</span>
+              <span>Accurate data collection requires desktop environment</span>
+            </div>
+          </div>
+
+          {/* Email Section */}
+          <div className="mobile-email-section">
+            <h2>📧 Send Link to Your Email</h2>
+            
+            {!mobileEmailSent ? (
+              <form onSubmit={handleSendLinkToEmail} className="mobile-email-form">
+                <input
+                  type="email"
+                  value={mobileEmail}
+                  onChange={(e) => setMobileEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  required
+                  disabled={mobileEmailLoading}
+                  className="mobile-email-input"
+                />
+                {mobileEmailError && (
+                  <p className="mobile-email-error">{mobileEmailError}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={!mobileEmail.trim() || mobileEmailLoading}
+                  className="mobile-email-button"
+                >
+                  {mobileEmailLoading ? 'Sending...' : '📧 Send Me the Link'}
+                </button>
+              </form>
+            ) : (
+              <div className="mobile-email-success">
+                <span className="success-icon">✅</span>
+                <p>Link sent to <strong>{mobileEmail}</strong>!</p>
+                <p className="success-hint">Check your inbox and open the link on your desktop.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="mobile-divider">
+            <span>or</span>
+          </div>
+
+          {/* Copy Link Section */}
+          <div className="mobile-copy-section">
+            <h2>📋 Copy Link</h2>
+            
+            <div className="copy-link-container">
+              <div className="link-display">{window.location.href}</div>
+              <button
+                onClick={handleCopyLink}
+                className={`copy-link-button ${linkCopied ? 'copied' : ''}`}
+              >
+                {linkCopied ? '✓ Copied!' : 'Copy'}
+              </button>
+            </div>
+            
+            {linkCopied && (
+              <p className="copy-success-hint">
+                ✅ Link copied! Paste it in your desktop browser.
+              </p>
+            )}
+          </div>
+
+          <div className="mobile-warning-footer">
+            <p>DM2730 Technology Enhanced Learning • KTH</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="landing-page">
