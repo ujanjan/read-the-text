@@ -178,7 +178,7 @@ src/
 └── index.css                          # Base CSS imports
 
 functions/                             # Cloudflare Workers API endpoints
-├── _worker.ts                         # Main router for API endpoints
+├── _worker.ts                         # Main router for API endpoints (contains '__INDEX_HTML_CONTENT__' placeholder)
 ├── types.ts                           # TypeScript interfaces for Worker environment
 └── api/
     ├── send-link.ts                   # POST /api/send-link - Email study link to mobile users
@@ -283,6 +283,31 @@ npm run build
 ```
 
 The production build will be created in the `dist/` directory.
+
+### Build Process Details
+
+The build process handles a key challenge: **SPA routing on Cloudflare Workers**.
+
+When users navigate to routes like `/admin` or `/results/:sessionId`, the Cloudflare Worker must serve `index.html` with the correct hashed asset paths (e.g., `/assets/index-B8-uZEdN.js`). Since Vite generates new hashes on every build, the worker needs the current `index.html` content.
+
+**How it works:**
+
+1. **`vite build`** - Creates `dist/` with `index.html` containing hashed asset references
+2. **`scripts/inject-index-html.js`** - Post-build script that:
+   - Copies `functions/` directory to `dist/functions/`
+   - Replaces `'__INDEX_HTML_CONTENT__'` placeholder in the worker with actual HTML
+3. **`wrangler deploy`** - Deploys `dist/functions/_worker.ts` (with injected HTML)
+
+**Key files:**
+- `functions/_worker.ts` - Source file with `'__INDEX_HTML_CONTENT__'` placeholder (never modified)
+- `dist/functions/_worker.ts` - Built file with actual HTML content (generated each build)
+- `scripts/inject-index-html.js` - Build script that performs the injection
+- `wrangler.toml` - Points to `dist/functions/_worker.ts` for deployment
+
+This approach ensures:
+- ✅ Source files stay clean and version-controllable
+- ✅ Each build gets the correct asset paths automatically
+- ✅ SPA routes work correctly on Cloudflare Workers
 
 ## Deployment
 

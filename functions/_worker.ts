@@ -1,26 +1,26 @@
 // Main Worker entry point for routing
 // This handles routing between static assets and API functions
 // For Cloudflare Workers deployment with [assets] configuration
+//
+// BUILD PROCESS:
+// ==============
+// This file contains a placeholder for index.html that gets replaced during build.
+// The build script (scripts/inject-index-html.js) copies this entire functions/
+// directory to dist/functions/ and injects the built index.html content.
+//
+// - Source: functions/_worker.ts (this file - keeps placeholder)
+// - Output: dist/functions/_worker.ts (has actual HTML with hashed assets)
+//
+// This ensures SPA routes like /admin work correctly by serving the right
+// index.html with current asset paths (e.g., /assets/index-B8-uZEdN.js).
+//
+// Run: npm run build && npx wrangler deploy
 
 import type { Env } from './types';
 
 // Placeholder for index.html - will be replaced during build
-const INDEX_HTML_PLACEHOLDER = `
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Reading Comprehension App</title>
-      <script type="module" crossorigin src="/assets/index-DSUld5uO.js"></script>
-      <link rel="stylesheet" crossorigin href="/assets/index-DUeRTjyq.css">
-    </head>
-
-    <body>
-      <div id="root"></div>
-    </body>
-  </html>
-  `;
+// DO NOT EDIT THIS LINE - it's replaced by scripts/inject-index-html.js
+const INDEX_HTML_PLACEHOLDER = '__INDEX_HTML_CONTENT__';
 
 // Import all handlers
 import { onRequestPost as sessionsCheckPost } from './api/sessions/check';
