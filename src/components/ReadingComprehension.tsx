@@ -377,7 +377,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                         : "bg-red-50 text-red-800"
                     }`}
                   >
-                    <div className="text-xs font-semibold mb-1 opacity-60">Response A (JSON-based)</div>
+                    <div className="text-xs font-semibold mb-1 opacity-60">Response A</div>
                     {isLoadingFeedback ? (
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -399,15 +399,18 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                     )}
                   </div>
 
+                  {/* Separator */}
+                  <div style={{ margin: '4px 0', height: '4px' }}></div>
+
                   {/* Heatmap feedback - BOTTOM */}
                   <div
-                    className={`p-3 rounded-md mt-2 text-sm min-w-0 max-w-full ${
+                    className={`p-3 rounded-md text-sm min-w-0 max-w-full ${
                       currentSubmissionCorrect
                         ? "bg-green-50 text-green-800"
                         : "bg-red-50 text-red-800"
                     }`}
                   >
-                    <div className="text-xs font-semibold mb-1 opacity-60">Response B (Heatmap-based)</div>
+                    <div className="text-xs font-semibold mb-1 opacity-60">Response B</div>
                     {isLoadingFeedbackHeatmap ? (
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
