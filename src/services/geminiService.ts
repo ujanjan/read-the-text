@@ -15,11 +15,6 @@ export interface CursorData {
   timestamp: number;
 }
 
-export interface AnalysisResult {
-  tips: string;
-  error?: string;
-}
-
 export interface QuestionFeedbackResult {
   feedback: string;
   error?: string;
@@ -34,181 +29,14 @@ function base64ToGeminiFormat(dataUrl: string): { mimeType: string; data: string
   if (!matches) {
     throw new Error('Invalid data URL format');
   }
-  
+
   const mimeType = matches[1];
   const base64Data = matches[2];
-  
+
   return {
     mimeType,
     data: base64Data,
   };
-}
-
-/**
- * Analyzes reading behavior data and provides comprehension tips
- */
-export async function analyzeReadingBehavior(
-  title: string,
-  passage: string,
-  screenshot: string | null,
-  cursorHistory: CursorData[]
-): Promise<AnalysisResult> {
-  if (!model) {
-    return {
-      tips: '',
-      error: 'Gemini API key is not configured. Please set VITE_GEMINI_API_KEY in your .env file.',
-    };
-  }
-
-  if (!passage) {
-    return {
-      tips: '',
-      error: 'Reading passage is required for analysis.',
-    };
-  }
-
-  if (cursorHistory.length === 0) {
-    return {
-      tips: '',
-      error: 'No cursor tracking data available. Please start tracking your cursor movements.',
-    };
-  }
-
-  // Prepare tracking data summary
-  const trackingDataSummary = {
-    totalPoints: cursorHistory.length,
-    duration: cursorHistory.length > 0
-      ? (cursorHistory[cursorHistory.length - 1].timestamp - cursorHistory[0].timestamp) / 1000
-      : 0,
-    coordinateRange: cursorHistory.length > 0
-      ? {
-          minX: Math.min(...cursorHistory.map(d => d.x)),
-          maxX: Math.max(...cursorHistory.map(d => d.x)),
-          minY: Math.min(...cursorHistory.map(d => d.y)),
-          maxY: Math.max(...cursorHistory.map(d => d.y)),
-        }
-      : null,
-  };
-
-  // OPTIMIZATION: Reduce JSON data sent to Gemini
-  // Send only a representative sample instead of all points
-  let jsonSample: CursorData[] = cursorHistory;
-  if (cursorHistory.length > 100) {
-    const sampleSize = 100; // Sample 100 points evenly distributed
-    const step = Math.floor(cursorHistory.length / sampleSize);
-    const sampledPoints: CursorData[] = [];
-    
-    // Evenly distribute 100 points from beginning to end
-    for (let i = 0; i < cursorHistory.length && sampledPoints.length < sampleSize; i += step) {
-      sampledPoints.push(cursorHistory[i]);
-    }
-    
-    // Ensure we always include the very last point
-    if (sampledPoints[sampledPoints.length - 1] !== cursorHistory[cursorHistory.length - 1]) {
-      sampledPoints.push(cursorHistory[cursorHistory.length - 1]);
-    }
-    
-    jsonSample = sampledPoints;
-    console.log(`🔽 [SAMPLING - Reading Behavior] Reduced cursor data from ${cursorHistory.length} to ${jsonSample.length} points`);
-  } else {
-    console.log(`✅ [NO SAMPLING - Reading Behavior] Cursor data size (${cursorHistory.length}) is under threshold, sending all points`);
-  }
-
-  const prompt = `You are an expert in reading comprehension and learning analytics. Analyze the following data from a student reading session and provide actionable feedback tips.
-
-**TEXT BEING READ:**
-
-${title ? `**Title:** ${title}\n\n` : ''}${passage}
-
-**VISUAL ATTENTION DATA:**
-
-- A heatmap image showing cursor movement patterns${screenshot ? ' (attached)' : ' (not available)'}
-- JSON file containing cursor coordinates (x, y) and timestamps in milliseconds (see below)
-- The heatmap intensity (green/bright areas) indicates where the cursor spent more time
-- Each JSON entry represents a cursor position at a specific moment
-
-**CURSOR TRACKING DATA SUMMARY:**
-- Total cursor points: ${trackingDataSummary.totalPoints}
-- Reading duration: ${trackingDataSummary.duration.toFixed(1)} seconds
-- Coordinate range: ${trackingDataSummary.coordinateRange ? `X: ${trackingDataSummary.coordinateRange.minX.toFixed(0)}-${trackingDataSummary.coordinateRange.maxX.toFixed(0)}, Y: ${trackingDataSummary.coordinateRange.minY.toFixed(0)}-${trackingDataSummary.coordinateRange.maxY.toFixed(0)}` : 'N/A'}
-
-**JSON DATA (sampled for efficiency - ${jsonSample.length} of ${cursorHistory.length} total points):**
-\`\`\`json
-${JSON.stringify(jsonSample)}
-\`\`\`
-
-**YOUR TASK:**
-
-Based on the heatmap, cursor tracking data, and reading passage, provide 4-6 concise actionable feedback tips for the student.
-
-**OUTPUT FORMAT:**
-
-Start with "Actionable Feedback Tips:" followed by the tips. Each tip should:
-- Start with "✓" symbol
-- Be 1-2 sentences maximum
-- Begin with a specific observation from the data
-- Follow with a brief, encouraging recommendation
-- Be direct and concise - no verbose explanations
-
-Example format:
-"Actionable Feedback Tips:
-
-✓ The first paragraph received a lot of attention but the paragraph about 'ancient DNA' was skimmed. The middle paragraphs often include key details about how researchers did their work. Try to spend more time on the second paragraph next time!
-
-✓ You spent extra time at the beginning and end. This suggests you are good at summarizing and paying attention to conclusions, but the middle parts are important as well! Consider spending a little more time on those."
-
-**IMPORTANT:**
-- Keep tips SHORT and CONCISE - 1-2 sentences each
-- Be specific and data-driven, referencing actual content from the passage
-- Focus on improvement, not criticism
-- No verbose explanations - get straight to the point
-- Prioritize the most impactful insights`;
-
-  try {
-    const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
-      { text: prompt },
-    ];
-
-    // Add screenshot if available
-    if (screenshot) {
-      try {
-        const imageData = base64ToGeminiFormat(screenshot);
-        parts.push({
-          inlineData: {
-            mimeType: imageData.mimeType,
-            data: imageData.data,
-          },
-        });
-      } catch (error) {
-        console.warn('Failed to process screenshot for Gemini:', error);
-        // Continue without image if processing fails
-      }
-    }
-
-    const result = await model.generateContent(parts);
-    const response = await result.response;
-    const text = response.text();
-
-    return {
-      tips: text,
-    };
-  } catch (error: any) {
-    console.error('Gemini API error:', error);
-    
-    let errorMessage = 'Failed to analyze reading behavior.';
-    if (error.message?.includes('API_KEY')) {
-      errorMessage = 'Invalid API key. Please check your VITE_GEMINI_API_KEY.';
-    } else if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
-      errorMessage = 'Rate limit exceeded. Please try again in a minute.';
-    } else if (error.message) {
-      errorMessage = `Error: ${error.message}`;
-    }
-
-    return {
-      tips: '',
-      error: errorMessage,
-    };
-  }
 }
 
 /**

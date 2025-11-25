@@ -243,17 +243,10 @@ Backend endpoint for sending study links:
 - Includes branded HTML email template
 
 ### Gemini Service
-Provides two AI-powered analysis functions:
-
-#### `analyzeReadingBehavior()`
-Analyzes overall reading patterns:
-- Processes cursor tracking data (sampled to 100 points for efficiency)
-- Analyzes heatmap visual patterns
-- Provides 4-6 actionable, concise feedback tips
-- Optimized for token usage with JPEG compression and data sampling
+Provides AI-powered personalized feedback:
 
 #### `getPersonalizedQuestionFeedback()`
-Provides question-specific feedback:
+Provides question-specific feedback based on reading behavior:
 - Analyzes which sections were actually read
 - Connects reading behavior to answer correctness
 - For correct answers: Validates they read the relevant sections
