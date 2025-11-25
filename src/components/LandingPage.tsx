@@ -116,6 +116,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
           completedSwesat: swesat as 'yes' | 'no' | 'unsure'
         };
         const newSession = await apiService.createSession(email.trim(), demographics);
+        
+        // Send welcome/confirmation email (fire and forget - don't block the quiz start)
+        apiService.sendWelcomeEmail(email.trim()).catch(err => {
+          console.warn('Failed to send welcome email:', err);
+        });
+        
         onStartQuiz(newSession.sessionId, newSession.passageOrder, false);
       }
     } catch (err) {
@@ -156,6 +162,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
         completedSwesat: swesat as 'yes' | 'no' | 'unsure'
       };
       const newSession = await apiService.createSession(email.trim(), demographics);
+      
+      // Send welcome/confirmation email (fire and forget - don't block the quiz start)
+      apiService.sendWelcomeEmail(email.trim()).catch(err => {
+        console.warn('Failed to send welcome email:', err);
+      });
+      
       onStartQuiz(newSession.sessionId, newSession.passageOrder, false);
       setShowResumeModal(false);
     } catch (err) {

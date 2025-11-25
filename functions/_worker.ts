@@ -32,6 +32,7 @@ import { onRequestPost as passageAttemptPost } from './api/passages/[sessionId]/
 import { onRequestGet as adminSessionsGet } from './api/admin/sessions';
 import { onRequestGet as adminSessionGet, onRequestDelete as adminSessionDelete } from './api/admin/sessions/[id]';
 import { onRequestPost as sendLinkPost } from './api/send-link';
+import { onRequestPost as sendWelcomePost } from './api/send-welcome';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -188,6 +189,11 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
     // Send link (email) route
     if (path === '/api/send-link' && method === 'POST') {
       return await sendLinkPost(createContext());
+    }
+
+    // Send welcome (confirmation email) route
+    if (path === '/api/send-welcome' && method === 'POST') {
+      return await sendWelcomePost(createContext());
     }
     
     // No matching route
