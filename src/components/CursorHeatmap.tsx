@@ -62,28 +62,18 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
       if (!ctx) return;
 
       // Get container bounds if provided, otherwise use full viewport
-      let containerBounds = {
-        left: 0,
-        top: 0,
-        width: window.innerWidth,
-        height: window.innerHeight
-      };
+      let width = window.innerWidth;
+      let height = window.innerHeight;
 
       if (containerRef?.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        containerBounds = {
-          left: rect.left,
-          top: rect.top,
-          width: rect.width,
-          height: rect.height
-        };
+        width = rect.width;
+        height = rect.height;
       }
 
-      // Use device pixel ratio for accurate rendering and screenshot compositing
       const pixelRatio = window.devicePixelRatio || 1;
-      canvas.width = containerBounds.width * pixelRatio;
-      canvas.height = containerBounds.height * pixelRatio;
-
+      canvas.width = width * pixelRatio;
+      canvas.height = height * pixelRatio;
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -91,26 +81,25 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
 
       // Create temp canvas at device pixel resolution
       const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = containerBounds.width * pixelRatio;
-      tempCanvas.height = containerBounds.height * pixelRatio;
+      tempCanvas.width = width * pixelRatio;
+      tempCanvas.height = height * pixelRatio;
       const tempCtx = tempCanvas.getContext('2d');
       if (!tempCtx) return;
 
       // Scale the temp context so we can work in CSS pixels
       tempCtx.scale(pixelRatio, pixelRatio);
-
+      
       // Filter cursor points to only those within the container bounds
       const pointsInBounds = cursorHistory.filter(point => {
-        return point.x >= containerBounds.left &&
-               point.x <= containerBounds.left + containerBounds.width &&
-               point.y >= containerBounds.top &&
-               point.y <= containerBounds.top + containerBounds.height;
+        return point.x >= 0 &&
+              point.x <= width &&
+              point.y >= 0 &&
+              point.y <= height;
       });
 
       pointsInBounds.forEach(point => {
-        // Convert global coordinates to container-relative coordinates
-        const relativeX = point.x - containerBounds.left;
-        const relativeY = point.y - containerBounds.top;
+        const relativeX = point.x;
+        const relativeY = point.y;
 
         const gradient = tempCtx.createRadialGradient(
           relativeX, relativeY, 0,
