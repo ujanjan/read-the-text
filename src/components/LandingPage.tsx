@@ -284,28 +284,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
             <div className="about-section compact">
               <div className="feature-grid">
                 <div className="feature-item">
-                  <span className="feature-icon">📖</span>
+                  <span className="feature-icon blue">📖</span>
                   <div className="feature-text">
                     <strong>Read & Answer</strong>
                     <p>10 short passages</p>
                   </div>
                 </div>
                 <div className="feature-item">
-                  <span className="feature-icon">⏱️</span>
+                  <span className="feature-icon red">⏱️</span>
                   <div className="feature-text">
                     <strong>~25 Minutes</strong>
                     <p>Complete in one sitting</p>
                   </div>
                 </div>
                 <div className="feature-item">
-                  <span className="feature-icon">💻</span>
+                  <span className="feature-icon blue">💻</span>
                   <div className="feature-text">
                     <strong>Desktop Only</strong>
                     <p>Mouse recommended</p>
                   </div>
                 </div>
                 <div className="feature-item">
-                  <span className="feature-icon">👁️</span>
+                  <span className="feature-icon red">👁️</span>
                   <div className="feature-text">
                     <strong>Eye Tracking</strong>
                     <p>Via cursor movement</p>
@@ -314,7 +314,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
               </div>
 
               <div className="important-tip">
-                <p><strong>🖱️ Important:</strong> Please follow the text with your cursor as you read. This acts as a proxy for eye-tracking.</p>
+                <p><strong>ℹ️ Important:</strong> Please follow the text with your cursor as you read. This acts as a proxy for eye-tracking.</p>
               </div>
             </div>
 
@@ -322,10 +322,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
               <div 
                 className="data-notice-header" 
                 onClick={() => setShowDataDetails(!showDataDetails)}
-                style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
               >
                 <h3>📋 Data Collection & Privacy</h3>
-                <span style={{ fontSize: '0.8rem', color: '#3b82f6' }}>
+                <span>
                   {showDataDetails ? 'Hide Details' : 'Show Details'}
                 </span>
               </div>
@@ -477,7 +476,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                 disabled={!isFormValid() || loading}
                 className="start-button"
               >
-                {loading ? 'Loading...' : '🚀 Start the Study'}
+                {loading ? 'Loading...' : (
+                  <>
+                    <span style={{ fontSize: '1.2em' }}>📊</span> Start the Study
+                  </>
+                )}
               </button>
             </form>
           </div>
