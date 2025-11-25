@@ -24,11 +24,51 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
     passageOrder: number[];
   } | null>(null);
   const [showDataDetails, setShowDataDetails] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [mobileEmail, setMobileEmail] = useState('');
   const [mobileEmailSent, setMobileEmailSent] = useState(false);
   const [mobileEmailLoading, setMobileEmailLoading] = useState(false);
   const [mobileEmailError, setMobileEmailError] = useState('');
   const isMobile = useIsMobile();
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 3000);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = window.location.href;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 3000);
+    }
+  };
+
+  const handleSendLinkToEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mobileEmail.trim()) return;
+
+    setMobileEmailLoading(true);
+    setMobileEmailError('');
+
+    try {
+      const result = await apiService.sendStudyLink(mobileEmail.trim());
+      if (result.success) {
+        setMobileEmailSent(true);
+      } else {
+        setMobileEmailError(result.error || 'Failed to send email. Please try again.');
+      }
+    } catch (err) {
+      setMobileEmailError('Failed to send email. Please try again.');
+    } finally {
+      setMobileEmailLoading(false);
+    }
+  };
 
   // Validation
   const isFormValid = () => {
@@ -123,25 +163,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
     }
   };
 
-  const handleSendLinkToEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!mobileEmail.trim()) return;
-
-    setMobileEmailLoading(true);
-    setMobileEmailError('');
-
-    try {
-      // For now, we'll just show a success message
-      // In production, you would call an API to send the email
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      setMobileEmailSent(true);
-    } catch (err) {
-      setMobileEmailError('Failed to send email. Please try again.');
-    } finally {
-      setMobileEmailLoading(false);
-    }
-  };
-
   // Show mobile warning modal
   if (isMobile) {
     return (
@@ -167,9 +188,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
             </div>
           </div>
 
+          {/* Email Section */}
           <div className="mobile-email-section">
-            <h2>Get the Link on Desktop</h2>
-            <p>Enter your email and we'll remind you to complete the study on your computer.</p>
+            <h2>📧 Send Link to Your Email</h2>
             
             {!mobileEmailSent ? (
               <form onSubmit={handleSendLinkToEmail} className="mobile-email-form">
@@ -202,8 +223,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
             )}
           </div>
 
+          {/* Divider */}
+          <div className="mobile-divider">
+            <span>or</span>
+          </div>
+
+          {/* Copy Link Section */}
+          <div className="mobile-copy-section">
+            <h2>📋 Copy Link</h2>
+            
+            <div className="copy-link-container">
+              <div className="link-display">{window.location.href}</div>
+              <button
+                onClick={handleCopyLink}
+                className={`copy-link-button ${linkCopied ? 'copied' : ''}`}
+              >
+                {linkCopied ? '✓ Copied!' : 'Copy'}
+              </button>
+            </div>
+            
+            {linkCopied && (
+              <p className="copy-success-hint">
+                ✅ Link copied! Paste it in your desktop browser.
+              </p>
+            )}
+          </div>
+
           <div className="mobile-warning-footer">
-            <p>Study URL: <span className="study-url">{window.location.href}</span></p>
+            <p>DM2730 Technology Enhanced Learning • KTH</p>
           </div>
         </div>
       </div>

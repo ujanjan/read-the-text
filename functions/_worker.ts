@@ -5,7 +5,22 @@
 import type { Env } from './types';
 
 // Placeholder for index.html - will be replaced during build
-const INDEX_HTML_PLACEHOLDER = '__INDEX_HTML_CONTENT__';
+const INDEX_HTML_PLACEHOLDER = `
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Reading Comprehension App</title>
+      <script type="module" crossorigin src="/assets/index-B_5ukyhN.js"></script>
+      <link rel="stylesheet" crossorigin href="/assets/index-CyWPjUMR.css">
+    </head>
+
+    <body>
+      <div id="root"></div>
+    </body>
+  </html>
+  `;
 
 // Import all handlers
 import { onRequestPost as sessionsCheckPost } from './api/sessions/check';

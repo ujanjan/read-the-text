@@ -2219,12 +2219,98 @@
 .mobile-warning-footer {
   padding-top: 1rem;
   border-top: 1px solid #e2e8f0;
+  text-align: center;
 }
 
 .mobile-warning-footer p {
   font-size: 0.75rem;
   color: #94a3b8;
   margin: 0;
+}
+
+/* Mobile Divider */
+.mobile-divider {
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+}
+
+.mobile-divider::before,
+.mobile-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.mobile-divider span {
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Mobile Copy Section */
+.mobile-copy-section {
+  background: #f8fafc;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.mobile-copy-section h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.75rem;
+}
+
+.copy-link-container {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.link-display {
+  flex: 1;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: #64748b;
+  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.copy-link-button {
+  padding: 0.75rem 1rem;
+  background: #475569;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.copy-link-button:hover {
+  background: #334155;
+}
+
+.copy-link-button.copied {
+  background: #10b981;
+}
+
+.copy-success-hint {
+  font-size: 0.8rem;
+  color: #10b981;
+  margin-top: 0.75rem;
+  text-align: center;
 }
 
 .study-url {

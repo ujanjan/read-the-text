@@ -1,0 +1,10 @@
+# Cloudflare Workers Local Development Secrets
+# Copy this file to .dev.vars and fill in your values
+#
+# IMPORTANT: This file is for Cloudflare Workers (backend), not Vite (frontend)
+# Wrangler automatically loads .dev.vars when running `npx wrangler dev`
+
+# Brevo (Sendinblue) API Key for sending emails
+# Get your API key from: https://app.brevo.com/settings/keys/api
+# Sign up for free at https://www.brevo.com (300 emails/day free)
+BREVO_API_KEY=your_brevo_api_key_here
