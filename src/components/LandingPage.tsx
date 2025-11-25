@@ -123,7 +123,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
         <div className="landing-grid">
           <div className="info-column">
             <div className="landing-header">
-              <h1>📚 Reading Comprehension Study</h1>
+              <h1>Reading Comprehension Study</h1>
               <div className="course-info">
                 <p>DM2730 Technology Enhanced Learning • KTH Royal Institute of Technology</p>
               </div>
@@ -314,7 +314,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                     onChange={(e) => setAgreed(e.target.checked)}
                     disabled={loading}
                   />
-                  I agree to the data collection and understand my reading patterns will be recorded
+                  I agree to data collection and recording of my reading patterns
                 </label>
               </div>
 
