@@ -379,10 +379,10 @@ export default function App() {
 
   const handleCaptureScreenshot = async (): Promise<string | null> => {
     try {
-      // OPTIMIZATION: Limit pixel ratio to reduce image size
-      // Use max 1.5x instead of full device pixel ratio (which can be 2-3x on retina)
-      // This significantly reduces file size while maintaining readability
-      const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+      // OPTIMIZATION: Use 1.0x pixel ratio to reduce image size
+      // This provides consistent resolution across devices and significantly reduces file size
+      // Quality is still sufficient for heatmap analysis by Gemini
+      const pixelRatio = 1.0;
 
       // Capture the full screen (document body)
       const canvas = await toCanvas(document.body, {
@@ -429,14 +429,15 @@ export default function App() {
         }
       }
 
-      // OPTIMIZATION: Use JPEG instead of PNG for much smaller file size
-      // Quality 0.85 provides good balance between quality and file size
-      // PNG: ~500KB-2MB, JPEG (0.85): ~50-150KB (10-20x smaller!)
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      
+      // OPTIMIZATION: Use JPEG with quality 0.70 for optimal file size
+      // Combined with 1.0x pixel ratio, this achieves target of ~40-80KB per image
+      // Quality is still sufficient for visual heatmap analysis
+      // PNG: ~500KB-2MB, JPEG (0.70, 1.0x): ~40-80KB (significant reduction!)
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.70);
+
       // Log size for monitoring
       const sizeKB = Math.round((dataUrl.length * 0.75) / 1024); // Approximate base64 to bytes
-      console.log(`📸 Screenshot captured: ${sizeKB}KB (JPEG quality 0.85, pixelRatio ${pixelRatio.toFixed(1)})`);
+      console.log(`📸 Screenshot captured: ${sizeKB}KB (JPEG quality 0.70, pixelRatio ${pixelRatio.toFixed(1)})`);
 
       // Store screenshot per-passage
       setPassageData(prev => ({

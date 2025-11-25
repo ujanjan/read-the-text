@@ -261,9 +261,10 @@ Provides question-specific feedback based on reading behavior:
 The app includes several optimizations for performance and cost efficiency:
 
 ### Screenshot Optimization
-- **Pixel Ratio Limiting**: Caps at 1.5x instead of full device pixel ratio (2-3x on retina)
-- **JPEG Compression**: Uses JPEG (quality 0.85) instead of PNG
-- **File Size**: Reduced from ~500KB-2MB (PNG) to ~50-150KB (JPEG) - 10-20x smaller
+- **Pixel Ratio**: Fixed at 1.0x for consistent resolution across devices
+- **JPEG Compression**: Uses JPEG (quality 0.70) for optimal file size
+- **File Size**: Reduced from ~500KB-2MB (PNG) to ~40-80KB (JPEG) - 10-25x smaller
+- **Target**: Keeps images under 100KB for efficient API transmission
 - **Heatmap Compositing**: Efficiently overlays heatmap during capture without DOM manipulation
 
 ### AI Token Optimization
