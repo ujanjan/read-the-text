@@ -4,25 +4,29 @@ interface SendLinkRequest {
   email: string;
 }
 
+// Helper to create JSON responses
+const jsonResponse = (data: any, status = 200) => {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' }
+  });
+};
+
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
     const { email } = await context.request.json() as SendLinkRequest;
 
     if (!email || !email.includes('@')) {
-      return Response.json(
-        { error: 'Valid email is required' },
-        { status: 400 }
-      );
+      return jsonResponse({ error: 'Valid email is required' }, 400);
     }
 
     const BREVO_API_KEY = context.env.BREVO_API_KEY;
+    const BREVO_SENDER_EMAIL = context.env.BREVO_SENDER_EMAIL || 'noreply@example.com';
+    const BREVO_SENDER_NAME = context.env.BREVO_SENDER_NAME || 'Reading Comprehension Study';
     
     if (!BREVO_API_KEY) {
       console.error('BREVO_API_KEY not configured');
-      return Response.json(
-        { error: 'Email service not configured' },
-        { status: 500 }
-      );
+      return jsonResponse({ error: 'Email service not configured. Please check .dev.vars file.' }, 500);
     }
 
     // Get the study URL from the request origin
@@ -39,8 +43,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       },
       body: JSON.stringify({
         sender: {
-          name: 'Reading Comprehension Study',
-          email: 'noreply@kth.se', // You can use any email, Brevo handles sending
+          name: BREVO_SENDER_NAME,
+          email: BREVO_SENDER_EMAIL,
         },
         to: [
           { email: email }
@@ -95,24 +99,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Brevo API error:', response.status, errorData);
-      return Response.json(
-        { error: 'Failed to send email. Please try again later.' },
-        { status: 500 }
-      );
+      const errorText = await response.text();
+      console.error('Brevo API error:', response.status, errorText);
+      return jsonResponse({ 
+        error: 'Failed to send email. Please try again later.',
+        details: errorText 
+      }, 500);
     }
 
-    return Response.json({ 
+    return jsonResponse({ 
       success: true, 
       message: 'Email sent successfully' 
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Send link error:', error);
-    return Response.json(
-      { error: 'Failed to send email' },
-      { status: 500 }
-    );
+    return jsonResponse({ 
+      error: 'Failed to send email',
+      details: error.message 
+    }, 500);
   }
 };

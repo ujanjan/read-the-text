@@ -7,4 +7,12 @@
 # Brevo (Sendinblue) API Key for sending emails
 # Get your API key from: https://app.brevo.com/settings/keys/api
 # Sign up for free at https://www.brevo.com (300 emails/day free)
-BREVO_API_KEY=your_brevo_api_key_here
+BREVO_API_KEY=xkeysib-your-brevo-api-key-here
+
+# Brevo Sender Email (MUST be verified in Brevo dashboard)
+# Go to: https://app.brevo.com/senders to add and verify your email
+# You can use your personal email (e.g., yourname@gmail.com) or KTH email
+BREVO_SENDER_EMAIL=your-verified-email@example.com
+
+# Brevo Sender Name (optional, defaults to "Reading Comprehension Study")
+BREVO_SENDER_NAME=Reading Comprehension Study
