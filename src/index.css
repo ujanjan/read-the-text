@@ -1248,6 +1248,31 @@
   max-width: 500px;
   width: 100%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  transition: max-width 0.3s ease;
+}
+
+.landing-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .landing-container {
+    max-width: 1000px;
+  }
+
+  .landing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .landing-header,
+  .landing-container h1 {
+    text-align: left;
+  }
 }
 
 .landing-container h1 {
