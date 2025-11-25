@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { apiService } from '../services/apiService';
 import type { SessionData, UserDemographics } from '../types/session';
+import { useIsMobile } from './ui/use-mobile';
 
 interface LandingPageProps {
   onStartQuiz: (sessionId: string, passageOrder: number[], isResume: boolean, resumeData?: SessionData) => void;
@@ -23,6 +24,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
     passageOrder: number[];
   } | null>(null);
   const [showDataDetails, setShowDataDetails] = useState(false);
+  const [mobileEmail, setMobileEmail] = useState('');
+  const [mobileEmailSent, setMobileEmailSent] = useState(false);
+  const [mobileEmailLoading, setMobileEmailLoading] = useState(false);
+  const [mobileEmailError, setMobileEmailError] = useState('');
+  const isMobile = useIsMobile();
 
   // Validation
   const isFormValid = () => {
@@ -116,6 +122,93 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
       setError('Failed to create new session.');
     }
   };
+
+  const handleSendLinkToEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mobileEmail.trim()) return;
+
+    setMobileEmailLoading(true);
+    setMobileEmailError('');
+
+    try {
+      // For now, we'll just show a success message
+      // In production, you would call an API to send the email
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      setMobileEmailSent(true);
+    } catch (err) {
+      setMobileEmailError('Failed to send email. Please try again.');
+    } finally {
+      setMobileEmailLoading(false);
+    }
+  };
+
+  // Show mobile warning modal
+  if (isMobile) {
+    return (
+      <div className="mobile-warning-overlay">
+        <div className="mobile-warning-modal">
+          <div className="mobile-warning-icon">💻</div>
+          <h1>Desktop Required</h1>
+          <p className="mobile-warning-text">
+            This reading comprehension study requires a <strong>desktop or laptop computer</strong> with a mouse.
+          </p>
+          <div className="mobile-warning-reasons">
+            <div className="reason-item">
+              <span className="reason-icon">🖱️</span>
+              <span>We track cursor movement as a proxy for eye-tracking</span>
+            </div>
+            <div className="reason-item">
+              <span className="reason-icon">📐</span>
+              <span>The interface is optimized for larger screens</span>
+            </div>
+            <div className="reason-item">
+              <span className="reason-icon">📊</span>
+              <span>Accurate data collection requires desktop environment</span>
+            </div>
+          </div>
+
+          <div className="mobile-email-section">
+            <h2>Get the Link on Desktop</h2>
+            <p>Enter your email and we'll remind you to complete the study on your computer.</p>
+            
+            {!mobileEmailSent ? (
+              <form onSubmit={handleSendLinkToEmail} className="mobile-email-form">
+                <input
+                  type="email"
+                  value={mobileEmail}
+                  onChange={(e) => setMobileEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  required
+                  disabled={mobileEmailLoading}
+                  className="mobile-email-input"
+                />
+                {mobileEmailError && (
+                  <p className="mobile-email-error">{mobileEmailError}</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={!mobileEmail.trim() || mobileEmailLoading}
+                  className="mobile-email-button"
+                >
+                  {mobileEmailLoading ? 'Sending...' : '📧 Send Me the Link'}
+                </button>
+              </form>
+            ) : (
+              <div className="mobile-email-success">
+                <span className="success-icon">✅</span>
+                <p>Link sent to <strong>{mobileEmail}</strong>!</p>
+                <p className="success-hint">Check your inbox and open the link on your desktop.</p>
+              </div>
+            )}
+          </div>
+
+          <div className="mobile-warning-footer">
+            <p>Study URL: <span className="study-url">{window.location.href}</span></p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="landing-page">
