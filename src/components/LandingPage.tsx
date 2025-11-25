@@ -199,7 +199,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                                 <input
                                     type="email"
                                     value={mobileEmail}
-                                    onChange={(e) => setMobileEmail(e.target.value)}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMobileEmail(e.target.value)}
                                     placeholder="your@email.com"
                                     required
                                     disabled={mobileEmailLoading}
@@ -360,7 +360,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                             <input
                                 type="email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                                 placeholder="e.g., john@example.com"
                                 required
                                 disabled={loading}
@@ -378,7 +378,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                                 min="18"
                                 max="99"
                                 value={age}
-                                onChange={(e) => setAge(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAge(e.target.value)}
                                 placeholder="Enter your age"
                                 required
                                 disabled={loading}
@@ -390,7 +390,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                             <label className="block text-gray-700 mb-2 text-xs font-medium">Have you attended university?</label>
                             <select
                                 value={university}
-                                onChange={(e) => setUniversity(e.target.value as any)}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setUniversity(e.target.value as 'yes' | 'no' | 'currently_attending' | '')}
                                 required
                                 disabled={loading}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none bg-white disabled:bg-gray-50"
@@ -406,7 +406,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                             <label className="block text-gray-700 mb-2 text-xs font-medium">English Fluency:</label>
                             <select
                                 value={englishFluency}
-                                onChange={(e) => setEnglishFluency(e.target.value as any)}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEnglishFluency(e.target.value as 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language' | '')}
                                 required
                                 disabled={loading}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none bg-white disabled:bg-gray-50"
@@ -426,7 +426,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                                 <input
                                     type="text"
                                     value={firstLanguage}
-                                    onChange={(e) => setFirstLanguage(e.target.value)}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstLanguage(e.target.value)}
                                     placeholder="e.g., Swedish, Spanish..."
                                     required
                                     disabled={loading}
@@ -440,7 +440,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                             <label className="block text-gray-700 mb-2 text-xs font-medium">Have you taken the SWESAT (Högskoleprovet)?</label>
                             <select
                                 value={swesat}
-                                onChange={(e) => setSwesat(e.target.value as any)}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSwesat(e.target.value as 'yes' | 'no' | 'unsure' | '')}
                                 required
                                 disabled={loading}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none bg-white disabled:bg-gray-50"
@@ -457,7 +457,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                                 type="checkbox"
                                 id="dataAgreement"
                                 checked={agreed}
-                                onChange={(e) => setAgreed(e.target.checked)}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgreed(e.target.checked)}
                                 disabled={loading}
                                 className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                             />

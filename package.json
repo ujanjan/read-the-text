@@ -52,6 +52,8 @@
       "devDependencies": {
             "@cloudflare/workers-types": "^4.20251121.0",
             "@types/node": "^20.10.0",
+            "@types/react": "^19.2.7",
+            "@types/react-dom": "^19.2.3",
             "@vitejs/plugin-react-swc": "^3.10.2",
             "vite": "6.3.5"
       },
