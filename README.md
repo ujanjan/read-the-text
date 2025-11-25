@@ -17,6 +17,9 @@ The original design is available at [Figma](https://www.figma.com/design/KIRnobZ
 - **Progress Tracking**: Track performance across all passages with statistics on time spent, accuracy, and attempts
 
 ### User Experience
+- **Mobile Warning**: Detects mobile devices and shows a warning that the study requires a desktop browser
+  - Users can copy the study link to share or save for later
+  - Users can enter their email to receive the study link (powered by Brevo/Sendinblue)
 - **Session Management**: Start, stop, and restart quiz sessions with data persistence per passage
 - **Navigation**: Move between passages while preserving individual progress
 - **Analytics Dashboard**: Collapsible sidebar showing cursor data, heatmap controls, and reading insights
@@ -46,6 +49,7 @@ The original design is available at [Figma](https://www.figma.com/design/KIRnobZ
 - **Tailwind CSS** - Styling with modern CSS features
 - **Radix UI** - Accessible component primitives
 - **Google Gemini AI (2.0 Flash)** - AI-powered feedback generation
+- **Brevo (Sendinblue)** - Transactional email service for mobile users
 - **html-to-image** - Screenshot capture functionality
 - **Lucide React** - Icon library
 
@@ -54,6 +58,7 @@ The original design is available at [Figma](https://www.figma.com/design/KIRnobZ
 - Node.js (v18 or higher recommended)
 - npm or yarn
 - Google Gemini API key ([Get one here](https://aistudio.google.com/app/apikey))
+- Brevo API key for email functionality ([Sign up free](https://www.brevo.com) - 300 emails/day)
 
 ## Setup
 
@@ -72,15 +77,28 @@ npm install
 
 ### 3. Configure environment variables
 
-Create a `.env` file in the root directory:
+**Frontend (Vite)** - Create a `.env` file in the root directory:
 
 ```env
-VITE_GEMINI_API_KEY=your_api_key_here
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 Get your Gemini API key from: https://aistudio.google.com/app/apikey
 
-**Note:** The `.env` file is already in `.gitignore` and will not be committed to the repository.
+**Backend (Cloudflare Workers)** - Create a `.dev.vars` file for local development:
+
+```env
+BREVO_API_KEY=xkeysib-your-brevo-api-key-here
+BREVO_SENDER_EMAIL=your-verified-email@example.com
+BREVO_SENDER_NAME=Reading Comprehension Study
+```
+
+**Important:** Your sender email MUST be verified in Brevo:
+1. Go to https://app.brevo.com/senders
+2. Add your email address
+3. Click the verification link sent to that email
+
+**Note:** Both `.env` and `.dev.vars` files are in `.gitignore` and will not be committed to the repository.
 
 ### 4. Start the development server
 
@@ -135,6 +153,7 @@ src/
 │   ├── CursorTracker.tsx              # Real-time cursor movement tracking
 │   ├── CursorHeatmap.tsx              # Canvas-based heatmap visualization
 │   ├── CursorTrackingData.tsx         # Analytics sidebar panel
+│   ├── LandingPage.tsx                # Entry page with mobile detection & email link feature
 │   ├── RealtimeCursorIndicator.tsx    # Live cursor position indicator (optional)
 │   ├── figma/
 │   │   └── ImageWithFallback.tsx      # Image loading with fallback handling
@@ -146,15 +165,26 @@ src/
 ├── data/
 │   └── passages.json                  # 10 reading comprehension passages with questions
 ├── services/
+│   ├── apiService.ts                  # API client for backend communication
 │   ├── geminiService.ts               # Gemini AI integration for feedback
 │   └── passageService.ts              # Passage data loading and management
 ├── types/
-│   └── passage.ts                     # TypeScript interfaces for passages
+│   ├── passage.ts                     # TypeScript interfaces for passages
+│   └── session.ts                     # TypeScript interfaces for sessions
 ├── styles/
 │   └── globals.css                    # Global styles and Tailwind configuration
 ├── App.tsx                            # Main application component with state management
 ├── main.tsx                           # Application entry point
 └── index.css                          # Base CSS imports
+
+functions/                             # Cloudflare Workers API endpoints
+├── _worker.ts                         # Main router for API endpoints
+├── types.ts                           # TypeScript interfaces for Worker environment
+└── api/
+    ├── send-link.ts                   # POST /api/send-link - Email study link to mobile users
+    ├── sessions/                      # Session management endpoints
+    ├── passages/                      # Passage data endpoints
+    └── admin/                         # Admin dashboard endpoints
 ```
 
 ## Key Components
@@ -195,6 +225,22 @@ Analytics sidebar displaying:
 - Screenshot preview
 - Heatmap controls (save, capture, debug toggle)
 - Reading behavior insights
+
+### LandingPage.tsx
+Entry page component featuring:
+- Mobile device detection using `useIsMobile` hook (< 768px width)
+- Modal warning for mobile users explaining desktop requirement
+- "Copy Link" functionality to save/share the study URL
+- Email form to send study link via Brevo API
+- Demographic data collection form for research
+- Session management (check existing, create new, or resume)
+
+### Send Link API (functions/api/send-link.ts)
+Backend endpoint for sending study links:
+- POST `/api/send-link` - Sends email with study URL
+- Uses Brevo (Sendinblue) transactional email API
+- Configurable sender email/name via environment variables
+- Includes branded HTML email template
 
 ### Gemini Service
 Provides two AI-powered analysis functions:
@@ -327,10 +373,34 @@ The production build will be created in the `dist/` directory.
 - **Build Settings**: Adjust in **Settings** → **Builds & deployments**
 - **Analytics**: View deployment and visitor analytics in the dashboard
 
+### Setting Up Worker Secrets for Production
+
+After deploying to Cloudflare, you need to set up secrets for the backend (Cloudflare Workers):
+
+```bash
+# Set Brevo API key (for sending emails to mobile users)
+npx wrangler secret put BREVO_API_KEY
+# Enter your Brevo API key when prompted (starts with xkeysib-)
+
+# Set verified sender email
+npx wrangler secret put BREVO_SENDER_EMAIL
+# Enter your verified email address
+
+# Optional: Set sender display name
+npx wrangler secret put BREVO_SENDER_NAME
+# Enter the name to show in emails (default: "Reading Comprehension Study")
+```
+
+**Before running these commands:**
+1. Sign up at https://www.brevo.com (free tier: 300 emails/day)
+2. Get your API key from https://app.brevo.com/settings/keys/api
+3. Verify your sender email at https://app.brevo.com/senders
+
 ### Important Notes
 
-- Environment variables must be prefixed with `VITE_` to be exposed to the client
-- The app is a static site (no server-side rendering)
+- Environment variables prefixed with `VITE_` are exposed to the client (frontend)
+- Worker secrets (BREVO_*) are only accessible by backend functions
+- The app uses Cloudflare Workers for backend API (email sending, data storage)
 - All AI processing happens client-side using the Gemini API
 - Ensure your Gemini API key has appropriate quota limits for production use
 
