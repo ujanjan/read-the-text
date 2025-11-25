@@ -12,8 +12,8 @@ const INDEX_HTML_PLACEHOLDER = `
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>Reading Comprehension App</title>
-      <script type="module" crossorigin src="/assets/index-B_5ukyhN.js"></script>
-      <link rel="stylesheet" crossorigin href="/assets/index-CyWPjUMR.css">
+      <script type="module" crossorigin src="/assets/index-DSUld5uO.js"></script>
+      <link rel="stylesheet" crossorigin href="/assets/index-DUeRTjyq.css">
     </head>
 
     <body>

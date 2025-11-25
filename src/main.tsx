@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App.tsx";
 import { ResultsPage } from "./components/ResultsPage.tsx";
 import { AdminPage } from "./components/AdminPage.tsx";
+import { QuitPage } from "./components/QuitPage.tsx";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
@@ -11,6 +12,7 @@ createRoot(document.getElementById("root")!).render(
       <Route path="/" element={<App />} />
       <Route path="/results/:sessionId" element={<ResultsPage />} />
       <Route path="/admin" element={<AdminPage />} />
+      <Route path="/quit" element={<QuitPage />} />
     </Routes>
   </BrowserRouter>
 );
