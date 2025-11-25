@@ -247,7 +247,9 @@ Provides AI-powered personalized feedback:
 
 #### `getPersonalizedQuestionFeedback()`
 Provides question-specific feedback based on reading behavior:
-- Analyzes which sections were actually read
+- **Input**: Screenshot with heatmap overlay + passage text + question/answers
+- **Note**: Cursor coordinate data is NOT sent to Gemini (only visual heatmap)
+- Analyzes which sections were actually read based on heatmap visualization
 - Connects reading behavior to answer correctness
 - For correct answers: Validates they read the relevant sections
 - For incorrect answers: Guides to the correct section without revealing the answer
@@ -265,10 +267,10 @@ The app includes several optimizations for performance and cost efficiency:
 - **Heatmap Compositing**: Efficiently overlays heatmap during capture without DOM manipulation
 
 ### AI Token Optimization
-- **Data Sampling**: Sends 100 evenly distributed cursor points instead of all points (can be 1000+)
-- **Maintains Quality**: Sampling preserves temporal and spatial distribution
-- **Token Reduction**: 10-20x fewer tokens while maintaining analytical accuracy
-- **Visual Priority**: Heatmap image is the primary analysis source, JSON is supplementary
+- **Visual-Only Analysis**: Only sends heatmap screenshot to Gemini (no cursor coordinate JSON)
+- **Cursor Data Storage**: Full cursor history (with timestamps) saved to cloud for research
+- **Token Reduction**: Significantly reduced token usage by eliminating JSON coordinate data
+- **Heatmap Priority**: Heatmap image provides visual representation of reading patterns
 
 ### Performance Features
 - **Canvas-based Heatmap**: Efficient rendering using HTML5 Canvas API
