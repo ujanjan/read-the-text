@@ -50,7 +50,8 @@ export async function getPersonalizedQuestionFeedback(
   question: string,
   selectedAnswer: string,
   correctAnswer: string,
-  isCorrect: boolean
+  isCorrect: boolean,
+  readingSummaryJson?: string
 ): Promise<QuestionFeedbackResult> {
   if (!model) {
     return {
@@ -87,53 +88,82 @@ ${screenshot ? `
 **HEATMAP IMAGE:** A visual heatmap is attached showing where the cursor spent time during reading. Bright/green areas indicate more time spent. Dark areas indicate less or no time spent. This shows which sections of the passage the student focused on.
 ` : '**HEATMAP IMAGE:** Not available - provide general feedback without reading behavior analysis.'}
 
-**CRITICAL INSTRUCTIONS FOR READING BEHAVIOR ANALYSIS:**
+${readingSummaryJson ? `
+**SENTENCE-LEVEL READING SUMMARY (JSON):**
 
-1. **ONLY make claims about reading behavior if you have CLEAR EVIDENCE:**
-   - Analyze which paragraphs/sections show bright areas (read) vs dark areas (not read or skimmed)
-   - DO NOT assume the student read something if there's no heatmap evidence
-   - Be specific about which parts of the passage show attention
+This JSON describes, for each sentence in the passage:
+- its index and text
+- total dwell time in milliseconds (\`dwell_ms\`)
+- how many separate visits there were (\`visits\`)
+- the order in which it was first visited (\`first_visit_order\`, where 0 = first sentence the student looked at).
 
-2. **Be accurate and specific:**
-   - If the heatmap shows the student skipped the beginning, say so
-   - If the heatmap shows the student focused on the middle paragraphs, reference that
-   - If the heatmap shows the student only read the end, mention that
-   - DO NOT make false claims about what they read
+Use this to reason precisely about which sentences the student focused on or skipped.
 
-3. **For INCORRECT answers:**
-   - Identify which paragraph contains the answer
-   - Check if the heatmap shows the student actually read that paragraph
-   - If they didn't read it: Guide them to that specific paragraph
-   - If they did read it: Suggest they reread it more carefully
-   - DO NOT reveal the correct answer
+\`\`\`json
+${readingSummaryJson}
+\`\`\`
+` : `
+**SENTENCE-LEVEL READING SUMMARY:** Not available for this session.
+`}
 
-**YOUR TASK:**
+**CRITICAL INSTRUCTIONS FOR FEEDBACK GENERATION:**
 
-Provide personalized, encouraging feedback based on ACTUAL heatmap evidence:
-1. Whether the answer was correct or incorrect
-2. What the heatmap shows about what was actually read
-3. Where in the passage the answer can be found (for incorrect answers)
+You have *three* types of evidence:
+1) The reading passage and its content  
+2) Sentence-level reading behavior data (dwell_ms, visits, first_visit_order)  
+3) Optional heatmap and cursor samples  
 
-**CRITICAL: ALWAYS ANALYZE READING BEHAVIOR WHEN HEATMAP IS AVAILABLE**
+Use **all three**, but **prioritize them in this order**:
 
-For CORRECT answers:
-- First, identify which paragraph(s) contain the information needed to answer this question
-- Then, check the heatmap to see if the student actually read those paragraph(s)
-- If the heatmap shows they DID read the relevant parts: Celebrate and connect it to their reading approach
-- If the heatmap shows they DID NOT read the relevant parts: Acknowledge the correct answer BUT mention that their heatmap shows they mostly read other sections, and suggest they read the relevant section more carefully next time
+### 1. CONTENT-FIRST INSIGHT
+Always reason about:
+- what the question is actually asking,
+- which parts of the passage support the correct reasoning,
+- how a student should conceptually approach the question.
+
+Your feedback **must help the student understand the passage and the reasoning process**, not just their behavior.
+
+### 2. BEHAVIOR-AS-EVIDENCE (Secondary Signal)
+Use reading behavior data as a **supporting diagnostic signal**, not the sole driver.
+Examples:
+- “You spent very little time on the sentence that explains X, which is key to the question.”
+- “You focused most on the introduction, but the detail you needed was later in the passage.”
+- “You revisited the sentence about Y, which suggests you were checking your interpretation.”
+
+Behavior data must **never override actual passage meaning**.
+If the behavior is unclear or contradictory, **fall back to content-based feedback**.
+
+### 3. NO HALLUCINATION RULE
+Do NOT:
+- Guess that the student “read” something without evidence  
+- Pretend behavior evidence is conclusive when it’s not  
+- Invent reasoning pathways the student did not show  
+
+When behavior data is inconclusive, say so briefly and then give normal content-based guidance.
+
+---
+
+**FOR INCORRECT ANSWERS:**
+- Identify the part of the passage that *contains* the evidence (without revealing the answer).
+- Use reading behavior to guide where they should re-read (“You spent little time on the sentence explaining X…”).
+- Provide a conceptual hint grounded in the content (“Look at how the author describes the contrast between Y and Z…”).
+
+**FOR CORRECT ANSWERS:**
+- Praise accuracy and briefly reference *content* (“You connected the author’s explanation of X to the question — well done.”)
+- Use behavior to reinforce metacognition (“You spent focused time on the key sentence about Y, which helped.”)
+- If behavior didn’t match correctness (lucky guess), address that gently.
+
+---
 
 **OUTPUT REQUIREMENTS:**
-- Keep it SHORT: Maximum 2-3 sentences (30-40 words total)
-- Be encouraging and constructive
-- ALWAYS analyze reading behavior if heatmap is available
-- For CORRECT answers:
-  - If they read the relevant parts: Celebrate and connect it to their reading approach
-  - If they DIDN'T read the relevant parts: Acknowledge the correct answer BUT point out the heatmap shows they didn't focus on the relevant paragraph(s)
-- For INCORRECT answers: ${isCorrect ? 'N/A' : 'Give hints about which paragraph to focus on. DO NOT reveal the correct answer. If the heatmap shows they didn\'t read that paragraph, guide them there. If they did read it, suggest rereading more carefully.'}
-- If no heatmap is available, just provide general encouraging guidance
+- 2–3 sentences (max ~40 words total)
+- Mix content-based insight + behavior insight
+- Encouraging but precise
+- No revealing answers
+- When behavior is ambiguous, acknowledge it and rely on content
 
-**OUTPUT FORMAT:**
-Just provide the feedback text directly, no prefix or formatting.`;
+**OUTPUT FORMAT:**  
+Just the feedback text. No bullet points, no headings.`;
 
   try {
     const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
@@ -144,10 +174,13 @@ Just provide the feedback text directly, no prefix or formatting.`;
     console.log('📊 Sending to Gemini for personalized feedback:');
     console.log(`  - Passage text: ${passage.length} characters`);
     console.log(`  - Screenshot with heatmap: ${screenshot ? 'Yes' : 'No'}`);
-    console.log(`  - Note: Cursor data is NOT sent to Gemini (only visual heatmap)`);
+    console.log(`  - Sentence-level reading summary JSON: ${readingSummaryJson ? 'Included' : 'Not included'}`);
+    if (readingSummaryJson) {
+      console.log(`    - ${readingSummaryJson}`);
+    }
 
     // Add screenshot if available
-    if (screenshot) {
+    if (screenshot && !readingSummaryJson) {
       try {
         const imageData = base64ToGeminiFormat(screenshot);
         parts.push({

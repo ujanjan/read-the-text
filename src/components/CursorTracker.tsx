@@ -9,9 +9,10 @@ export interface CursorData {
 interface CursorTrackerProps {
   onCursorData?: (data: CursorData) => void;
   enabled: boolean;
+  getContainer: () => HTMLElement | null;
 }
 
-export function CursorTracker({ onCursorData, enabled }: CursorTrackerProps) {
+export function CursorTracker({ onCursorData, enabled, getContainer}: CursorTrackerProps) {
   const throttleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const callbackRef = useRef(onCursorData);
 
@@ -27,10 +28,15 @@ export function CursorTracker({ onCursorData, enabled }: CursorTrackerProps) {
       // Throttle mouse move events to avoid overwhelming data
       if (throttleTimeoutRef.current) return;
 
+      const container = getContainer();
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+
       const cursorData: CursorData = {
-        x: e.clientX,
-        y: e.clientY,
-        timestamp: Date.now()
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+        timestamp: Date.now(),
       };
 
       if (callbackRef.current) {
