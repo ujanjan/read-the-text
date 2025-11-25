@@ -234,8 +234,8 @@ Just the feedback text. No bullet points, no headings.`;
 }
 
 /**
- * Provides personalized feedback ALWAYS using heatmap screenshot (never JSON summary)
- * This is a variant for A/B testing to compare with the JSON-based approach
+ * Provides personalized feedback for quiz question answers based on reading behavior
+ * Note: Cursor data is tracked and stored but NOT sent to Gemini API (only heatmap screenshot)
  */
 export async function getPersonalizedQuestionFeedbackWithHeatmap(
   title: string,
@@ -244,7 +244,8 @@ export async function getPersonalizedQuestionFeedbackWithHeatmap(
   question: string,
   selectedAnswer: string,
   correctAnswer: string,
-  isCorrect: boolean
+  isCorrect: boolean,
+  readingSummaryJson?: string
 ): Promise<QuestionFeedbackResult> {
   if (!model) {
     return {
@@ -257,13 +258,6 @@ export async function getPersonalizedQuestionFeedbackWithHeatmap(
     return {
       feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
       error: 'Reading passage is required for personalized feedback.',
-    };
-  }
-
-  if (!screenshot) {
-    return {
-      feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
-      error: 'Screenshot is required for heatmap-based feedback.',
     };
   }
 
@@ -284,15 +278,36 @@ ${isCorrect ? `**CORRECT ANSWER:** ${correctAnswer}` : ''}
 
 **READING BEHAVIOR ANALYSIS:**
 
+${screenshot ? `
 **HEATMAP IMAGE:** A visual heatmap is attached showing where the cursor spent time during reading. Bright/green areas indicate more time spent. Dark areas indicate less or no time spent. This shows which sections of the passage the student focused on.
+` : '**HEATMAP IMAGE:** Not available - provide general feedback without reading behavior analysis.'}
+
+${readingSummaryJson ? `
+**SENTENCE-LEVEL READING SUMMARY (JSON):**
+
+This JSON describes, for each sentence in the passage:
+- its index and text
+- total dwell time in milliseconds (\`dwell_ms\`)
+- how many separate visits there were (\`visits\`)
+- the order in which it was first visited (\`first_visit_order\`, where 0 = first sentence the student looked at).
+
+Use this to reason precisely about which sentences the student focused on or skipped.
+
+\`\`\`json
+${readingSummaryJson}
+\`\`\`
+` : `
+**SENTENCE-LEVEL READING SUMMARY:** Not available for this session.
+`}
 
 **CRITICAL INSTRUCTIONS FOR FEEDBACK GENERATION:**
 
-You have *two* types of evidence:
-1) The reading passage and its content
-2) Visual heatmap showing cursor dwell patterns
+You have *three* types of evidence:
+1) The reading passage and its content  
+2) Sentence-level reading behavior data (dwell_ms, visits, first_visit_order)  
+3) Heatmap image showing cursor dwell patterns  
 
-Use **both**, but **prioritize them in this order**:
+Use **all three**, but **prioritize them in this order**:
 
 ### 1. CONTENT-FIRST INSIGHT
 Always reason about:
@@ -314,9 +329,9 @@ If the behavior is unclear or contradictory, **fall back to content-based feedba
 
 ### 3. NO HALLUCINATION RULE
 Do NOT:
-- Guess that the student "read" something without evidence
-- Pretend behavior evidence is conclusive when it's not
-- Invent reasoning pathways the student did not show
+- Guess that the student "read" something without evidence  
+- Pretend behavior evidence is conclusive when it's not  
+- Invent reasoning pathways the student did not show  
 
 When behavior data is inconclusive, say so briefly and then give normal content-based guidance.
 
@@ -341,7 +356,7 @@ When behavior data is inconclusive, say so briefly and then give normal content-
 - No revealing answers
 - When behavior is ambiguous, acknowledge it and rely on content
 
-**OUTPUT FORMAT:**
+**OUTPUT FORMAT:**  
 Just the feedback text. No bullet points, no headings.`;
 
   try {
@@ -352,24 +367,28 @@ Just the feedback text. No bullet points, no headings.`;
     // Log data being sent to Gemini
     console.log('📊 Sending to Gemini for personalized feedback (HEATMAP VARIANT):');
     console.log(`  - Passage text: ${passage.length} characters`);
-    console.log(`  - Screenshot with heatmap: Yes`);
+    console.log(`  - Screenshot with heatmap: ${screenshot ? 'Yes' : 'No'}`);
+    console.log(`  - Sentence-level reading summary JSON: ${readingSummaryJson ? 'Included' : 'Not included'}`);
+    if (readingSummaryJson) {
+      console.log(`    - ${readingSummaryJson}`);
+    }
 
-    // Add screenshot
-    try {
-      const imageData = base64ToGeminiFormat(screenshot);
-      parts.push({
-        inlineData: {
-          mimeType: imageData.mimeType,
-          data: imageData.data,
-        },
-      });
-      console.log(`  ✅ Screenshot with heatmap added (${imageData.mimeType}, ${Math.round(imageData.data.length / 1024)}KB)`);
-    } catch (error) {
-      console.warn('Failed to process screenshot for Gemini:', error);
-      return {
-        feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
-        error: 'Failed to process screenshot.',
-      };
+    // Add screenshot if available (always include for heatmap variant, regardless of JSON summary)
+    if (screenshot) {
+      try {
+        const imageData = base64ToGeminiFormat(screenshot);
+        parts.push({
+          inlineData: {
+            mimeType: imageData.mimeType,
+            data: imageData.data,
+          },
+        });
+        console.log(`  ✅ Screenshot with heatmap added (${imageData.mimeType}, ${Math.round(imageData.data.length / 1024)}KB)`);
+      } catch (error) {
+        console.warn('Failed to process screenshot for Gemini:', error);
+      }
+    } else {
+      console.log('  ⚠️ No screenshot available - feedback will be based on text only');
     }
 
     const result = await model.generateContent(parts);
@@ -388,18 +407,18 @@ Just the feedback text. No bullet points, no headings.`;
       feedback: text || (isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.'),
     };
   } catch (error: any) {
-    console.error('Gemini API error (heatmap variant):', error);
-
+    console.error('Gemini API error:', error);
+    
     // Handle rate limiting specifically
     if (error.message?.includes('429') || error.message?.includes('Resource exhausted') || error.message?.includes('rate limit')) {
       return {
-        feedback: isCorrect
-          ? 'Correct! (Personalized feedback temporarily unavailable due to rate limits. Please wait a moment before submitting again.)'
+        feedback: isCorrect 
+          ? 'Correct! (Personalized feedback temporarily unavailable due to rate limits. Please wait a moment before submitting again.)' 
           : 'Try again! Focus on the passage to find the answer. (Personalized feedback temporarily unavailable due to rate limits.)',
         error: 'Rate limit exceeded. Please wait a moment before submitting again.',
       };
     }
-
+    
     // Fallback to default messages on error
     return {
       feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
