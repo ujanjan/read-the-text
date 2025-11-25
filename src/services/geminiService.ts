@@ -233,4 +233,179 @@ Just the feedback text. No bullet points, no headings.`;
   }
 }
 
+/**
+ * Provides personalized feedback ALWAYS using heatmap screenshot (never JSON summary)
+ * This is a variant for A/B testing to compare with the JSON-based approach
+ */
+export async function getPersonalizedQuestionFeedbackWithHeatmap(
+  title: string,
+  passage: string,
+  screenshot: string | null,
+  question: string,
+  selectedAnswer: string,
+  correctAnswer: string,
+  isCorrect: boolean
+): Promise<QuestionFeedbackResult> {
+  if (!model) {
+    return {
+      feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
+      error: 'Gemini API key is not configured. Using default feedback.',
+    };
+  }
+
+  if (!passage) {
+    return {
+      feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
+      error: 'Reading passage is required for personalized feedback.',
+    };
+  }
+
+  if (!screenshot) {
+    return {
+      feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
+      error: 'Screenshot is required for heatmap-based feedback.',
+    };
+  }
+
+  const prompt = `You are an expert reading comprehension tutor. Analyze a student's reading behavior and provide personalized feedback for their quiz answer.
+
+**READING PASSAGE:**
+${title ? `**Title:** ${title}\n\n` : ''}${passage}
+
+**QUESTION:**
+${question}
+
+**STUDENT'S ANSWER:**
+${selectedAnswer}
+
+**ANSWER STATUS:** ${isCorrect ? 'CORRECT' : 'INCORRECT'}
+
+${isCorrect ? `**CORRECT ANSWER:** ${correctAnswer}` : ''}
+
+**READING BEHAVIOR ANALYSIS:**
+
+**HEATMAP IMAGE:** A visual heatmap is attached showing where the cursor spent time during reading. Bright/green areas indicate more time spent. Dark areas indicate less or no time spent. This shows which sections of the passage the student focused on.
+
+**CRITICAL INSTRUCTIONS FOR FEEDBACK GENERATION:**
+
+You have *two* types of evidence:
+1) The reading passage and its content
+2) Visual heatmap showing cursor dwell patterns
+
+Use **both**, but **prioritize them in this order**:
+
+### 1. CONTENT-FIRST INSIGHT
+Always reason about:
+- what the question is actually asking,
+- which parts of the passage support the correct reasoning,
+- how a student should conceptually approach the question.
+
+Your feedback **must help the student understand the passage and the reasoning process**, not just their behavior.
+
+### 2. BEHAVIOR-AS-EVIDENCE (Secondary Signal)
+Use reading behavior data as a **supporting diagnostic signal**, not the sole driver.
+Examples:
+- "You spent very little time on the sentence that explains X, which is key to the question."
+- "You focused most on the introduction, but the detail you needed was later in the passage."
+- "You revisited the sentence about Y, which suggests you were checking your interpretation."
+
+Behavior data must **never override actual passage meaning**.
+If the behavior is unclear or contradictory, **fall back to content-based feedback**.
+
+### 3. NO HALLUCINATION RULE
+Do NOT:
+- Guess that the student "read" something without evidence
+- Pretend behavior evidence is conclusive when it's not
+- Invent reasoning pathways the student did not show
+
+When behavior data is inconclusive, say so briefly and then give normal content-based guidance.
+
+---
+
+**FOR INCORRECT ANSWERS:**
+- Identify the part of the passage that *contains* the evidence (without revealing the answer).
+- Use reading behavior to guide where they should re-read ("You spent little time on the sentence explaining X…").
+- Provide a conceptual hint grounded in the content ("Look at how the author describes the contrast between Y and Z…").
+
+**FOR CORRECT ANSWERS:**
+- Praise accuracy and briefly reference *content* ("You connected the author's explanation of X to the question — well done.")
+- Use behavior to reinforce metacognition ("You spent focused time on the key sentence about Y, which helped.")
+- If behavior didn't match correctness (lucky guess), address that gently.
+
+---
+
+**OUTPUT REQUIREMENTS:**
+- 2–3 sentences (max ~40 words total)
+- Mix content-based insight + behavior insight
+- Encouraging but precise
+- No revealing answers
+- When behavior is ambiguous, acknowledge it and rely on content
+
+**OUTPUT FORMAT:**
+Just the feedback text. No bullet points, no headings.`;
+
+  try {
+    const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+      { text: prompt },
+    ];
+
+    // Log data being sent to Gemini
+    console.log('📊 Sending to Gemini for personalized feedback (HEATMAP VARIANT):');
+    console.log(`  - Passage text: ${passage.length} characters`);
+    console.log(`  - Screenshot with heatmap: Yes`);
+
+    // Add screenshot
+    try {
+      const imageData = base64ToGeminiFormat(screenshot);
+      parts.push({
+        inlineData: {
+          mimeType: imageData.mimeType,
+          data: imageData.data,
+        },
+      });
+      console.log(`  ✅ Screenshot with heatmap added (${imageData.mimeType}, ${Math.round(imageData.data.length / 1024)}KB)`);
+    } catch (error) {
+      console.warn('Failed to process screenshot for Gemini:', error);
+      return {
+        feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
+        error: 'Failed to process screenshot.',
+      };
+    }
+
+    const result = await model.generateContent(parts);
+    const response = await result.response;
+    const text = response.text().trim();
+
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('📥 [GEMINI RAW RESPONSE - HEATMAP VARIANT]');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('Raw text length:', response.text().length);
+    console.log('Trimmed text length:', text.length);
+    console.log('First 200 chars:', text.substring(0, 200));
+    console.log('═══════════════════════════════════════════════════════');
+
+    return {
+      feedback: text || (isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.'),
+    };
+  } catch (error: any) {
+    console.error('Gemini API error (heatmap variant):', error);
+
+    // Handle rate limiting specifically
+    if (error.message?.includes('429') || error.message?.includes('Resource exhausted') || error.message?.includes('rate limit')) {
+      return {
+        feedback: isCorrect
+          ? 'Correct! (Personalized feedback temporarily unavailable due to rate limits. Please wait a moment before submitting again.)'
+          : 'Try again! Focus on the passage to find the answer. (Personalized feedback temporarily unavailable due to rate limits.)',
+        error: 'Rate limit exceeded. Please wait a moment before submitting again.',
+      };
+    }
+
+    // Fallback to default messages on error
+    return {
+      feedback: isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.',
+      error: 'Failed to generate personalized feedback. Using default.',
+    };
+  }
+}
+
 

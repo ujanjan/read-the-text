@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
-import { getPersonalizedQuestionFeedback, CursorData } from "../services/geminiService";
+import { getPersonalizedQuestionFeedback, getPersonalizedQuestionFeedbackWithHeatmap, CursorData } from "../services/geminiService";
 import { apiService } from "../services/apiService";
 import { ReadingSummary, summarizeCursorSession, computeSentenceRects } from "../summarizeCursor";
 
@@ -75,6 +75,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     const [showFeedback, setShowFeedback] = useState(initialIsComplete);
     const [feedbackText, setFeedbackText] = useState<string>(initialFeedback);
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
+    const [feedbackTextHeatmap, setFeedbackTextHeatmap] = useState<string>('');
+    const [isLoadingFeedbackHeatmap, setIsLoadingFeedbackHeatmap] = useState(false);
     const [currentSubmissionCorrect, setCurrentSubmissionCorrect] = useState<boolean>(initialIsComplete);
     const [wrongAttempts, setWrongAttempts] = useState(0);
     const [isComplete, setIsComplete] = useState(initialIsComplete);
@@ -93,11 +95,13 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       setShowFeedback(initialIsComplete);
       if (!shouldPreserveFeedback) {
         setFeedbackText(initialFeedback);
+        setFeedbackTextHeatmap('');
       }
       setCurrentSubmissionCorrect(initialIsComplete);
       setIsComplete(initialIsComplete);
       setWrongAttempts(0);
       setIsLoadingFeedback(false);
+      setIsLoadingFeedbackHeatmap(false);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPassageIndex, initialIsComplete, initialSelectedAnswer, initialFeedback]);
 
@@ -110,7 +114,9 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         setSelectedAnswer("");
         setShowFeedback(false);
         setFeedbackText("");
+        setFeedbackTextHeatmap("");
         setIsLoadingFeedback(false);
+        setIsLoadingFeedbackHeatmap(false);
         setCurrentSubmissionCorrect(false);
         setWrongAttempts(0);
         setIsComplete(false);
@@ -136,6 +142,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       setCurrentSubmissionCorrect(isCorrect);
       setShowFeedback(true);
       setIsLoadingFeedback(true);
+      setIsLoadingFeedbackHeatmap(true);
 
       // Always capture a fresh screenshot to include latest cursor movements
       // This ensures the heatmap reflects all cursor activity up to this point
@@ -153,76 +160,99 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         }
       }
 
-      // Get personalized feedback
-      let feedback = '';
-      try {
-        const selectedAnswerText = currentQuestion.choices[parseInt(selectedAnswer)];
-        const correctAnswerText = currentQuestion.choices[currentQuestion.correctAnswer];
+      // Get personalized feedback from BOTH variants in parallel
+      const selectedAnswerText = currentQuestion.choices[parseInt(selectedAnswer)];
+      const correctAnswerText = currentQuestion.choices[currentQuestion.correctAnswer];
 
-        // LOG DATA BEING SENT TO GEMINI
-        const screenshotSizeKB = currentScreenshot ? Math.round((currentScreenshot.length * 0.75) / 1024) : 0;
-        const passageLength = passage.length;
-        const cursorPoints = cursorHistory.length;
-        console.log('═══════════════════════════════════════════════════════');
-        console.log('📤 [GEMINI API CALL] Personalized Question Feedback');
-        console.log('═══════════════════════════════════════════════════════');
-        console.log(`📍 Passage Index: ${currentPassageIndex}`);
-        console.log(`📊 Cursor History: ${cursorPoints} points (tracked locally, NOT sent to Gemini)`);
-        console.log(`📸 Screenshot: ${currentScreenshot ? `Yes (${screenshotSizeKB} KB) - includes visual heatmap` : 'No'}`);
-        console.log(`📝 Passage Length: ${passageLength} characters`);
-        console.log(`✅ Answer Correct: ${isCorrect}`);
-        console.log(`🔢 Attempt Number: ${wrongAttempts + 1}`);
-        console.log('═══════════════════════════════════════════════════════');
-        
-        const container = passageRef.current;
-        let readingSummaryJson: string | undefined = undefined;
+      // LOG DATA BEING SENT TO GEMINI
+      const screenshotSizeKB = currentScreenshot ? Math.round((currentScreenshot.length * 0.75) / 1024) : 0;
+      const passageLength = passage.length;
+      const cursorPoints = cursorHistory.length;
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('📤 [GEMINI API CALLS] Personalized Question Feedback - BOTH VARIANTS');
+      console.log('═══════════════════════════════════════════════════════');
+      console.log(`📍 Passage Index: ${currentPassageIndex}`);
+      console.log(`📊 Cursor History: ${cursorPoints} points (tracked locally, NOT sent to Gemini)`);
+      console.log(`📸 Screenshot: ${currentScreenshot ? `Yes (${screenshotSizeKB} KB) - includes visual heatmap` : 'No'}`);
+      console.log(`📝 Passage Length: ${passageLength} characters`);
+      console.log(`✅ Answer Correct: ${isCorrect}`);
+      console.log(`🔢 Attempt Number: ${wrongAttempts + 1}`);
+      console.log('═══════════════════════════════════════════════════════');
 
-        if (container && cursorHistory.length > 0) {
-          const sentenceRects = computeSentenceRects(container, "[data-sentence-id]");
-          const readingSummary: ReadingSummary = summarizeCursorSession(
-            cursorHistory,
-            sentenceRects
-          );
-          readingSummaryJson = JSON.stringify(readingSummary);
-        }
+      const container = passageRef.current;
+      let readingSummaryJson: string | undefined = undefined;
 
-        const result = await getPersonalizedQuestionFeedback(
-          title || '',
-          passage,
-          currentScreenshot,
-          currentQuestion.question,
-          selectedAnswerText,
-          correctAnswerText,
-          isCorrect,
-          readingSummaryJson
+      if (container && cursorHistory.length > 0) {
+        const sentenceRects = computeSentenceRects(container, "[data-sentence-id]");
+        const readingSummary: ReadingSummary = summarizeCursorSession(
+          cursorHistory,
+          sentenceRects
         );
+        readingSummaryJson = JSON.stringify(readingSummary);
+      }
 
-        feedback = result.feedback;
-        console.log('🤖 [GEMINI RESPONSE]:', feedback);
-        console.log('🤖 [GEMINI RESPONSE LENGTH]:', feedback.length);
-        setFeedbackText(feedback);
-        console.log('✅ [STATE UPDATE] setFeedbackText called with:', feedback.substring(0, 50) + '...');
-
-        // Record attempt in cloud if we have a session
-        if (sessionId) {
-          try {
-            await apiService.recordAttempt(sessionId, currentPassageIndex, {
-              selectedAnswer: selectedAnswerText,
-              isCorrect,
-              geminiResponse: feedback,
-              screenshot: currentScreenshot || undefined
-            });
-          } catch (err) {
-            console.error('Failed to record attempt:', err);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to get personalized feedback:', error);
-        // Fallback to default messages
-        feedback = isCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.';
-        setFeedbackText(feedback);
-      } finally {
+      // Call both API variants in parallel
+      const originalPromise = getPersonalizedQuestionFeedback(
+        title || '',
+        passage,
+        currentScreenshot,
+        currentQuestion.question,
+        selectedAnswerText,
+        correctAnswerText,
+        isCorrect,
+        readingSummaryJson
+      ).then(result => {
+        console.log('🤖 [GEMINI RESPONSE - ORIGINAL]:', result.feedback);
+        console.log('🤖 [GEMINI RESPONSE LENGTH - ORIGINAL]:', result.feedback.length);
+        setFeedbackText(result.feedback);
         setIsLoadingFeedback(false);
+        console.log('✅ [STATE UPDATE] setFeedbackText called with:', result.feedback.substring(0, 50) + '...');
+        return result;
+      }).catch(error => {
+        console.error('Failed to get personalized feedback (original):', error);
+        const fallback = isCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.';
+        setFeedbackText(fallback);
+        setIsLoadingFeedback(false);
+        return { feedback: fallback, error: error.message };
+      });
+
+      const heatmapPromise = getPersonalizedQuestionFeedbackWithHeatmap(
+        title || '',
+        passage,
+        currentScreenshot,
+        currentQuestion.question,
+        selectedAnswerText,
+        correctAnswerText,
+        isCorrect
+      ).then(result => {
+        console.log('🤖 [GEMINI RESPONSE - HEATMAP]:', result.feedback);
+        console.log('🤖 [GEMINI RESPONSE LENGTH - HEATMAP]:', result.feedback.length);
+        setFeedbackTextHeatmap(result.feedback);
+        setIsLoadingFeedbackHeatmap(false);
+        return result;
+      }).catch(error => {
+        console.error('Failed to get personalized feedback (heatmap):', error);
+        const fallback = isCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.';
+        setFeedbackTextHeatmap(fallback);
+        setIsLoadingFeedbackHeatmap(false);
+        return { feedback: fallback, error: error.message };
+      });
+
+      // Wait for the original variant to complete before recording to DB
+      const [originalResult] = await Promise.all([originalPromise, heatmapPromise]);
+
+      // Record attempt in cloud if we have a session (only store original feedback)
+      if (sessionId) {
+        try {
+          await apiService.recordAttempt(sessionId, currentPassageIndex, {
+            selectedAnswer: selectedAnswerText,
+            isCorrect,
+            geminiResponse: originalResult.feedback,
+            screenshot: currentScreenshot || undefined
+          });
+        } catch (err) {
+          console.error('Failed to record attempt:', err);
+        }
       }
 
       // Mark as complete and notify parent if correct
@@ -238,8 +268,10 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     const handleTryAgain = () => {
       setShowFeedback(false);
       setFeedbackText("");
+      setFeedbackTextHeatmap("");
       setSelectedAnswer("");
       setIsLoadingFeedback(false);
+      setIsLoadingFeedbackHeatmap(false);
       setCurrentSubmissionCorrect(false);
     };
 
@@ -336,33 +368,67 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
               </div>
 
               {showFeedback && (
-                <div
-                  className={`p-3 rounded-md mt-3 text-sm min-w-0 max-w-full ${
-                    currentSubmissionCorrect
-                      ? "bg-green-50 text-green-800"
-                      : "bg-red-50 text-red-800"
-                  }`}
-                >
-                  {isLoadingFeedback ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-xs">
-                        Generating personalized feedback...
-                      </span>
-                    </div>
-                  ) : (
-                    <div className={`flex items-start gap-2 min-w-0 w-full ${currentSubmissionCorrect ? 'items-center' : ''}`}>
-                      {currentSubmissionCorrect ? (
-                        <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-                      ) : (
-                        <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      )}
-                      <span className="text-xs break-words min-w-0 max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                        {feedbackText || (currentSubmissionCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.')}
-                      </span>
-                    </div>
-                  )}
-                </div>
+                <>
+                  {/* Original feedback (JSON-based) - TOP */}
+                  <div
+                    className={`p-3 rounded-md mt-3 text-sm min-w-0 max-w-full ${
+                      currentSubmissionCorrect
+                        ? "bg-green-50 text-green-800"
+                        : "bg-red-50 text-red-800"
+                    }`}
+                  >
+                    <div className="text-xs font-semibold mb-1 opacity-60">Response A (JSON-based)</div>
+                    {isLoadingFeedback ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-xs">
+                          Generating personalized feedback...
+                        </span>
+                      </div>
+                    ) : (
+                      <div className={`flex items-start gap-2 min-w-0 w-full ${currentSubmissionCorrect ? 'items-center' : ''}`}>
+                        {currentSubmissionCorrect ? (
+                          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        )}
+                        <span className="text-xs break-words min-w-0 max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                          {feedbackText || (currentSubmissionCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Heatmap feedback - BOTTOM */}
+                  <div
+                    className={`p-3 rounded-md mt-2 text-sm min-w-0 max-w-full ${
+                      currentSubmissionCorrect
+                        ? "bg-green-50 text-green-800"
+                        : "bg-red-50 text-red-800"
+                    }`}
+                  >
+                    <div className="text-xs font-semibold mb-1 opacity-60">Response B (Heatmap-based)</div>
+                    {isLoadingFeedbackHeatmap ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-xs">
+                          Generating personalized feedback...
+                        </span>
+                      </div>
+                    ) : (
+                      <div className={`flex items-start gap-2 min-w-0 w-full ${currentSubmissionCorrect ? 'items-center' : ''}`}>
+                        {currentSubmissionCorrect ? (
+                          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        )}
+                        <span className="text-xs break-words min-w-0 max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                          {feedbackTextHeatmap || (currentSubmissionCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 
