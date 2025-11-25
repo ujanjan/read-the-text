@@ -38,17 +38,21 @@ export interface ReadingComprehensionHandle {
 }
 
 const renderSentences = (text: string, nextId: () => number) => {
-  const sentences = text.match(/[^.!?]+[.!?]+|\S+/g) ?? [];
-  const id: number = nextId();
-  return sentences.map((sentence) => (
-    <span
-      key={id}
-      data-sentence-id={id}
-      style={{ display: "inline" }}
-    >
-      {sentence + " "}
-    </span>
-  ));
+  const sentences = text.match(/[^.!?]+(?:[.!?]+|$)/g) ?? [];
+
+  return sentences.map((sentence) => {
+    const id = nextId();
+
+    return (
+      <span
+        key={id}
+        data-sentence-id={id}
+        style={{ display: "inline" }}
+      >
+        {sentence + " "}
+      </span>
+    );
+  });
 };
 
 export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, ReadingComprehensionProps>(
