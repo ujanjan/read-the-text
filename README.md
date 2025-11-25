@@ -21,11 +21,23 @@ The original design is available at [Figma](https://www.figma.com/design/KIRnobZ
 - **Navigation**: Move between passages while preserving individual progress
 - **Analytics Dashboard**: Collapsible sidebar showing cursor data, heatmap controls, and reading insights
 - **Summary Screen**: Comprehensive performance summary with:
+  - User demographic profile
   - Total time spent
   - Accuracy rate (perfect passages)
   - Average time per passage
   - Visual heatmap gallery for all completed passages
 - **Screenshot Capture**: Automatically captures reading sessions with integrated heatmap overlay
+
+### Research & Data Collection
+- **Demographic Data Collection**: Collects participant background information for research analysis:
+  - Age (18-99)
+  - University attendance status (yes/no/currently attending)
+  - English fluency level (first language, learned at young age, high school, university, not at all)
+  - First language (if English is not first language)
+  - SWESAT (Högskoleprovet) experience
+- **Data Storage**: All demographic data stored securely alongside reading behavior data
+- **Research Context**: Part of DM2730 Technology Enhanced Learning course at KTH
+- **Privacy**: Comprehensive data collection notice and informed consent on landing page
 
 ## Tech Stack
 
@@ -330,6 +342,77 @@ The production build will be created in the `dist/` directory.
   - Title and full text
   - One multiple-choice question with 4 options
   - Correct answer index
+
+### Database Schema (Cloudflare D1)
+The application uses Cloudflare D1 (SQLite) for data storage with the following structure:
+
+#### Sessions Table
+Stores user session and demographic data:
+- `id` (TEXT, PRIMARY KEY): Unique session identifier
+- `email` (TEXT): User email address
+- `status` (TEXT): Session status ('in_progress' or 'completed')
+- `current_passage_index` (INTEGER): Current position in quiz
+- `passage_order` (TEXT): Randomized passage order (JSON array)
+- `total_passages` (INTEGER): Total number of passages (10)
+- `created_at` (TEXT): Session start timestamp
+- `completed_at` (TEXT): Session completion timestamp
+- `total_time_ms` (INTEGER): Total time spent in milliseconds
+- **Demographic Fields:**
+  - `age` (INTEGER): Participant age (18-99)
+  - `has_attended_university` (TEXT): 'yes', 'no', or 'currently_attending'
+  - `english_fluency` (TEXT): 'not_at_all', 'young_age', 'high_school', 'university', or 'first_language'
+  - `first_language` (TEXT): Native language if not English
+  - `completed_swesat` (TEXT): 'yes', 'no', or 'unsure'
+
+#### Passage Results Table
+Stores per-passage completion data:
+- `session_id` (TEXT): Foreign key to sessions
+- `passage_index` (INTEGER): Passage position (0-9)
+- `passage_id` (INTEGER): Actual passage from pool
+- `screenshot_r2_key` (TEXT): R2 storage key for heatmap screenshot
+- `cursor_history_r2_key` (TEXT): R2 storage key for cursor data
+- `is_complete` (INTEGER): Completion status (0/1)
+- `wrong_attempts` (INTEGER): Number of incorrect answers
+- `time_spent_ms` (INTEGER): Time spent on passage
+- `final_selected_answer` (TEXT): Final answer chosen
+
+#### Passage Attempts Table
+Stores each answer attempt with AI feedback:
+- `session_id` (TEXT): Foreign key to sessions
+- `passage_index` (INTEGER): Passage position
+- `attempt_number` (INTEGER): Sequential attempt counter
+- `selected_answer` (TEXT): Answer chosen
+- `is_correct` (INTEGER): Correctness (0/1)
+- `gemini_response` (TEXT): AI-generated feedback
+- `screenshot_r2_key` (TEXT): Heatmap screenshot for this attempt
+- `created_at` (TEXT): Attempt timestamp
+
+#### Storage (Cloudflare R2)
+Binary data stored in R2 object storage:
+- **Screenshots**: JPEG images with heatmap overlays (~50-150KB each)
+- **Cursor History**: JSON files with cursor coordinate arrays
+
+### Database Migrations
+The project includes SQL migrations in the `/migrations` directory:
+- **0001_initial.sql**: Creates base tables (sessions, passage_results, passage_attempts)
+- **0002_add_attempt_screenshots.sql**: Adds screenshot capability to attempts
+- **0003_rename_nickname_to_email.sql**: Changes nickname field to email
+- **0004_add_user_demographics.sql**: Adds demographic data fields
+
+To apply migrations locally:
+```bash
+npx wrangler d1 execute read_the_text_db --local --file=migrations/0001_initial.sql
+npx wrangler d1 execute read_the_text_db --local --file=migrations/0002_add_attempt_screenshots.sql
+npx wrangler d1 execute read_the_text_db --local --file=migrations/0003_rename_nickname_to_email.sql
+npx wrangler d1 execute read_the_text_db --local --file=migrations/0004_add_user_demographics.sql
+```
+
+To apply migrations to production:
+```bash
+npx wrangler d1 execute read_the_text_db --remote --file=migrations/0004_add_user_demographics.sql
+```
+
+**Note**: Apply migrations in order. Existing migrations have already been applied to production.
 
 ### State Management
 - **Per-passage tracking**: Each passage maintains independent state for:

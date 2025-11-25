@@ -59,11 +59,85 @@ export const ResultsPage: React.FC = () => {
     attemptsByPassage[attempt.passage_index].push(attempt);
   });
 
+  // Helper function to format demographic labels
+  const formatUniversity = (value?: string) => {
+    if (!value) return null;
+    switch (value) {
+      case 'yes': return 'Yes';
+      case 'no': return 'No';
+      case 'currently_attending': return 'Currently attending';
+      default: return value;
+    }
+  };
+
+  const formatEnglishFluency = (value?: string) => {
+    if (!value) return null;
+    switch (value) {
+      case 'first_language': return 'English is my first language';
+      case 'young_age': return 'Learned at a young age';
+      case 'high_school': return 'Learned in high school';
+      case 'university': return 'Learned at university';
+      case 'not_at_all': return 'Not at all';
+      default: return value;
+    }
+  };
+
+  const formatSwesat = (value?: string) => {
+    if (!value) return null;
+    switch (value) {
+      case 'yes': return 'Yes';
+      case 'no': return 'No';
+      case 'unsure': return "Don't know";
+      default: return value;
+    }
+  };
+
+  const hasDemographics = session.age || session.has_attended_university || session.english_fluency;
+
   return (
     <div className="results-page">
       <div className="results-container">
         <h1>Quiz Results</h1>
         <p className="email-display">Participant: {session.email}</p>
+
+        {/* Demographics Section */}
+        {hasDemographics && (
+          <div className="demographics-card">
+            <h2>Your Profile</h2>
+            <div className="demographics-grid">
+              {session.age && (
+                <div className="demo-item">
+                  <span className="demo-label">Age:</span>
+                  <span className="demo-value">{session.age}</span>
+                </div>
+              )}
+              {session.has_attended_university && (
+                <div className="demo-item">
+                  <span className="demo-label">University:</span>
+                  <span className="demo-value">{formatUniversity(session.has_attended_university)}</span>
+                </div>
+              )}
+              {session.english_fluency && (
+                <div className="demo-item">
+                  <span className="demo-label">English Fluency:</span>
+                  <span className="demo-value">{formatEnglishFluency(session.english_fluency)}</span>
+                </div>
+              )}
+              {session.first_language && (
+                <div className="demo-item">
+                  <span className="demo-label">First Language:</span>
+                  <span className="demo-value">{session.first_language}</span>
+                </div>
+              )}
+              {session.completed_swesat && (
+                <div className="demo-item">
+                  <span className="demo-label">SWESAT Experience:</span>
+                  <span className="demo-value">{formatSwesat(session.completed_swesat)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="stats-summary">
           <div className="stat-card">

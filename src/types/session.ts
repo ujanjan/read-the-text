@@ -8,6 +8,12 @@ export interface Session {
   created_at: string;
   completed_at?: string;
   total_time_ms: number;
+  // Demographics
+  age?: number;
+  has_attended_university?: 'yes' | 'no' | 'currently_attending';
+  english_fluency?: 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language';
+  first_language?: string;
+  completed_swesat?: 'yes' | 'no' | 'unsure';
 }
 
 export interface PassageResult {
@@ -67,4 +73,13 @@ export interface AdminSession {
   completed_at?: string;
   total_time_ms: number;
   completed_passages: number;
+}
+
+// User demographics form data
+export interface UserDemographics {
+  age: number;
+  hasAttendedUniversity: 'yes' | 'no' | 'currently_attending';
+  englishFluency: 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language';
+  firstLanguage: string;
+  completedSwesat: 'yes' | 'no' | 'unsure';
 }

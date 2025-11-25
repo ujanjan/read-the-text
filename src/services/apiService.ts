@@ -2,7 +2,8 @@ import type {
   SessionCheckResponse,
   SessionCreateResponse,
   SessionData,
-  AdminSession
+  AdminSession,
+  UserDemographics
 } from '../types/session';
 
 const API_BASE = '/api';
@@ -18,11 +19,11 @@ export const apiService = {
     return res.json();
   },
 
-  async createSession(email: string): Promise<SessionCreateResponse> {
+  async createSession(email: string, demographics?: UserDemographics): Promise<SessionCreateResponse> {
     const res = await fetch(`${API_BASE}/sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email, ...demographics })
     });
     return res.json();
   },
