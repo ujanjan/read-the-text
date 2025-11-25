@@ -178,7 +178,7 @@ src/
 └── index.css                          # Base CSS imports
 
 functions/                             # Cloudflare Workers API endpoints
-├── _worker.ts                         # Main router for API endpoints
+├── _worker.ts                         # Main router for API endpoints (contains '__INDEX_HTML_CONTENT__' placeholder)
 ├── types.ts                           # TypeScript interfaces for Worker environment
 └── api/
     ├── send-link.ts                   # POST /api/send-link - Email study link to mobile users
@@ -243,18 +243,13 @@ Backend endpoint for sending study links:
 - Includes branded HTML email template
 
 ### Gemini Service
-Provides two AI-powered analysis functions:
-
-#### `analyzeReadingBehavior()`
-Analyzes overall reading patterns:
-- Processes cursor tracking data (sampled to 100 points for efficiency)
-- Analyzes heatmap visual patterns
-- Provides 4-6 actionable, concise feedback tips
-- Optimized for token usage with JPEG compression and data sampling
+Provides AI-powered personalized feedback:
 
 #### `getPersonalizedQuestionFeedback()`
-Provides question-specific feedback:
-- Analyzes which sections were actually read
+Provides question-specific feedback based on reading behavior:
+- **Input**: Screenshot with heatmap overlay + passage text + question/answers
+- **Note**: Cursor coordinate data is NOT sent to Gemini (only visual heatmap)
+- Analyzes which sections were actually read based on heatmap visualization
 - Connects reading behavior to answer correctness
 - For correct answers: Validates they read the relevant sections
 - For incorrect answers: Guides to the correct section without revealing the answer
@@ -266,16 +261,17 @@ Provides question-specific feedback:
 The app includes several optimizations for performance and cost efficiency:
 
 ### Screenshot Optimization
-- **Pixel Ratio Limiting**: Caps at 1.5x instead of full device pixel ratio (2-3x on retina)
-- **JPEG Compression**: Uses JPEG (quality 0.85) instead of PNG
-- **File Size**: Reduced from ~500KB-2MB (PNG) to ~50-150KB (JPEG) - 10-20x smaller
+- **Pixel Ratio**: Fixed at 1.0x for consistent resolution across devices
+- **JPEG Compression**: Uses JPEG (quality 0.70) for optimal file size
+- **File Size**: Reduced from ~500KB-2MB (PNG) to ~40-80KB (JPEG) - 10-25x smaller
+- **Target**: Keeps images under 100KB for efficient API transmission
 - **Heatmap Compositing**: Efficiently overlays heatmap during capture without DOM manipulation
 
 ### AI Token Optimization
-- **Data Sampling**: Sends 100 evenly distributed cursor points instead of all points (can be 1000+)
-- **Maintains Quality**: Sampling preserves temporal and spatial distribution
-- **Token Reduction**: 10-20x fewer tokens while maintaining analytical accuracy
-- **Visual Priority**: Heatmap image is the primary analysis source, JSON is supplementary
+- **Visual-Only Analysis**: Only sends heatmap screenshot to Gemini (no cursor coordinate JSON)
+- **Cursor Data Storage**: Full cursor history (with timestamps) saved to cloud for research
+- **Token Reduction**: Significantly reduced token usage by eliminating JSON coordinate data
+- **Heatmap Priority**: Heatmap image provides visual representation of reading patterns
 
 ### Performance Features
 - **Canvas-based Heatmap**: Efficient rendering using HTML5 Canvas API
@@ -290,6 +286,31 @@ npm run build
 ```
 
 The production build will be created in the `dist/` directory.
+
+### Build Process Details
+
+The build process handles a key challenge: **SPA routing on Cloudflare Workers**.
+
+When users navigate to routes like `/admin` or `/results/:sessionId`, the Cloudflare Worker must serve `index.html` with the correct hashed asset paths (e.g., `/assets/index-B8-uZEdN.js`). Since Vite generates new hashes on every build, the worker needs the current `index.html` content.
+
+**How it works:**
+
+1. **`vite build`** - Creates `dist/` with `index.html` containing hashed asset references
+2. **`scripts/inject-index-html.js`** - Post-build script that:
+   - Copies `functions/` directory to `dist/functions/`
+   - Replaces `'__INDEX_HTML_CONTENT__'` placeholder in the worker with actual HTML
+3. **`wrangler deploy`** - Deploys `dist/functions/_worker.ts` (with injected HTML)
+
+**Key files:**
+- `functions/_worker.ts` - Source file with `'__INDEX_HTML_CONTENT__'` placeholder (never modified)
+- `dist/functions/_worker.ts` - Built file with actual HTML content (generated each build)
+- `scripts/inject-index-html.js` - Build script that performs the injection
+- `wrangler.toml` - Points to `dist/functions/_worker.ts` for deployment
+
+This approach ensures:
+- ✅ Source files stay clean and version-controllable
+- ✅ Each build gets the correct asset paths automatically
+- ✅ SPA routes work correctly on Cloudflare Workers
 
 ## Deployment
 

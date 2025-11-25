@@ -148,8 +148,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         console.log('📤 [GEMINI API CALL] Personalized Question Feedback');
         console.log('═══════════════════════════════════════════════════════');
         console.log(`📍 Passage Index: ${currentPassageIndex}`);
-        console.log(`📊 Cursor History: ${cursorPoints} points`);
-        console.log(`📸 Screenshot: ${currentScreenshot ? `Yes (${screenshotSizeKB} KB)` : 'No'}`);
+        console.log(`📊 Cursor History: ${cursorPoints} points (tracked locally, NOT sent to Gemini)`);
+        console.log(`📸 Screenshot: ${currentScreenshot ? `Yes (${screenshotSizeKB} KB) - includes visual heatmap` : 'No'}`);
         console.log(`📝 Passage Length: ${passageLength} characters`);
         console.log(`✅ Answer Correct: ${isCorrect}`);
         console.log(`🔢 Attempt Number: ${wrongAttempts + 1}`);
@@ -159,7 +159,6 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
           title || '',
           passage,
           currentScreenshot,
-          cursorHistory,
           currentQuestion.question,
           selectedAnswerText,
           correctAnswerText,

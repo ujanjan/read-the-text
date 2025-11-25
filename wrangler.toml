@@ -1,9 +1,25 @@
 # Cloudflare Workers configuration
 name = "read-the-text"
 compatibility_date = "2025-11-18"
-main = "functions/_worker.ts"
 
-# Static assets directory
+# IMPORTANT: Build Process for SPA Routing
+# ==========================================
+# The worker needs the built index.html with hashed asset paths (e.g., /assets/index-B8-uZEdN.js)
+# to serve SPA routes like /admin, /results/:id correctly.
+#
+# Build Flow:
+# 1. `vite build` creates dist/ with index.html containing hashed asset paths
+# 2. `scripts/inject-index-html.js` copies functions/ to dist/functions/ and
+#    replaces the '__INDEX_HTML_CONTENT__' placeholder with the actual HTML
+# 3. Wrangler deploys dist/functions/_worker.ts (with injected HTML)
+#
+# The source file (functions/_worker.ts) always keeps the placeholder,
+# so builds work correctly every time regardless of asset hash changes.
+#
+# Run: npm run build && npx wrangler deploy (or: npm run deploy)
+main = "dist/functions/_worker.ts"
+
+# Static assets directory (Vite build output)
 [assets]
 directory = "./dist"
 
