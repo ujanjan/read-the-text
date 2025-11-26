@@ -346,7 +346,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                     </div>
 
                     <div className="mt-6 text-xs text-gray-500">
-                        Questions? <a href="mailto:user@kth.se" className="text-blue-600 hover:underline">user@kth.se</a> | <a href="https://www.kth.se/student/kurser/kurs/DM2730?l=en" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Course Info</a>
+                        Questions? <a href="mailto:robp@kth.se" className="text-blue-600 hover:underline">robp@kth.se</a> | <a href="https://www.kth.se/student/kurser/kurs/DM2730?l=en" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Course Info</a>
                     </div>
                 </div>
 
