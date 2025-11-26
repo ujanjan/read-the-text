@@ -3,7 +3,7 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { getPersonalizedQuestionFeedback, getPersonalizedQuestionFeedbackWithHeatmap, getPersonalizedQuestionFeedbackVariantC, CursorData } from "../services/geminiService";
 import { apiService } from "../services/apiService";
 import { ReadingSummary, summarizeCursorSession, computeSentenceRects } from "../summarizeCursor";
@@ -29,6 +29,10 @@ interface ReadingComprehensionProps {
   initialIsComplete?: boolean;
   initialSelectedAnswer?: string;
   initialFeedback?: string;
+  onNextPassage?: () => void;
+  onPreviousPassage?: () => void;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
 }
 
 export interface ReadingComprehensionHandle {
@@ -70,6 +74,10 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     initialIsComplete = false,
     initialSelectedAnswer = "",
     initialFeedback = "",
+    onNextPassage,
+    onPreviousPassage,
+    hasPrevious = false,
+    hasNext = false,
   }, ref) {
     const [selectedAnswer, setSelectedAnswer] = useState<string>(initialSelectedAnswer);
     const [showFeedback, setShowFeedback] = useState(initialIsComplete);
@@ -340,8 +348,28 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
 
         {/* Questions Section - 40% width */}
         <Card className="p-4 flex flex-col min-w-0 overflow-hidden" style={{ flex: '2 1 0%' }}>
-          <div className="mb-3">
+          <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg">Question</h2>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onPreviousPassage}
+                disabled={!hasPrevious || !trackingEnabled}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onNextPassage}
+                disabled={!hasNext || !trackingEnabled}
+                className="h-8 w-8 p-0"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <div className="flex-1 flex flex-col overflow-hidden min-w-0">
@@ -361,16 +389,16 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                     <div
                       key={index}
                       className={`flex items-center space-x-2 p-2 rounded-md mb-2 text-sm min-w-0 ${showFeedback && isComplete
-                          ? index === currentQuestion.correctAnswer
-                            ? "bg-green-50 border-2 border-green-500"
-                            : selectedAnswer === index.toString()
-                              ? "bg-red-50 border-2 border-red-500"
-                              : "bg-gray-50"
-                          : showFeedback && !isComplete && selectedAnswer === index.toString()
+                        ? index === currentQuestion.correctAnswer
+                          ? "bg-green-50 border-2 border-green-500"
+                          : selectedAnswer === index.toString()
                             ? "bg-red-50 border-2 border-red-500"
-                            : !trackingEnabled
-                              ? "bg-gray-50 opacity-50 cursor-not-allowed"
-                              : "bg-gray-50 hover:bg-gray-100"
+                            : "bg-gray-50"
+                        : showFeedback && !isComplete && selectedAnswer === index.toString()
+                          ? "bg-red-50 border-2 border-red-500"
+                          : !trackingEnabled
+                            ? "bg-gray-50 opacity-50 cursor-not-allowed"
+                            : "bg-gray-50 hover:bg-gray-100"
                         }`}
                     >
                       <RadioGroupItem
@@ -403,8 +431,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                   {/* Original feedback (JSON-based) - TOP */}
                   <div
                     className={`p-3 rounded-md mt-3 text-sm min-w-0 max-w-full ${currentSubmissionCorrect
-                        ? "bg-green-50 text-green-800"
-                        : "bg-red-50 text-red-800"
+                      ? "bg-green-50 text-green-800"
+                      : "bg-red-50 text-red-800"
                       }`}
                   >
                     <div className="text-xs font-semibold mb-1 opacity-60">Response A</div>
@@ -435,8 +463,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                   {/* Heatmap feedback - MIDDLE */}
                   <div
                     className={`p-3 rounded-md text-sm min-w-0 max-w-full ${currentSubmissionCorrect
-                        ? "bg-green-50 text-green-800"
-                        : "bg-red-50 text-red-800"
+                      ? "bg-green-50 text-green-800"
+                      : "bg-red-50 text-red-800"
                       }`}
                   >
                     <div className="text-xs font-semibold mb-1 opacity-60">Response B</div>
@@ -467,8 +495,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                   {/* Variant C feedback - BOTTOM */}
                   <div
                     className={`p-3 rounded-md text-sm min-w-0 max-w-full ${currentSubmissionCorrect
-                        ? "bg-green-50 text-green-800"
-                        : "bg-red-50 text-red-800"
+                      ? "bg-green-50 text-green-800"
+                      : "bg-red-50 text-red-800"
                       }`}
                   >
                     <div className="text-xs font-semibold mb-1 opacity-60">Response C</div>
