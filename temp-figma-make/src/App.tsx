@@ -4,9 +4,10 @@ import { CursorTracker, CursorData } from './components/CursorTracker';
 import { CursorTrackingData } from './components/CursorTrackingData';
 import { CursorHeatmap, CursorHeatmapHandle } from './components/CursorHeatmap';
 import { LandingPage } from './components/LandingPage';
+import { Questionnaire } from './components/Questionnaire';
 //import { RealtimeCursorIndicator } from './components/RealtimeCursorIndicator';
 import { Button } from './components/ui/button';
-import { MousePointer2, MousePointerClick, Flame } from 'lucide-react';
+import { MousePointer2, MousePointerClick, Flame, Info } from 'lucide-react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const readingTexts = [
@@ -14,7 +15,7 @@ const readingTexts = [
     title: "Animal Life",
     passage: `Animal Life
 
-It took a mere 85 million years – the geologic blink of an eye – for animals to evolve and radiate out near much of the year and the land was periodically washed by huge floods; nuclear biology has provided much of the framework on which modern sciences depends. Scientists have now filled in enough of the record to be able to figure out exactly what sparked this massive diversification. New research shows that the retreat of the final great massive melting glaciers may have provided the extra energy needed for the dramatic development.`,
+It took a mere 85 million years – the geologic blink of an eye – for animals to evolve and radiate out over much of the world's land and oceans. Although fossil records and molecular biology have provided much information on the spread of animal life, scientists have not been able to figure out exactly what sparked this massive diversification. New research shows that nutrient-rich runoff from massive melting glaciers may have provided the extra energy needed to fuel this dramatic evolution.`,
     question: "What is said about evolution in this text?",
     choices: [
       "Historically, many animals have early global warming to thank for it.",
@@ -25,10 +26,10 @@ It took a mere 85 million years – the geologic blink of an eye – for animals
     correctAnswer: 2
   },
   {
-    title: "Scents with Flowers",
-    passage: `Scents with Flowers
+    title: "Saying it with Flowers",
+    passage: `Saying it with Flowers
 
-Bronze Age burials containing pollen from an aromatic plant suggest that floral offerings was an ancient custom in Scotland. Recent excavation of five burial sites has corroborated data from two earlier excavations showing that plants were deposited by people into by natural processes, such as being blown in by the wind. Notably from the plant meadowsweet, has led Scottish archaeologists locally to suppose that the deceased may have been given floral offerings – in bread, as a flavoring in honey or mead, or as a bouquet or burial garland. Meadowsweet has a strong and herbal literature as having a pleasant scent. Whether it was used in ancient times to raise spirits at a funeral, or to mask or counteract the smell of rotten flesh has remained unclear.`,
+Bronze Age burials containing pollen from an aromatic plant suggest that floral tribute was an ancient custom in Scotland. Recent excavation of five burial sites has corroborated data from two earlier excavations showing that plants were deposited by people, not by natural processes. The discovery of Filipendula pollen, probably from the plant meadowsweet, has led Scottish archaeologist Richard Tipping to speculate that the plant may have been used in graveside offerings—in bread, as a flavoring in honey or mead, or as a bouquet or floral covering. Meadowsweet is described in herbal literature as having a pleasant scent. Whether it was used in ancient times to raise the spirit of mourners or to counteract the smell of rotten flesh has remained unclear.`,
     question: "What conclusion has been drawn from the findings described in the text?",
     choices: [
       "The traces of flowers in the ancient graves are the results of human activity",
@@ -39,24 +40,10 @@ Bronze Age burials containing pollen from an aromatic plant suggest that floral 
     correctAnswer: 0
   },
   {
-    title: "Trygve Lie",
-    passage: `Trygve Lie
-
-The first Secretary-General of the United Nations was Trygve Lie the Norwegian statesman. He was a driven man with a vision in the aftermath of a devastating war. But Lies' readiness to wade in with his own opinions on any and every issue ran him into trouble in his own results. In supporting, in vain, Communist China's right to take its seat at the UN after the 1949 Revolution, he had Moscow's backing sighted and prepared to stand up to the US. But ultimately his passionate and humanitarian mission to halt the Korean War alienated him that enemy of the Soviet Union, which refused to take part in UN activities while he was present, forcing him to resign.`,
-    question: "What was Trygve Lie like, according to the text?",
-    choices: [
-      "He was unable to cooperate with his staff",
-      "He was a very outspoken person",
-      "He was governed more by reason than by passion",
-      "He was a dishonest and self-centred leader"
-    ],
-    correctAnswer: 1
-  },
-  {
     title: "The Great Lakes",
     passage: `The Great Lakes
 
-The Great Lakes are undergoing "an ecological catastrophe unlike any this region has seen," according to Jack Trotter, president of the National Wildlife Federation. Algae mats, spurred by pollution, have dramatically altered the lakes' fauna since invasive species first snuck up through the man-made corridor in the St. Lawrence Seaway. Blunders sometimes stemmed from well-meaning policies. Researchers imported Asian carp from the South to clean up waste without chemicals, and now some worry the fish has silently invaded Lake Michigan and Wisconsin. Already such problems are quickly becoming national disasters, such as the tiny and quick-spawning zebra mussel which clogs pipes in infested regions as far away as Lake Mead and Lake Powell on the Colorado River.`,
+The Great Lakes are undergoing "an ecological catastrophe unlike any this continent has seen," according to Pulitzer Prize finalist Dan Egan. Humans have dramatically altered the lakes' fauna since invasive species first snuck up through the man-made Saint Lawrence Seaway. Blunders sometimes stemmed from well-meaning policies. Researchers imported Asian carp to kill river nuisances without chemicals, and now some worry the fish has silently invaded Lake Michigan's floor via the Chicago Sanitary and Ship Canal. And the lakes' imported problems are quickly becoming national disasters, such as the tiny and quick-spawning quagga mussel that has infested regions as far away as Lake Mead and Lake Powell on the Colorado River.`,
     question: "What is implied here?",
     choices: [
       "Measures against environmental destruction tend to be taken only when it is already too late.",
@@ -70,7 +57,7 @@ The Great Lakes are undergoing "an ecological catastrophe unlike any this region
     title: "American Folk Music",
     passage: `American Folk Music
 
-The national heritage that is American folk and country music came over on boats from the British Isles in the 17th century, especially the Scots-Irish. Immigrants had traveled down the Appalachian – via fiddle, banjo and guitar – in ballads and hymns, and it spread quickly around the settled area. Cecil Sharp, the great English folklorist in his was the first music that the great American songwriter Woody Guthrie heard when he grew up amongst the Anglo-Celtic ballads in a high nasal country twang at their home outside Okemah, Oklahoma.`,
+The national treasure that is American folk and country music came over on boats from the British Isles in the 17th century, especially the Scots-Irish borderlands. It traveled down the Appalachian – via fiddle, banjo and guitar – in ballads and hymns, the words changing into new songs but the music immutable. For example, it was the first music that the great American songwriter Woody Guthrie ever heard: his mother singing Anglo-Celtic ballads in a high nasal country twang at their home outside Okemah, Oklahoma.`,
     question: "What is said here about the relationship between British and American folk songs?",
     choices: [
       "The British melodies were combined with new lyrics were replaced.",
@@ -84,7 +71,7 @@ The national heritage that is American folk and country music came over on boats
     title: "New Scotland Yard",
     passage: `New Scotland Yard
 
-New Scotland Yard might not be a beacon of law and order in the heart of London, but the sight of its lights burning through the night has been taken as a different kind of light at the HQ of the Metropolitan Police use so much lighting, heating, cooling and electricity every year that they are using out 13,491 tonnes of carbon dioxide a year – equivalent to about 2,200 transatlantic flights. It makes the Met one of London's and England and Wales and for that the biggest contributors to greenhouse gas emissions of any public building in Britain.`,
+New Scotland Yard may be a beacon of law and order in the heart of London, but the sight of its lights burning through the night has taken on a different meaning. Staff at the HQ of the Metropolitan Police use so much lighting, heating, cooling and electricity that the tower pumps out 13,491 tonnes of carbon dioxide a year – equivalent to about 2,200 households. It makes it the most polluting police station in England and Wales and one of the biggest contributors to greenhouse gases of any public building in Britain.`,
     question: "What is indicated here?",
     choices: [
       "The Metropolitan Police are working hard to cut down on greenhouse gases.",
@@ -98,7 +85,7 @@ New Scotland Yard might not be a beacon of law and order in the heart of London,
     title: "Men and Women",
     passage: `Men and Women
 
-Statistically speaking, the noise in the weather is so much respects that it is unlikely that men and women can be easily shown to experience the death of their spouse and that the marriage to widows and widowers are more likely to die within a year.`,
+Biologically speaking, the male is the weaker sex in most respects. One important consequence is that women are more likely than men to experience the death of their spouse and that the marriage market for widows is more restricted than that for widowers.`,
     question: "What does the writer suggest?",
     choices: [
       "It is uncertain whether a death in the family affects a man more than a woman or vice versa.",
@@ -109,10 +96,10 @@ Statistically speaking, the noise in the weather is so much respects that it is 
     correctAnswer: 1
   },
   {
-    title: "The Mayan",
-    passage: `The Mayan
+    title: "The Mayas",
+    passage: `The Mayas
 
-As recently as 30 years ago, many archaeologists imagined the ancient Maya to be peaceful astronomers occupied chiefly with charting the path of planets and stars. They were partly right. The Maya were remarkable astronomers. Yet they had another side. Mayan archaeologists knew of page-terrors marked the complex hieroglyphic writing. Now, with a new understanding of texts from sites throughout the Maya region and with new excavations from Aguateca Guatemala, what was once considered a mystery is finally becoming clear. Far from being philosophical or religious that relate solely to astronomy and what mystical any-rulers were sad to lose were, brutally ruthless. Put to put no uncertain terms, the Maya were always remain a mystery`,
+As recently as 30 years ago, many archaeologists imagined the Mayas as peaceful mystics, their lives focused on stately ceremonial centers where astronomer-priests interpreted the stars. However, that picture faded in the 1960s and 1970s as a breed of anthropologists known as epigraphers cracked the complex hieroglyphic system of Maya writing. The glyphs told a lively story of politics and warfare, and the ceremonial centers became  quarrelsome city-states. Now, with a new reading of texts from sites throughout the Maya heartland in Mexico, Guatemala, and Belize, the Mayas have taken another step toward modernity. It seems as if most of the individual city-states were tied in two large, durable alliances. Like NATO and the Warsaw Pact, each alliance was led by a dominant power.`,
     question: "What is the writer's main idea?",
     choices: [
       "That as archaeologists get more information, largest from a peaceful society that is a picture wildlife one.",
@@ -126,7 +113,7 @@ As recently as 30 years ago, many archaeologists imagined the ancient Maya to be
     title: "Rock Posters",
     passage: `Rock Posters
 
-The vibrating colors and illegible typography forming of psychedelic concert posters is the very big part of a movement in design of the 60s. The style was new, and exciting important and Posters were designed to advertise bands, dances, raves etc in cafeterias. The designers reflected the mood and the acid visual rock machines to folks imagination. While some of these posters are based on the actual acid trips by their creators, and other prints are just imitations of what the designers thought an drug vision to be admiration.`,
+The vibrating colors and illegible typographic lettering of psychedelic concert posters in the late 60's gave us a universal graphic language for the hippie sex, drugs and rock'n'roll era. Posters were designed to advertise bands, appeal to aficionados and off end everyone else. Hip-capitalist entrepreneurs, however, quickly reduced real psychedelia to a youth-culture style that sold everything from tie-dyed neckties to Volkswagen vans. What came next, in the 70's, was punk music – and an anarchic graphic sensibility typified by D.I.Y. (Do It Yourself ), a deliberately clumsy hodgepodge of images that were cut and pasted and frequently stolen and photocopied. Punk was known for its ransom-note aesthetic; it broke the tenets of legibility but telegraphed clear-coded mes sages to its audience.`,
     question: "It is possible to note from the passage that which of the following statements is true of psychedelic concert posters?",
     choices: [
       "That their design is slightly out of keeping with the music",
@@ -140,7 +127,7 @@ The vibrating colors and illegible typography forming of psychedelic concert pos
     title: "Therapy",
     passage: `Therapy
 
-It is in tens of thousand typical interval self entirely to cognitive therapy then it is to try to prevent diseases. Most patients do not object the treatment being too long but the feel to of the discussing (asking questions taking cause patient to individual therapy patients)`,
+The brains of depressed people respond differently to cognitive therapy than to drug therapy, according to a University of Toronto study. Neither treatment appears to work better than the other, researchers found, but the difference should help doctors under stand why one treatment works for some but not for others.`,
     question: "What can be concluded from the text?",
     choices: [
       "That patients do not like the method",
@@ -161,6 +148,7 @@ export default function App() {
   const [showCompletionPage, setShowCompletionPage] = useState(false);
   const [completedQuestions, setCompletedQuestions] = useState<number[]>([]);
   const [showLandingPage, setShowLandingPage] = useState(true);
+  const [questionnaireSubmitted, setQuestionnaireSubmitted] = useState(false);
   //const [showRealtimeIndicator, setShowRealtimeIndicator] = useState(true);
 
   // 🔹 Ref to control the CursorHeatmap (for saving image)
@@ -240,29 +228,27 @@ export default function App() {
       <div className="flex-1 flex flex-col min-h-0">
         {/* Header */}
         <div className="flex-shrink-0 px-6 py-3 bg-gray-50">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-gray-900" style={{ fontSize: '0.875rem', fontWeight: '600' }}>Reading Comprehension Learning Tool - User Testing</h1>
-              <p className="text-gray-500" style={{ fontSize: '0.75rem' }}>
-                {showCompletionPage ? 'Ending Page' : `Text ${currentTextIndex + 1} of ${readingTexts.length}`}
-              </p>
+          <div className="flex items-center justify-between gap-6">
+            <div className="flex-1 flex items-center justify-between">
+              <div>
+                <h1 className="text-gray-900" style={{ fontSize: '0.875rem', fontWeight: '600' }}>Reading Comprehension Learning Tool - User Testing</h1>
+                <p className="text-gray-500" style={{ fontSize: '0.75rem' }}>
+                  {showCompletionPage ? (questionnaireSubmitted ? '' : 'Questionnaire') : `Text ${currentTextIndex + 1} of ${readingTexts.length}`}
+                </p>
+              </div>
+              {!showCompletionPage && (
+                <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                  <Info className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
+                  <span className="text-xs text-red-900"><span className="font-semibold">Remember!</span> Show your eyeline with your cursor</span>
+                </div>
+              )}
             </div>
             
-            <div className="flex gap-2 items-center">
+            <div className="w-[600px] flex justify-end">
               <Button
-                variant="outline"
-                size="sm"
-                onClick={handleStopQuiz}
-                className="h-7 px-2 bg-yellow-50 hover:bg-yellow-100 border-yellow-200"
-                style={{ fontSize: '0.75rem' }}
-              >
-                {quizStopped ? 'Start Quiz' : 'Stop Quiz'}
-              </Button>
-              <Button
-                variant="outline"
                 size="sm"
                 onClick={handleEndQuiz}
-                className="h-7 px-2 bg-red-50 hover:bg-red-100 border-red-200"
+                className="h-7 px-2 bg-red-600 hover:bg-red-700 text-white flex-shrink-0"
                 style={{ fontSize: '0.75rem' }}
               >
                 End Quiz
@@ -291,28 +277,13 @@ export default function App() {
                 onQuestionCompleted={() => handleQuestionCompleted(currentTextIndex)}
               />
             ) : (
-              <div className="h-full flex items-center justify-center">
-                <div className="bg-white rounded-lg shadow-sm w-[600px] h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <h2 className="text-gray-900 mb-2">You have answered {completedQuestions.length}/{readingTexts.length} Questions correctly</h2>
-                    <p className="text-gray-700 mb-6">Are you finished?</p>
-                    <div className="flex gap-4 justify-center">
-                      <Button
-                        onClick={handleStopQuiz}
-                        className="bg-green-600 hover:bg-green-700"
-                      >
-                        Yes I am done
-                      </Button>
-                      <Button
-                        onClick={handleReturnToFirstText}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        No, I am not finished
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <Questionnaire 
+                onNext={handleNextText}
+                onPrevious={handlePreviousText}
+                hasNext={false}
+                hasPrevious={true}
+                onSubmit={() => setQuestionnaireSubmitted(true)}
+              />
             )}
           </div>
         </div>

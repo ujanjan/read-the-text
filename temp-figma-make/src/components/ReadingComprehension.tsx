@@ -115,7 +115,7 @@ export function ReadingComprehension({
   return (
     <div className="h-full flex gap-6">
       {/* Reading Passage - Left Column */}
-      <div className="flex-1 flex flex-col bg-white rounded-lg overflow-hidden shadow-sm justify-center">
+      <div className="flex-1 flex flex-col bg-white rounded-lg overflow-hidden shadow-sm">
         <div className="px-8 py-3">
           <h2 className="text-gray-900 font-black">{title}</h2>
         </div>
@@ -173,7 +173,7 @@ export function ReadingComprehension({
                   const isCorrectAnswer = index === currentQuestion.correctAnswer;
                   // Show correct answer in green when question is locked
                   const showAsCorrect = showFeedback && questionLocked && isCorrectAnswer && isCorrect;
-                  const showAsIncorrect = showFeedback && !isCorrect && isSelected;
+                  const showAsIncorrect = showFeedback && !questionLocked && evaluatedAnswer === index.toString();
 
                   return (
                     <div
@@ -251,7 +251,7 @@ export function ReadingComprehension({
                   disabled={!selectedAnswer}
                   className="w-full bg-red-600 hover:bg-red-700"
                 >
-                  Try again
+                  Submit Again
                 </Button>
               )}
             </div>
