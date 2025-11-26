@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
-import { getPersonalizedQuestionFeedback, getPersonalizedQuestionFeedbackWithHeatmap, CursorData } from "../services/geminiService";
+import { getPersonalizedQuestionFeedback, getPersonalizedQuestionFeedbackWithHeatmap, getPersonalizedQuestionFeedbackVariantC, CursorData } from "../services/geminiService";
 import { apiService } from "../services/apiService";
 import { ReadingSummary, summarizeCursorSession, computeSentenceRects } from "../summarizeCursor";
 
@@ -77,6 +77,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
     const [feedbackTextHeatmap, setFeedbackTextHeatmap] = useState<string>('');
     const [isLoadingFeedbackHeatmap, setIsLoadingFeedbackHeatmap] = useState(false);
+    const [feedbackTextVariantC, setFeedbackTextVariantC] = useState<string>('');
+    const [isLoadingFeedbackVariantC, setIsLoadingFeedbackVariantC] = useState(false);
     const [currentSubmissionCorrect, setCurrentSubmissionCorrect] = useState<boolean>(initialIsComplete);
     const [wrongAttempts, setWrongAttempts] = useState(0);
     const [isComplete, setIsComplete] = useState(initialIsComplete);
@@ -86,22 +88,24 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     useEffect(() => {
       console.log(`🔄 [Passage Change] Switching to passage ${currentPassageIndex}`);
       console.log(`   └─ Cursor history for this passage: ${cursorHistory?.length || 0} points`);
-      
+
       // Don't reset feedback if we're on the same passage and just completed it
       // This preserves the Gemini feedback that was just generated
       const shouldPreserveFeedback = isComplete && initialIsComplete;
-      
+
       setSelectedAnswer(initialSelectedAnswer);
       setShowFeedback(initialIsComplete);
       if (!shouldPreserveFeedback) {
         setFeedbackText(initialFeedback);
         setFeedbackTextHeatmap('');
+        setFeedbackTextVariantC('');
       }
       setCurrentSubmissionCorrect(initialIsComplete);
       setIsComplete(initialIsComplete);
       setWrongAttempts(0);
       setIsLoadingFeedback(false);
       setIsLoadingFeedbackHeatmap(false);
+      setIsLoadingFeedbackVariantC(false);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPassageIndex, initialIsComplete, initialSelectedAnswer, initialFeedback]);
 
@@ -115,8 +119,10 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         setShowFeedback(false);
         setFeedbackText("");
         setFeedbackTextHeatmap("");
+        setFeedbackTextVariantC("");
         setIsLoadingFeedback(false);
         setIsLoadingFeedbackHeatmap(false);
+        setIsLoadingFeedbackVariantC(false);
         setCurrentSubmissionCorrect(false);
         setWrongAttempts(0);
         setIsComplete(false);
@@ -143,6 +149,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       setShowFeedback(true);
       setIsLoadingFeedback(true);
       setIsLoadingFeedbackHeatmap(true);
+      setIsLoadingFeedbackVariantC(true);
 
       // Always capture a fresh screenshot to include latest cursor movements
       // This ensures the heatmap reflects all cursor activity up to this point
@@ -160,7 +167,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         }
       }
 
-      // Get personalized feedback from BOTH variants in parallel
+      // Get personalized feedback from ALL variants in parallel
       const selectedAnswerText = currentQuestion.choices[parseInt(selectedAnswer)];
       const correctAnswerText = currentQuestion.choices[currentQuestion.correctAnswer];
 
@@ -169,7 +176,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       const passageLength = passage.length;
       const cursorPoints = cursorHistory.length;
       console.log('═══════════════════════════════════════════════════════');
-      console.log('📤 [GEMINI API CALLS] Personalized Question Feedback - BOTH VARIANTS');
+      console.log('📤 [GEMINI API CALLS] Personalized Question Feedback - ALL 3 VARIANTS');
       console.log('═══════════════════════════════════════════════════════');
       console.log(`📍 Passage Index: ${currentPassageIndex}`);
       console.log(`📊 Cursor History: ${cursorPoints} points (tracked locally, NOT sent to Gemini)`);
@@ -191,7 +198,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         readingSummaryJson = JSON.stringify(readingSummary);
       }
 
-      // Call both API variants in parallel
+      // Call all API variants in parallel
       const originalPromise = getPersonalizedQuestionFeedback(
         title || '',
         passage,
@@ -238,8 +245,31 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         return { feedback: fallback, error: error.message };
       });
 
-      // Wait for the original variant to complete before recording to DB
-      const [originalResult] = await Promise.all([originalPromise, heatmapPromise]);
+      const variantCPromise = getPersonalizedQuestionFeedbackVariantC(
+        title || '',
+        passage,
+        currentScreenshot,
+        currentQuestion.question,
+        selectedAnswerText,
+        correctAnswerText,
+        isCorrect,
+        readingSummaryJson
+      ).then(result => {
+        console.log('🤖 [GEMINI RESPONSE - VARIANT C]:', result.feedback);
+        console.log('🤖 [GEMINI RESPONSE LENGTH - VARIANT C]:', result.feedback.length);
+        setFeedbackTextVariantC(result.feedback);
+        setIsLoadingFeedbackVariantC(false);
+        return result;
+      }).catch(error => {
+        console.error('Failed to get personalized feedback (Variant C):', error);
+        const fallback = isCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.';
+        setFeedbackTextVariantC(fallback);
+        setIsLoadingFeedbackVariantC(false);
+        return { feedback: fallback, error: error.message };
+      });
+
+      // Wait for all variants to complete before recording to DB
+      const [originalResult] = await Promise.all([originalPromise, heatmapPromise, variantCPromise]);
 
       // Record attempt in cloud if we have a session (only store original feedback)
       if (sessionId) {
@@ -269,9 +299,11 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       setShowFeedback(false);
       setFeedbackText("");
       setFeedbackTextHeatmap("");
+      setFeedbackTextVariantC("");
       setSelectedAnswer("");
       setIsLoadingFeedback(false);
       setIsLoadingFeedbackHeatmap(false);
+      setIsLoadingFeedbackVariantC(false);
       setCurrentSubmissionCorrect(false);
     };
 
@@ -286,7 +318,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
             className="overflow-y-auto flex-1 pr-2"
           >
             {title && (
-              <h3 
+              <h3
                 className="!font-bold !mb-10 !text-gray-900 !leading-tight"
                 style={{ fontSize: '2rem', fontWeight: '700' }}
               >
@@ -328,8 +360,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                   {currentQuestion.choices.map((choice, index) => (
                     <div
                       key={index}
-                      className={`flex items-center space-x-2 p-2 rounded-md mb-2 text-sm min-w-0 ${
-                        showFeedback && isComplete
+                      className={`flex items-center space-x-2 p-2 rounded-md mb-2 text-sm min-w-0 ${showFeedback && isComplete
                           ? index === currentQuestion.correctAnswer
                             ? "bg-green-50 border-2 border-green-500"
                             : selectedAnswer === index.toString()
@@ -340,7 +371,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                             : !trackingEnabled
                               ? "bg-gray-50 opacity-50 cursor-not-allowed"
                               : "bg-gray-50 hover:bg-gray-100"
-                      }`}
+                        }`}
                     >
                       <RadioGroupItem
                         value={index.toString()}
@@ -371,11 +402,10 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                 <>
                   {/* Original feedback (JSON-based) - TOP */}
                   <div
-                    className={`p-3 rounded-md mt-3 text-sm min-w-0 max-w-full ${
-                      currentSubmissionCorrect
+                    className={`p-3 rounded-md mt-3 text-sm min-w-0 max-w-full ${currentSubmissionCorrect
                         ? "bg-green-50 text-green-800"
                         : "bg-red-50 text-red-800"
-                    }`}
+                      }`}
                   >
                     <div className="text-xs font-semibold mb-1 opacity-60">Response A</div>
                     {isLoadingFeedback ? (
@@ -402,13 +432,12 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                   {/* Separator */}
                   <div style={{ margin: '4px 0', height: '4px' }}></div>
 
-                  {/* Heatmap feedback - BOTTOM */}
+                  {/* Heatmap feedback - MIDDLE */}
                   <div
-                    className={`p-3 rounded-md text-sm min-w-0 max-w-full ${
-                      currentSubmissionCorrect
+                    className={`p-3 rounded-md text-sm min-w-0 max-w-full ${currentSubmissionCorrect
                         ? "bg-green-50 text-green-800"
                         : "bg-red-50 text-red-800"
-                    }`}
+                      }`}
                   >
                     <div className="text-xs font-semibold mb-1 opacity-60">Response B</div>
                     {isLoadingFeedbackHeatmap ? (
@@ -427,6 +456,38 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                         )}
                         <span className="text-xs break-words min-w-0 max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                           {feedbackTextHeatmap || (currentSubmissionCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Separator */}
+                  <div style={{ margin: '4px 0', height: '4px' }}></div>
+
+                  {/* Variant C feedback - BOTTOM */}
+                  <div
+                    className={`p-3 rounded-md text-sm min-w-0 max-w-full ${currentSubmissionCorrect
+                        ? "bg-green-50 text-green-800"
+                        : "bg-red-50 text-red-800"
+                      }`}
+                  >
+                    <div className="text-xs font-semibold mb-1 opacity-60">Response C</div>
+                    {isLoadingFeedbackVariantC ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span className="text-xs">
+                          Generating personalized feedback...
+                        </span>
+                      </div>
+                    ) : (
+                      <div className={`flex items-start gap-2 min-w-0 w-full ${currentSubmissionCorrect ? 'items-center' : ''}`}>
+                        {currentSubmissionCorrect ? (
+                          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                        ) : (
+                          <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                        )}
+                        <span className="text-xs break-words min-w-0 max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                          {feedbackTextVariantC || (currentSubmissionCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.')}
                         </span>
                       </div>
                     )}
