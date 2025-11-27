@@ -96,18 +96,14 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     useEffect(() => {
       console.log(`🔄 [Passage Change] Switching to passage ${currentPassageIndex}`);
       console.log(`   └─ Cursor history for this passage: ${cursorHistory?.length || 0} points`);
-
-      // Don't reset feedback if we're on the same passage and just completed it
-      // This preserves the Gemini feedback that was just generated
-      const shouldPreserveFeedback = isComplete && initialIsComplete;
+      console.log(`   └─ Initial feedback: ${initialFeedback ? initialFeedback.substring(0, 50) + '...' : 'none'}`);
 
       setSelectedAnswer(initialSelectedAnswer);
       setShowFeedback(initialIsComplete);
-      if (!shouldPreserveFeedback) {
-        setFeedbackText(initialFeedback);
-        setFeedbackTextHeatmap('');
-        setFeedbackTextVariantC('');
-      }
+      // Always restore feedback from initialFeedback for completed passages
+      setFeedbackText(initialFeedback);
+      setFeedbackTextHeatmap('');
+      setFeedbackTextVariantC('');
       setCurrentSubmissionCorrect(initialIsComplete);
       setIsComplete(initialIsComplete);
       setWrongAttempts(0);
@@ -397,7 +393,9 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                               ? currentSubmissionCorrect
                                 ? "#f0fdf4" // green-50 (user's correct answer)
                                 : "#fef2f2" // red-50 (user's wrong answer)
-                              : "#F5F5F5" // lighter gray for all other options (never reveal correct answer)
+                              : isComplete && isCorrect
+                                ? "#f0fdf4" // green-50 (show correct answer in green for completed passages)
+                                : "#F5F5F5" // lighter gray for all other options
                             : !trackingEnabled
                               ? "#F5F5F5"
                               : isChosen
@@ -407,7 +405,9 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                             ? currentSubmissionCorrect
                               ? "2px solid #22c55e" // green border for correct answer
                               : "2px solid #ef4444" // red border for wrong answer
-                            : "none",
+                            : isComplete && isCorrect && showingFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC
+                              ? "2px solid #22c55e" // green border for correct answer on completed passages
+                              : "none",
                           opacity: !trackingEnabled ? 0.5 : 1,
                           cursor: (!trackingEnabled || showingFeedback || isComplete) ? "not-allowed" : "pointer"
                         }}
