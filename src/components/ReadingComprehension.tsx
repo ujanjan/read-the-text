@@ -383,46 +383,76 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                   disabled={showFeedback || !trackingEnabled || isComplete}
                   className="min-w-0 space-y-3"
                 >
-                  {currentQuestion.choices.map((choice, index) => (
-                    <div
-                      key={index}
-                      className={`flex items-center space-x-2 p-3 rounded-md text-xs min-w-0 transition-all ${showFeedback && isComplete
-                        ? index === currentQuestion.correctAnswer
-                          ? "bg-green-50 border-2 border-green-500"
-                          : selectedAnswer === index.toString()
-                            ? "bg-red-50 border-2 border-red-500"
-                            : "bg-gray-100"
-                        : showFeedback && !isComplete && selectedAnswer === index.toString()
-                          ? "bg-red-100 border-2 border-red-500"
-                          : !trackingEnabled
-                            ? "bg-gray-100 opacity-50 cursor-not-allowed"
-                            : selectedAnswer === index.toString()
-                              ? "bg-blue-100"
-                              : "bg-gray-100 hover:bg-gray-200"
-                        }`}
-                    >
-                      <RadioGroupItem
-                        value={index.toString()}
-                        id={`choice-${index}`}
-                      />
-                      <Label
-                        htmlFor={`choice-${index}`}
-                        className="flex-1 cursor-pointer font-bold text-xs text-gray-900 break-words min-w-0 max-w-full"
-                        style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                  {currentQuestion.choices.map((choice, index) => {
+                    const isChosen = selectedAnswer === index.toString();
+                    const isCorrect = index === currentQuestion.correctAnswer;
+                    const showingFeedback = showFeedback;
+
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          backgroundColor: showingFeedback && isComplete
+                            ? isCorrect
+                              ? "#f0fdf4" // green-50
+                              : isChosen
+                                ? "#fef2f2" // red-50
+                                : "#F5F5F5" // lighter gray for unchosen
+                            : showingFeedback && !isComplete && isChosen
+                              ? "#fee2e2" // red-100
+                              : !trackingEnabled
+                                ? "#F5F5F5"
+                                : isChosen
+                                  ? "#dbeafe" // blue-100
+                                  : "#F5F5F5", // lighter gray default
+                          border: showingFeedback && (
+                            (isComplete && isCorrect) ||
+                            (isChosen && !isCorrect)
+                          )
+                            ? isCorrect
+                              ? "2px solid #22c55e"
+                              : "2px solid #ef4444"
+                            : "none",
+                          opacity: !trackingEnabled ? 0.5 : 1,
+                          cursor: !trackingEnabled ? "not-allowed" : "pointer"
+                        }}
+                        className="flex items-center space-x-2 p-3 rounded-md text-xs min-w-0 transition-all hover:bg-[#E8E8E8]"
+                        onMouseEnter={(e) => {
+                          if (trackingEnabled && !showingFeedback && !isChosen) {
+                            e.currentTarget.style.backgroundColor = "#E8E8E8";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (trackingEnabled && !showingFeedback && !isChosen) {
+                            e.currentTarget.style.backgroundColor = "#F5F5F5";
+                          }
+                        }}
                       >
-                        {choice}
-                      </Label>
-                      {showFeedback && isComplete && index === currentQuestion.correctAnswer && (
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      )}
-                      {showFeedback && !isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
-                        <XCircle className="h-4 w-4 text-red-600" />
-                      )}
-                      {showFeedback && isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
-                        <XCircle className="h-4 w-4 text-red-600" />
-                      )}
-                    </div>
-                  ))}
+                        <RadioGroupItem
+                          value={index.toString()}
+                          id={`choice-${index}`}
+                          className="sr-only"
+                          style={{ display: 'none' }}
+                        />
+                        <Label
+                          htmlFor={`choice-${index}`}
+                          className="flex-1 cursor-pointer font-bold text-xs text-gray-900 break-words min-w-0 max-w-full"
+                          style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                        >
+                          {choice}
+                        </Label>
+                        {showFeedback && isComplete && index === currentQuestion.correctAnswer && (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        )}
+                        {showFeedback && !isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
+                          <XCircle className="h-4 w-4 text-red-600" />
+                        )}
+                        {showFeedback && isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
+                          <XCircle className="h-4 w-4 text-red-600" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </RadioGroup>
               </div>
 
