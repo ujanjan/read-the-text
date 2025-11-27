@@ -6,7 +6,7 @@ import { CursorTrackingData } from './components/CursorTrackingData';
 import { CursorHeatmap, CursorHeatmapHandle } from './components/CursorHeatmap';
 import { LandingPage } from './components/LandingPage';
 import { Button } from './components/ui/button';
-import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Trophy, Target, Zap } from 'lucide-react';
+import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Trophy, Target, Zap, Info } from 'lucide-react';
 import { toCanvas } from 'html-to-image';
 import { getPassages } from './services/passageService';
 import { apiService } from './services/apiService';
@@ -666,6 +666,14 @@ export default function App() {
             <p className="text-gray-600 text-sm">
               Passage {currentPassageIndex + 1} of {passages.length}
             </p>
+          </div>
+
+          {/* Eyeline reminder box - centered in header */}
+          <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-center gap-2">
+            <Info className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
+            <span className="text-xs text-red-900">
+              <span className="font-semibold">Remember!</span> Show your eyeline with your cursor
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
