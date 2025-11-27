@@ -589,10 +589,12 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                 // State 3 (wrong - red "Submit Again")
                 <Button
                   onClick={handleTryAgain}
+                  disabled={isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC}
                   style={{
                     backgroundColor: '#e7000b',
                     color: 'white',
-                    opacity: 1
+                    opacity: (isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC) ? 0.5 : 1,
+                    cursor: (isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC) ? 'not-allowed' : 'pointer'
                   }}
                   className="flex-1 text-sm py-3 font-semibold rounded-lg transition-all"
                 >
