@@ -144,8 +144,14 @@ export default function App() {
         setCurrentPassageIndex(state.currentPassageIndex);
         setPassageData(state.passageData || {});
         setShowLanding(false);
-        setTrackingEnabled(true);
-        passageStartTimeRef.current = Date.now();
+        // Restore questionnaire state if it was saved
+        if (state.showQuestionnaire) {
+          setShowQuestionnaire(true);
+          setTrackingEnabled(false);
+        } else {
+          setTrackingEnabled(true);
+          passageStartTimeRef.current = Date.now();
+        }
       } catch (err) {
         console.error('Failed to restore session from storage:', err);
         sessionStorage.removeItem(SESSION_STORAGE_KEY);
@@ -160,11 +166,12 @@ export default function App() {
         sessionId,
         passageOrder,
         currentPassageIndex,
-        passageData
+        passageData,
+        showQuestionnaire
       };
       sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state));
     }
-  }, [sessionId, passageOrder, currentPassageIndex, passageData, showLanding]);
+  }, [sessionId, passageOrder, currentPassageIndex, passageData, showLanding, showQuestionnaire]);
 
   // Handle starting quiz from landing page
   const handleStartQuiz = (
@@ -223,9 +230,10 @@ export default function App() {
 
   const handleToggleTracking = () => {
     if (trackingEnabled) {
-      // When stopping, accumulate time and stop tracking
+      // When stopping, accumulate time, stop tracking, and go to questionnaire
       accumulateTimeForCurrentPassage();
       setTrackingEnabled(false);
+      setShowQuestionnaire(true);
     } else {
       // When starting fresh, start timer
       passageStartTimeRef.current = Date.now();
@@ -249,6 +257,33 @@ export default function App() {
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
     // Go back to landing
     setShowLanding(true);
+  };
+
+  // Resume quiz from questionnaire page - returns to exact passage where they stopped
+  const handleResumeQuiz = () => {
+    setShowQuestionnaire(false);
+    setTrackingEnabled(true);
+    // Restart timer for current passage if not complete
+    if (!currentData.isComplete) {
+      passageStartTimeRef.current = Date.now();
+    }
+  };
+
+  // Restart quiz from questionnaire page - clears all progress and starts from passage 1
+  const handleRestartQuizFromQuestionnaire = () => {
+    // Reset the quiz component state
+    if (readingComprehensionRef.current) {
+      readingComprehensionRef.current.reset();
+    }
+    // Clear all passage data but keep session info
+    setPassageData({});
+    setCurrentPassageIndex(0);
+    setShowQuestionnaire(false);
+    setTrackingEnabled(true);
+    // Clear session storage
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    // Start timer for first passage
+    passageStartTimeRef.current = Date.now();
   };
 
   // Navigation between passages
@@ -491,10 +526,17 @@ export default function App() {
 
   // Show questionnaire page
   if (showQuestionnaire && sessionId) {
+    // Check if all passages are complete
+    const allPassagesComplete = passages.length > 0 && passages.every((_, index) =>
+      passageData[index]?.isComplete === true
+    );
+
     return (
       <QuestionnairePage
         sessionId={sessionId}
         onSubmit={handleQuestionnaireSubmit}
+        onResumeQuiz={!allPassagesComplete ? handleResumeQuiz : undefined}
+        onRestartQuiz={!allPassagesComplete ? handleRestartQuizFromQuestionnaire : undefined}
       />
     );
   }

@@ -257,7 +257,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       <div className="flex gap-4 h-full min-w-0 w-full">
         {/* Reading Passage - 60% width */}
         <div className="flex flex-col min-w-0" style={{ flex: '3 1 0%' }}>
-          <Card ref={ref} className="p-6 overflow-hidden flex flex-col min-w-0 flex-1">
+          <Card className="p-6 overflow-hidden flex flex-col min-w-0 flex-1">
             <div className="mb-3">
               <h2 className="text-lg font-bold">{title || 'Reading Passage'}</h2>
             </div>
