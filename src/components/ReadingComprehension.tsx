@@ -556,26 +556,47 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
 
             <div className="mt-3 flex gap-2">
               {!showFeedback ? (
+                // State 1 (disabled) or State 2 (active - ready to submit)
                 <Button
                   onClick={handleSubmit}
                   disabled={!selectedAnswer || isLoadingFeedback || !trackingEnabled || isComplete}
-                  className="flex-1 text-xs py-2"
+                  style={{
+                    backgroundColor: (!selectedAnswer || !trackingEnabled) ? '#d1d5dc' : '#155dfc',
+                    color: 'white',
+                    opacity: 1,
+                    cursor: (!selectedAnswer || !trackingEnabled) ? 'not-allowed' : 'pointer'
+                  }}
+                  className="flex-1 text-sm py-3 font-semibold rounded-lg transition-all"
                 >
-                  Submit
+                  Submit Answer
                 </Button>
               ) : isComplete ? (
+                // State 4 (correct - green "Good Job - Next Question")
                 <Button
-                  disabled
-                  className="flex-1 text-xs py-2"
+                  onClick={onNextPassage}
+                  disabled={isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC || !hasNext}
+                  style={{
+                    backgroundColor: '#00a63e',
+                    color: 'white',
+                    opacity: (isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC || !hasNext) ? 0.5 : 1,
+                    cursor: (isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC || !hasNext) ? 'not-allowed' : 'pointer'
+                  }}
+                  className="flex-1 text-sm py-3 font-semibold rounded-lg transition-all"
                 >
-                  Completed
+                  Good Job - Next Question
                 </Button>
               ) : (
+                // State 3 (wrong - red "Submit Again")
                 <Button
                   onClick={handleTryAgain}
-                  className="flex-1 text-xs py-2"
+                  style={{
+                    backgroundColor: '#e7000b',
+                    color: 'white',
+                    opacity: 1
+                  }}
+                  className="flex-1 text-sm py-3 font-semibold rounded-lg transition-all"
                 >
-                  Try Again
+                  Submit Again
                 </Button>
               )}
             </div>
