@@ -322,7 +322,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         <div className="flex flex-col min-w-0" style={{ flex: '3 1 0%' }}>
           <Card ref={ref} className="p-6 overflow-hidden flex flex-col min-w-0 flex-1">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg">Reading Passage</h2>
+              <h2 className="text-lg font-bold">{title || 'Reading Passage'}</h2>
               {/* Eyeline reminder box - positioned on the same line as the heading */}
               <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-center gap-2">
                 <Info className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
@@ -335,14 +335,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
               ref={passageRef}
               className="overflow-y-auto flex-1 pr-2"
             >
-              {title && (
-                <h3
-                  className="!font-bold !mb-10 !text-gray-900 !leading-tight"
-                  style={{ fontSize: '2rem', fontWeight: '700' }}
-                >
-                  {title}
-                </h3>
-              )}
+
               <div className="prose max-w-none text-base">
                 {passage.split("\n\n").map((paragraph, index) => (
                   <p
