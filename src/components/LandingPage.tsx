@@ -464,20 +464,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6 mb-8">
+                    <div className="space-y-4 mb-8">
                         <div className="flex gap-3">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <BookOpen className="w-5 h-5 text-blue-600" />
+                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <BookOpen className="w-6 h-6 text-blue-600" />
                             </div>
                             <div>
                                 <p className="font-semibold text-gray-900 text-sm">Read & Answer</p>
-                                <p className="text-gray-500 text-xs">10 short passages</p>
+                                <p className="text-gray-500 text-xs">10 short texts</p>
                             </div>
                         </div>
 
                         <div className="flex gap-3">
-                            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <Clock className="w-5 h-5 text-red-600" />
+                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Clock className="w-6 h-6 text-blue-600" />
                             </div>
                             <div>
                                 <p className="font-semibold text-gray-900 text-sm">~25 Minutes</p>
@@ -486,32 +486,32 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                         </div>
 
                         <div className="flex gap-3">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <Monitor className="w-5 h-5 text-blue-600" />
+                            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Monitor className="w-6 h-6 text-blue-600" />
                             </div>
                             <div>
                                 <p className="font-semibold text-gray-900 text-sm">Desktop Only</p>
                                 <p className="text-gray-500 text-xs">Mouse recommended</p>
                             </div>
                         </div>
-
-                        <div className="flex gap-3">
-                            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <Eye className="w-5 h-5 text-red-600" />
-                            </div>
-                            <div>
-                                <p className="font-semibold text-gray-900 text-sm">Eye Tracking</p>
-                                <p className="text-gray-500 text-xs">Via cursor movement</p>
-                            </div>
-                        </div>
                     </div>
 
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
-                        <div className="flex gap-2">
-                            <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                            <p className="text-xs text-blue-900">
-                                <span className="font-semibold">Important:</span> Please follow the text with your cursor as you read. This acts as a proxy for eye-tracking.
-                            </p>
+                    <div className="bg-red-50 border border-red-300 rounded-lg p-5 mb-8">
+                        <div className="flex gap-3">
+                            <div className="flex-shrink-0">
+                                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                                    <Info className="w-4 h-4 text-red-700" />
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-red-900 mb-2">Important!</p>
+                                <p className="text-sm text-red-900 font-semibold mb-2">
+                                    For this test it is crucial that you show your line of sight with the cursor of your mouse.
+                                </p>
+                                <p className="text-sm text-red-800">
+                                    In other words - keep the mouse where you are looking at all times. This will produce an invisible heatmap of where your eyes and focus are during the test.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
@@ -521,7 +521,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                         type="submit"
                         form="user-info-form"
                         disabled={!isFormValid() || loading}
-                        className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors mt-8"
+                        className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
                     >
                         {loading ? 'Loading...' : (
                             <>
