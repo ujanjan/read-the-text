@@ -258,7 +258,204 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-white px-8 py-12">
             <div className="w-full max-w-6xl mx-auto grid grid-cols-2 gap-16">
-                {/* Left Column */}
+                {/* Left Column - Form */}
+                <div className="flex flex-col">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Information</h2>
+
+                    <form id="user-info-form" onSubmit={handleSubmit} className="space-y-5">
+                        <div>
+                            <label className="block text-gray-700 mb-2 text-xs font-medium">Enter your email:</label>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                                placeholder="e.g., john@example.com"
+                                required
+                                disabled={loading}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
+                            />
+                            <p className="text-xs text-gray-400 mt-2">
+                                Tip: You can continue a past session or view your results by entering your previous email.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="block text-gray-700 mb-2 text-xs font-medium">Age:</label>
+                            <input
+                                type="number"
+                                min="18"
+                                max="99"
+                                value={age}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAge(e.target.value)}
+                                placeholder="Enter your age"
+                                required
+                                disabled={loading}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-gray-700 mb-3 text-xs font-medium">Have you attended university?</label>
+                            <div className="flex gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="university"
+                                        value="yes"
+                                        checked={university === 'yes'}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUniversity(e.target.value as 'yes' | 'no' | 'currently_attending')}
+                                        required
+                                        disabled={loading}
+                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                    />
+                                    <span className="text-xs text-gray-700">Yes</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="university"
+                                        value="no"
+                                        checked={university === 'no'}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUniversity(e.target.value as 'yes' | 'no' | 'currently_attending')}
+                                        required
+                                        disabled={loading}
+                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                    />
+                                    <span className="text-xs text-gray-700">No</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="university"
+                                        value="currently_attending"
+                                        checked={university === 'currently_attending'}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUniversity(e.target.value as 'yes' | 'no' | 'currently_attending')}
+                                        required
+                                        disabled={loading}
+                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                    />
+                                    <span className="text-xs text-gray-700">Currently attending</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-gray-700 mb-2 text-xs font-medium">English Fluency:</label>
+                            <select
+                                value={englishFluency}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEnglishFluency(e.target.value as 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language' | '')}
+                                required
+                                disabled={loading}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none bg-white disabled:bg-gray-50"
+                            >
+                                <option value="">Select an option</option>
+                                <option value="first_language">English is my first language</option>
+                                <option value="young_age">Learned at a young age</option>
+                                <option value="high_school">Learned in high school</option>
+                                <option value="university">Learned at university</option>
+                                <option value="not_at_all">Not fluent</option>
+                            </select>
+                        </div>
+
+                        {englishFluency && englishFluency !== 'first_language' && (
+                            <div>
+                                <label className="block text-gray-700 mb-2 text-xs font-medium">What is your first language?</label>
+                                <input
+                                    type="text"
+                                    value={firstLanguage}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstLanguage(e.target.value)}
+                                    placeholder="e.g., Swedish, Spanish..."
+                                    required
+                                    disabled={loading}
+                                    maxLength={100}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
+                                />
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-gray-700 mb-3 text-xs font-medium">Have you previously taken the SWSAT (Högskoleprovet)?</label>
+                            <div className="flex gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="swesat"
+                                        value="yes"
+                                        checked={swesat === 'yes'}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSwesat(e.target.value as 'yes' | 'no' | 'unsure')}
+                                        required
+                                        disabled={loading}
+                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                    />
+                                    <span className="text-xs text-gray-700">Yes</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="swesat"
+                                        value="no"
+                                        checked={swesat === 'no'}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSwesat(e.target.value as 'yes' | 'no' | 'unsure')}
+                                        required
+                                        disabled={loading}
+                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                    />
+                                    <span className="text-xs text-gray-700">No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-3 pt-2">
+                            <input
+                                type="checkbox"
+                                id="dataAgreement"
+                                checked={agreed}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgreed(e.target.checked)}
+                                disabled={loading}
+                                className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                            />
+                            <label htmlFor="dataAgreement" className="text-xs text-gray-700">
+                                I agree to data collection and recording of my reading patterns
+                            </label>
+                        </div>
+
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700">
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="border-t pt-6">
+                            <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                <Info className="w-4 h-4" />
+                                <span className="text-xs font-medium">Data Collection & Privacy</span>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                                We collect reading patterns, answers, and demographics for research purposes. All data is anonymized and stored securely. <button
+                                    onClick={() => setShowDataDetails(!showDataDetails)}
+                                    className="text-blue-600 hover:underline"
+                                >
+                                    {showDataDetails ? 'Hide Details' : 'Show Details'}
+                                </button>
+                            </p>
+                            {showDataDetails && (
+                                <div className="mt-3 text-xs text-gray-500 space-y-2">
+                                    <p>• Your cursor movements and reading patterns will be recorded</p>
+                                    <p>• Your answers to comprehension questions will be stored</p>
+                                    <p>• Demographic information helps us understand participant backgrounds</p>
+                                    <p>• All data is anonymized and used solely for academic research</p>
+                                    <p>• Data is stored securely and will not be shared with third parties</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="text-xs text-gray-500">
+                            Questions? <a href="mailto:robp@kth.se" className="text-blue-600 hover:underline">robp@kth.se</a> | <a href="https://www.kth.se/student/kurser/kurs/DM2730?l=en" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Course Info</a>
+                        </div>
+                    </form>
+                </div>
+
+                {/* Right Column - Study Information */}
                 <div className="flex flex-col">
                     <div className="mb-8">
                         <h1 className="text-3xl font-bold text-gray-900 mb-2">Reading Comprehension Study</h1>
@@ -318,172 +515,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                         </div>
                     </div>
 
-                    <div className="border-t pt-6">
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2 text-gray-600">
-                                <Info className="w-4 h-4" />
-                                <span className="text-xs font-medium">Data Collection & Privacy</span>
-                            </div>
-                            <button
-                                onClick={() => setShowDataDetails(!showDataDetails)}
-                                className="text-xs text-blue-600 hover:underline"
-                            >
-                                {showDataDetails ? 'Hide Details' : 'Show Details'}
-                            </button>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                            We collect reading patterns, answers, and demographics for research purposes. All data is anonymized and stored securely.
-                        </p>
-                        {showDataDetails && (
-                            <div className="mt-3 text-xs text-gray-500 space-y-2">
-                                <p>• Your cursor movements and reading patterns will be recorded</p>
-                                <p>• Your answers to comprehension questions will be stored</p>
-                                <p>• Demographic information helps us understand participant backgrounds</p>
-                                <p>• All data is anonymized and used solely for academic research</p>
-                                <p>• Data is stored securely and will not be shared with third parties</p>
-                            </div>
+
+
+                    <button
+                        type="submit"
+                        form="user-info-form"
+                        disabled={!isFormValid() || loading}
+                        className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors mt-8"
+                    >
+                        {loading ? 'Loading...' : (
+                            <>
+                                <span className="mr-2">📊</span> Start the Study
+                            </>
                         )}
-                    </div>
-
-                    <div className="mt-6 text-xs text-gray-500">
-                        Questions? <a href="mailto:robp@kth.se" className="text-blue-600 hover:underline">robp@kth.se</a> | <a href="https://www.kth.se/student/kurser/kurs/DM2730?l=en" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Course Info</a>
-                    </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="flex flex-col">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Information</h2>
-
-                    <form onSubmit={handleSubmit} className="space-y-5">
-                        <div>
-                            <label className="block text-gray-700 mb-2 text-xs font-medium">Enter your email:</label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                                placeholder="e.g., john@example.com"
-                                required
-                                disabled={loading}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
-                            />
-                            <p className="text-xs text-gray-400 mt-2">
-                                Tip: You can continue a past session or view your results by entering your previous email.
-                            </p>
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700 mb-2 text-xs font-medium">Age:</label>
-                            <input
-                                type="number"
-                                min="18"
-                                max="99"
-                                value={age}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAge(e.target.value)}
-                                placeholder="Enter your age"
-                                required
-                                disabled={loading}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700 mb-2 text-xs font-medium">Have you attended university?</label>
-                            <select
-                                value={university}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setUniversity(e.target.value as 'yes' | 'no' | 'currently_attending' | '')}
-                                required
-                                disabled={loading}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none bg-white disabled:bg-gray-50"
-                            >
-                                <option value="">Select an option</option>
-                                <option value="yes">Yes</option>
-                                <option value="currently_attending">Currently attending</option>
-                                <option value="no">No</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700 mb-2 text-xs font-medium">English Fluency:</label>
-                            <select
-                                value={englishFluency}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEnglishFluency(e.target.value as 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language' | '')}
-                                required
-                                disabled={loading}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none bg-white disabled:bg-gray-50"
-                            >
-                                <option value="">Select an option</option>
-                                <option value="first_language">English is my first language</option>
-                                <option value="young_age">Learned at a young age</option>
-                                <option value="high_school">Learned in high school</option>
-                                <option value="university">Learned at university</option>
-                                <option value="not_at_all">Not fluent</option>
-                            </select>
-                        </div>
-
-                        {englishFluency && englishFluency !== 'first_language' && (
-                            <div>
-                                <label className="block text-gray-700 mb-2 text-xs font-medium">What is your first language?</label>
-                                <input
-                                    type="text"
-                                    value={firstLanguage}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstLanguage(e.target.value)}
-                                    placeholder="e.g., Swedish, Spanish..."
-                                    required
-                                    disabled={loading}
-                                    maxLength={100}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
-                                />
-                            </div>
-                        )}
-
-                        <div>
-                            <label className="block text-gray-700 mb-2 text-xs font-medium">Have you taken the SWESAT (Högskoleprovet)?</label>
-                            <select
-                                value={swesat}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSwesat(e.target.value as 'yes' | 'no' | 'unsure' | '')}
-                                required
-                                disabled={loading}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none bg-white disabled:bg-gray-50"
-                            >
-                                <option value="">Select an option</option>
-                                <option value="yes">Yes</option>
-                                <option value="no">No</option>
-                                <option value="unsure">What's that?</option>
-                            </select>
-                        </div>
-
-                        <div className="flex items-start gap-3 pt-2">
-                            <input
-                                type="checkbox"
-                                id="dataAgreement"
-                                checked={agreed}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgreed(e.target.checked)}
-                                disabled={loading}
-                                className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                            />
-                            <label htmlFor="dataAgreement" className="text-xs text-gray-700">
-                                I agree to data collection and recording of my reading patterns
-                            </label>
-                        </div>
-
-                        {error && (
-                            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700">
-                                {error}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={!isFormValid() || loading}
-                            className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
-                        >
-                            {loading ? 'Loading...' : (
-                                <>
-                                    <span className="mr-2">📊</span> Start the Study
-                                </>
-                            )}
-                        </button>
-                    </form>
+                    </button>
                 </div>
             </div>
 
