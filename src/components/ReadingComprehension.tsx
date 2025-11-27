@@ -22,7 +22,7 @@ interface ReadingComprehensionProps {
   cursorHistory?: CursorData[];
   screenshot?: string | null;
   onCaptureScreenshot?: () => Promise<string | null>;
-  onPassageComplete?: (wrongAttempts: number, selectedAnswer: string) => void;
+  onPassageComplete?: (wrongAttempts: number, selectedAnswer: string, feedbackText: string) => void;
   trackingEnabled?: boolean;
   sessionId?: string | null;
   currentPassageIndex?: number;
@@ -96,7 +96,6 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     useEffect(() => {
       console.log(`🔄 [Passage Change] Switching to passage ${currentPassageIndex}`);
       console.log(`   └─ Cursor history for this passage: ${cursorHistory?.length || 0} points`);
-      console.log(`   └─ Initial feedback: ${initialFeedback ? initialFeedback.substring(0, 50) + '...' : 'none'}`);
 
       setSelectedAnswer(initialSelectedAnswer);
       setShowFeedback(initialIsComplete);
@@ -294,7 +293,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         setIsComplete(true);
         if (onPassageComplete) {
           const selectedAnswerText = currentQuestion.choices[parseInt(selectedAnswer)];
-          onPassageComplete(wrongAttempts, selectedAnswerText);
+          // Pass the feedback text to the parent so it can be stored in passageData
+          onPassageComplete(wrongAttempts, selectedAnswerText, originalResult.feedback);
         }
       }
     };

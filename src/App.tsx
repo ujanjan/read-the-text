@@ -301,7 +301,7 @@ export default function App() {
   };
 
   // Handle passage completion (correct answer)
-  const handlePassageComplete = async (wrongAttempts: number, selectedAnswer: string) => {
+  const handlePassageComplete = async (wrongAttempts: number, selectedAnswer: string, feedbackText: string) => {
     // Capture screenshot with heatmap before marking complete
     const screenshot = await handleCaptureScreenshot();
 
@@ -318,7 +318,9 @@ export default function App() {
       screenshot: screenshot || passageData[currentPassageIndex]?.screenshot || null,
       isComplete: true,
       wrongAttempts,
-      timeSpent: finalTimeSpent
+      timeSpent: finalTimeSpent,
+      selectedAnswer,
+      feedbackText // Store the feedback text!
     };
 
     setPassageData(prev => ({
