@@ -190,6 +190,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
           sentenceRects
         );
         readingSummaryJson = JSON.stringify(readingSummary);
+        console.log('📊 [SENTENCE-LEVEL READING SUMMARY]:');
+        console.log(readingSummaryJson);
       }
 
       // Call only Variant C (strategy-focused feedback)
