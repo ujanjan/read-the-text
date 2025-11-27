@@ -192,6 +192,11 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       const container = passageRef.current;
       let readingSummaryJson: string | undefined = undefined;
 
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('🔍 [ReadingComprehension] Submit debug:');
+      console.log('  - Container exists:', !!container);
+      console.log('  - Cursor history length:', cursorHistory.length);
+
       if (container && cursorHistory.length > 0) {
         const sentenceRects = computeSentenceRects(container, "[data-sentence-id]");
         const readingSummary: ReadingSummary = summarizeCursorSession(

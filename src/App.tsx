@@ -802,7 +802,6 @@ export default function App() {
       <CursorTracker
         onCursorData={handleCursorData}
         enabled={trackingEnabled}
-        getContainer={() => passageRef.current}
       />
 
       {trackingEnabled && (
@@ -812,7 +811,6 @@ export default function App() {
           opacity={0.6}
           radius={40}
           visible={debugMode}
-          containerRef={passageRef}
         />
       )}
     </div>
