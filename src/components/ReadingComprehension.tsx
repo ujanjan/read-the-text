@@ -319,41 +319,44 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     return (
       <div className="flex gap-4 h-full min-w-0 w-full">
         {/* Reading Passage - 60% width */}
-        <Card ref={ref} className="p-6 overflow-hidden flex flex-col min-w-0" style={{ flex: '3 1 0%' }}>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg">Reading Passage</h2>
-            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-center gap-2">
-              <Info className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
-              <span className="text-xs text-red-900">
-                <span className="font-semibold">Remember!</span> Show your eyeline with your cursor
-              </span>
+        <div className="flex flex-col min-w-0" style={{ flex: '3 1 0%' }}>
+          <Card ref={ref} className="p-6 overflow-hidden flex flex-col min-w-0 flex-1">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg">Reading Passage</h2>
+              {/* Eyeline reminder box - positioned on the same line as the heading */}
+              <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                <Info className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
+                <span className="text-xs text-red-900">
+                  <span className="font-semibold">Remember!</span> Show your eyeline with your cursor
+                </span>
+              </div>
             </div>
-          </div>
-          <div
-            ref={passageRef}
-            className="overflow-y-auto flex-1 pr-2"
-          >
-            {title && (
-              <h3
-                className="!font-bold !mb-10 !text-gray-900 !leading-tight"
-                style={{ fontSize: '2rem', fontWeight: '700' }}
-              >
-                {title}
-              </h3>
-            )}
-            <div className="prose max-w-none text-base">
-              {passage.split("\n\n").map((paragraph, index) => (
-                <p
-                  key={index}
-                  className="mb-4 text-gray-700"
-                  style={{ lineHeight: '1.3cm' }}
+            <div
+              ref={passageRef}
+              className="overflow-y-auto flex-1 pr-2"
+            >
+              {title && (
+                <h3
+                  className="!font-bold !mb-10 !text-gray-900 !leading-tight"
+                  style={{ fontSize: '2rem', fontWeight: '700' }}
                 >
-                  {renderSentences(paragraph, () => globalSentenceId++)}
-                </p>
-              ))}
+                  {title}
+                </h3>
+              )}
+              <div className="prose max-w-none text-base">
+                {passage.split("\n\n").map((paragraph, index) => (
+                  <p
+                    key={index}
+                    className="mb-4 text-gray-700"
+                    style={{ lineHeight: '1.3cm' }}
+                  >
+                    {renderSentences(paragraph, () => globalSentenceId++)}
+                  </p>
+                ))}
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
 
         {/* Questions Section - 40% width */}
         <Card className="p-4 flex flex-col min-w-0 overflow-hidden" style={{ flex: '2 1 0%' }}>
