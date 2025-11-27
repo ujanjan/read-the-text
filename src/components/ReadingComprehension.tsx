@@ -3,7 +3,7 @@ import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
-import { CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { getPersonalizedQuestionFeedback, getPersonalizedQuestionFeedbackWithHeatmap, getPersonalizedQuestionFeedbackVariantC, CursorData } from "../services/geminiService";
 import { apiService } from "../services/apiService";
 import { ReadingSummary, summarizeCursorSession, computeSentenceRects } from "../summarizeCursor";
@@ -320,7 +320,15 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       <div className="flex gap-4 h-full min-w-0 w-full">
         {/* Reading Passage - 60% width */}
         <Card ref={ref} className="p-6 overflow-hidden flex flex-col min-w-0" style={{ flex: '3 1 0%' }}>
-          <h2 className="mb-3 text-lg">Reading Passage</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg">Reading Passage</h2>
+            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-center gap-2">
+              <Info className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
+              <span className="text-xs text-red-900">
+                <span className="font-semibold">Remember!</span> Show your eyeline with your cursor
+              </span>
+            </div>
+          </div>
           <div
             ref={passageRef}
             className="overflow-y-auto flex-1 pr-2"
@@ -337,7 +345,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
               {passage.split("\n\n").map((paragraph, index) => (
                 <p
                   key={index}
-                  className="mb-3 text-gray-700 leading-relaxed"
+                  className="mb-4 text-gray-700"
+                  style={{ lineHeight: '1.3cm' }}
                 >
                   {renderSentences(paragraph, () => globalSentenceId++)}
                 </p>
@@ -378,27 +387,29 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                 {currentQuestion.question}
               </p>
 
-              <div className="min-w-0">
+              <div className="min-w-0 space-y-3">
                 <RadioGroup
                   value={selectedAnswer}
                   onValueChange={setSelectedAnswer}
                   disabled={showFeedback || !trackingEnabled || isComplete}
-                  className="min-w-0"
+                  className="min-w-0 space-y-3"
                 >
                   {currentQuestion.choices.map((choice, index) => (
                     <div
                       key={index}
-                      className={`flex items-center space-x-2 p-2 rounded-md mb-2 text-sm min-w-0 ${showFeedback && isComplete
+                      className={`flex items-center space-x-2 p-3 rounded-md text-xs min-w-0 transition-all ${showFeedback && isComplete
                         ? index === currentQuestion.correctAnswer
                           ? "bg-green-50 border-2 border-green-500"
                           : selectedAnswer === index.toString()
                             ? "bg-red-50 border-2 border-red-500"
-                            : "bg-gray-50"
+                            : "bg-gray-100"
                         : showFeedback && !isComplete && selectedAnswer === index.toString()
-                          ? "bg-red-50 border-2 border-red-500"
+                          ? "bg-red-100 border-2 border-red-500"
                           : !trackingEnabled
-                            ? "bg-gray-50 opacity-50 cursor-not-allowed"
-                            : "bg-gray-50 hover:bg-gray-100"
+                            ? "bg-gray-100 opacity-50 cursor-not-allowed"
+                            : selectedAnswer === index.toString()
+                              ? "bg-blue-100"
+                              : "bg-gray-100 hover:bg-gray-200"
                         }`}
                     >
                       <RadioGroupItem
@@ -407,7 +418,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                       />
                       <Label
                         htmlFor={`choice-${index}`}
-                        className="flex-1 cursor-pointer text-sm break-words min-w-0 max-w-full"
+                        className="flex-1 cursor-pointer font-bold text-xs text-gray-900 break-words min-w-0 max-w-full"
                         style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
                       >
                         {choice}
