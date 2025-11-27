@@ -401,20 +401,20 @@ export default function App() {
             // The heatmap canvas is already sized to match the container exactly
             // and contains only container-relative coordinates (0,0 to width,height)
             // So we can draw it directly without cropping
-            
+
             // However, we need to account for pixel ratio differences
             // The screenshot canvas might be at a different scale than the heatmap canvas
             const screenshotWidth = canvas.width;
             const screenshotHeight = canvas.height;
             const heatmapWidth = heatmapCanvas.width;
             const heatmapHeight = heatmapCanvas.height;
-            
+
             // Save the current context state
             ctx.save();
-            
+
             // Apply the heatmap opacity (0.6) when compositing
             ctx.globalAlpha = 0.6;
-            
+
             // Draw the entire heatmap canvas onto the screenshot
             // Scale it to match the screenshot dimensions exactly
             ctx.drawImage(
@@ -422,7 +422,7 @@ export default function App() {
               0, 0, heatmapWidth, heatmapHeight, // Source: entire heatmap canvas
               0, 0, screenshotWidth, screenshotHeight // Destination: full screenshot canvas
             );
-            
+
             // Restore the context state
             ctx.restore();
           }
@@ -573,11 +573,10 @@ export default function App() {
                           </span>
                         </div>
                         {/* Performance badge */}
-                        <div className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                          isPerfect
-                            ? 'bg-green-500 text-white'
-                            : 'bg-yellow-500 text-white'
-                        }`}>
+                        <div className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${isPerfect
+                          ? 'bg-green-500 text-white'
+                          : 'bg-yellow-500 text-white'
+                          }`}>
                           {isPerfect ? 'Perfect' : `${attempts}x`}
                         </div>
                       </div>
@@ -586,11 +585,10 @@ export default function App() {
                     {/* Passage Info */}
                     <div className="p-2.5">
                       <div className="flex items-start gap-2">
-                        <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                          isPerfect
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-yellow-100 text-yellow-700'
-                        }`}>
+                        <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isPerfect
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                          }`}>
                           {index + 1}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -598,9 +596,8 @@ export default function App() {
                             {passage.title}
                           </h3>
                           <div className="flex items-center gap-2 text-[10px]">
-                            <span className={`inline-flex items-center gap-0.5 ${
-                              isPerfect ? 'text-green-600' : 'text-yellow-600'
-                            }`}>
+                            <span className={`inline-flex items-center gap-0.5 ${isPerfect ? 'text-green-600' : 'text-yellow-600'
+                              }`}>
                               {isPerfect ? (
                                 <CheckCircle2 className="h-3 w-3" />
                               ) : (
@@ -672,17 +669,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Passage navigation */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePreviousPassage}
-              disabled={currentPassageIndex === 0 || !trackingEnabled}
-              className="text-xs"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
             {/* Passage completion indicators */}
             <div className="flex items-center gap-1 px-2">
               {passages.map((_, idx) => (
@@ -696,29 +682,17 @@ export default function App() {
                     }
                   }}
                   disabled={!trackingEnabled}
-                  className={`w-2.5 h-2.5 rounded-full transition-all ${
-                    idx === currentPassageIndex
-                      ? 'ring-2 ring-blue-400 ring-offset-1'
-                      : ''
-                  } ${
-                    passageData[idx]?.isComplete
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${idx === currentPassageIndex
+                    ? 'ring-2 ring-blue-400 ring-offset-1'
+                    : ''
+                    } ${passageData[idx]?.isComplete
                       ? 'bg-green-500'
                       : 'bg-gray-300'
-                  } ${trackingEnabled ? 'cursor-pointer hover:scale-125' : 'cursor-default'}`}
+                    } ${trackingEnabled ? 'cursor-pointer hover:scale-125' : 'cursor-default'}`}
                   title={`Passage ${idx + 1}${passageData[idx]?.isComplete ? ' (completed)' : ''}`}
                 />
               ))}
             </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNextPassage}
-              disabled={currentPassageIndex === passages.length - 1 || !trackingEnabled}
-              className="text-xs"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
 
             {allPassagesComplete ? (
               <Button
@@ -771,7 +745,7 @@ export default function App() {
             </Button>
           </div>
         </div>
-        
+
         <div className="flex-1 min-h-0 flex gap-3 min-w-0">
           <div className="flex-1 min-h-0 min-w-0">
             <ReadingComprehension
@@ -789,9 +763,13 @@ export default function App() {
               initialIsComplete={currentData.isComplete}
               initialSelectedAnswer={currentData.selectedAnswer}
               initialFeedback={currentData.feedbackText}
+              onNextPassage={handleNextPassage}
+              onPreviousPassage={handlePreviousPassage}
+              hasPrevious={currentPassageIndex > 0}
+              hasNext={currentPassageIndex < passages.length - 1}
             />
           </div>
-          
+
           {showSidebar && (
             <div className="w-80 flex-shrink-0">
               <CursorTrackingData
@@ -811,7 +789,7 @@ export default function App() {
         </div>
       </div>
 
-      <CursorTracker 
+      <CursorTracker
         onCursorData={handleCursorData}
         enabled={trackingEnabled}
         getContainer={() => passageRef.current}
