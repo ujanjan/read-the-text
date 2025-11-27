@@ -5,6 +5,8 @@ import { CursorTracker, CursorData } from './components/CursorTracker';
 import { CursorTrackingData } from './components/CursorTrackingData';
 import { CursorHeatmap, CursorHeatmapHandle } from './components/CursorHeatmap';
 import { LandingPage } from './components/LandingPage';
+import { QuestionnairePage, QuestionnaireResponses } from './components/QuestionnairePage';
+import { ThankYouPage } from './components/ThankYouPage';
 import { Button } from './components/ui/button';
 import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Trophy, Target, Zap, Info } from 'lucide-react';
 import { toCanvas } from 'html-to-image';
@@ -41,6 +43,10 @@ export default function App() {
   const [showLanding, setShowLanding] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [passageOrder, setPassageOrder] = useState<number[]>([]);
+
+  // Questionnaire flow
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false);
 
   // Per-passage data storage
   const [passageData, setPassageData] = useState<Record<number, PassageData>>({});
@@ -353,7 +359,8 @@ export default function App() {
     if (allComplete) {
       setTrackingEnabled(false);
 
-      // Mark session complete in cloud and redirect to results
+      // Mark session complete in cloud but DON'T redirect
+      // User will click "Finish The Quiz" to proceed to questionnaire
       if (sessionId) {
         const totalTime = Object.values(passageData).reduce(
           (sum, data) => sum + (data?.timeSpent || 0), 0
@@ -361,16 +368,9 @@ export default function App() {
 
         try {
           await apiService.completeSession(sessionId, totalTime);
-          // Clear session storage on completion
-          sessionStorage.removeItem(SESSION_STORAGE_KEY);
-          // Redirect to results page
-          navigate(`/results/${sessionId}`);
+          console.log('✅ Session marked complete in cloud');
         } catch (err) {
           console.error('Failed to complete session:', err);
-          // Clear session storage on completion
-          sessionStorage.removeItem(SESSION_STORAGE_KEY);
-          // Still redirect even if API fails - data is saved
-          navigate(`/results/${sessionId}`);
         }
       } else {
         // No session - show local summary (fallback)
@@ -456,6 +456,48 @@ export default function App() {
       return null;
     }
   };
+
+  // Handle "Finish The Quiz" button click
+  const handleFinishQuiz = () => {
+    // Clear session storage
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    // Show questionnaire
+    setShowQuestionnaire(true);
+  };
+
+  // Handle questionnaire submission
+  const handleQuestionnaireSubmit = async (responses: QuestionnaireResponses) => {
+    if (!sessionId) {
+      console.error('No session ID available');
+      return;
+    }
+
+    try {
+      await apiService.submitQuestionnaire(sessionId, responses);
+      console.log('✅ Questionnaire submitted successfully');
+      // Show thank you page
+      setShowQuestionnaire(false);
+      setShowThankYou(true);
+    } catch (error) {
+      console.error('Failed to submit questionnaire:', error);
+      throw error; // Let the component handle the error
+    }
+  };
+
+  // Show thank you page
+  if (showThankYou) {
+    return <ThankYouPage />;
+  }
+
+  // Show questionnaire page
+  if (showQuestionnaire && sessionId) {
+    return (
+      <QuestionnairePage
+        sessionId={sessionId}
+        onSubmit={handleQuestionnaireSubmit}
+      />
+    );
+  }
 
   // Show landing page first
   if (showLanding) {
@@ -708,11 +750,11 @@ export default function App() {
               <Button
                 variant="default"
                 size="sm"
-                onClick={() => sessionId && navigate(`/results/${sessionId}`)}
+                onClick={handleFinishQuiz}
                 className="text-xs bg-green-600 hover:bg-green-700"
               >
                 <Trophy className="h-4 w-4 mr-1" />
-                See Results
+                Finish The Quiz
               </Button>
             ) : (
               <Button

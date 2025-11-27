@@ -175,6 +175,28 @@ export const AdminPage: React.FC = () => {
                 })}
               </div>
 
+              {/* Questionnaire Responses */}
+              {sessionDetail.questionnaireResponse && (
+                <>
+                  <h3>Questionnaire Responses</h3>
+                  <div className="questionnaire-section">
+                    <div className="questionnaire-item">
+                      <p className="question"><strong>1. What is your impression of the interface, as a tool for independent learning?</strong></p>
+                      <p className="answer">{sessionDetail.questionnaireResponse.question_1_response || '(No response)'}</p>
+                    </div>
+                    <div className="questionnaire-item">
+                      <p className="question"><strong>2. What are your thoughts on the AI-generated feedback?</strong></p>
+                      <p className="answer">{sessionDetail.questionnaireResponse.question_2_response || '(No response)'}</p>
+                    </div>
+                    <div className="questionnaire-item">
+                      <p className="question"><strong>3. Please share any general feedback you have about the application as a tool for learning?</strong></p>
+                      <p className="answer">{sessionDetail.questionnaireResponse.question_3_response || '(No response)'}</p>
+                    </div>
+                    <p className="submitted-at"><em>Submitted: {new Date(sessionDetail.questionnaireResponse.submitted_at).toLocaleString()}</em></p>
+                  </div>
+                </>
+              )}
+
               <button
                 onClick={() => {
                   setSelectedSession(null);

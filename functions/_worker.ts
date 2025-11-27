@@ -33,6 +33,8 @@ import { onRequestGet as adminSessionsGet } from './api/admin/sessions';
 import { onRequestGet as adminSessionGet, onRequestDelete as adminSessionDelete } from './api/admin/sessions/[id]';
 import { onRequestPost as sendLinkPost } from './api/send-link';
 import { onRequestPost as sendWelcomePost } from './api/send-welcome';
+import { onRequestPost as questionnairePost } from './api/questionnaire/[sessionId]';
+
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -51,13 +53,13 @@ export default {
       // - Static files (JS, CSS, images, etc.) are served by Cloudflare automatically
       // - The worker is invoked for paths without matching files
       // - We serve index.html for SPA routes (paths without file extensions)
-      
+
       const hasFileExtension = /\.[a-zA-Z0-9]+$/.test(url.pathname);
-      
+
       // If path has a file extension, it's requesting a specific file that doesn't exist
       if (hasFileExtension && !url.pathname.endsWith('.html')) {
         console.log('File not found:', url.pathname);
-        return new Response('Not Found', { 
+        return new Response('Not Found', {
           status: 404,
           headers: { 'Content-Type': 'text/plain' }
         });
@@ -66,10 +68,10 @@ export default {
       // For paths without extensions (SPA routes like /admin, /results/xxx)
       // serve index.html to let React Router handle the routing
       console.log('SPA route, serving index.html for:', url.pathname);
-      
+
       // Get index.html content
       let indexHtml = INDEX_HTML_PLACEHOLDER;
-      
+
       // If placeholder not replaced (dev mode), use a basic template
       if (indexHtml === '__INDEX_HTML_CONTENT__') {
         indexHtml = `<!DOCTYPE html>
@@ -85,7 +87,7 @@ export default {
   </body>
 </html>`;
       }
-      
+
       return new Response(indexHtml, {
         status: 200,
         headers: {
@@ -93,7 +95,7 @@ export default {
           'Cache-Control': 'no-cache',
         },
       });
-      
+
     } catch (error: any) {
       console.error('Worker error:', error);
       console.error('Error stack:', error.stack);
@@ -121,7 +123,7 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
     env,
     params,
     waitUntil: ctx.waitUntil.bind(ctx),
-    passThroughOnException: () => {},
+    passThroughOnException: () => { },
     next: async () => new Response('Not Found', { status: 404 }),
     data: {},
     functionPath: path
@@ -132,11 +134,11 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
     if (path === '/api/sessions/check' && method === 'POST') {
       return await sessionsCheckPost(createContext());
     }
-    
+
     if (path === '/api/sessions' && method === 'POST') {
       return await sessionsCreatePost(createContext());
     }
-    
+
     // Session by ID - GET/DELETE
     const sessionIdMatch = path.match(/^\/api\/sessions\/([^\/]+)$/);
     if (sessionIdMatch) {
@@ -148,33 +150,33 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
         return await sessionDelete(createContext({ id: sessionId }));
       }
     }
-    
+
     // Session complete
     const completeMatch = path.match(/^\/api\/sessions\/([^\/]+)\/complete$/);
     if (completeMatch && method === 'POST') {
       const sessionId = completeMatch[1];
       return await sessionCompletePost(createContext({ id: sessionId }));
     }
-    
+
     // Passage result - PUT
     const passageMatch = path.match(/^\/api\/passages\/([^\/]+)\/(\d+)$/);
     if (passageMatch && method === 'PUT') {
       const [, sessionId, passageIndex] = passageMatch;
       return await passageResultPut(createContext({ sessionId, passageIndex }));
     }
-    
+
     // Passage attempts - POST
     const attemptMatch = path.match(/^\/api\/passages\/([^\/]+)\/(\d+)\/attempts$/);
     if (attemptMatch && method === 'POST') {
       const [, sessionId, passageIndex] = attemptMatch;
       return await passageAttemptPost(createContext({ sessionId, passageIndex }));
     }
-    
+
     // Admin routes
     if (path === '/api/admin/sessions' && method === 'GET') {
       return await adminSessionsGet(createContext());
     }
-    
+
     const adminSessionMatch = path.match(/^\/api\/admin\/sessions\/([^\/]+)$/);
     if (adminSessionMatch) {
       const sessionId = adminSessionMatch[1];
@@ -186,6 +188,13 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
       }
     }
 
+    // Questionnaire route
+    const questionnaireMatch = path.match(/^\/api\/questionnaire\/([^\/]+)$/);
+    if (questionnaireMatch && method === 'POST') {
+      const sessionId = questionnaireMatch[1];
+      return await questionnairePost(createContext({ sessionId }));
+    }
+
     // Send link (email) route
     if (path === '/api/send-link' && method === 'POST') {
       return await sendLinkPost(createContext());
@@ -195,15 +204,15 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
     if (path === '/api/send-welcome' && method === 'POST') {
       return await sendWelcomePost(createContext());
     }
-    
+
     // No matching route
     return new Response('Not Found', { status: 404 });
-    
+
   } catch (error: any) {
     console.error('API Error:', error);
-    return new Response(JSON.stringify({ 
-      error: error.message, 
-      stack: error.stack 
+    return new Response(JSON.stringify({
+      error: error.message,
+      stack: error.stack
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }

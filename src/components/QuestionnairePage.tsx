@@ -1,0 +1,117 @@
+import React, { useState } from 'react';
+import { Card } from './ui/card';
+import { Button } from './ui/button';
+import { Loader2 } from 'lucide-react';
+
+interface QuestionnairePageProps {
+    sessionId: string;
+    onSubmit: (responses: QuestionnaireResponses) => Promise<void>;
+}
+
+export interface QuestionnaireResponses {
+    question1: string;
+    question2: string;
+    question3: string;
+}
+
+export function QuestionnairePage({ sessionId, onSubmit }: QuestionnairePageProps) {
+    const [question1, setQuestion1] = useState('');
+    const [question2, setQuestion2] = useState('');
+    const [question3, setQuestion3] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async () => {
+        setIsSubmitting(true);
+        try {
+            await onSubmit({
+                question1,
+                question2,
+                question3
+            });
+        } catch (error) {
+            console.error('Failed to submit questionnaire:', error);
+            alert('Failed to submit questionnaire. Please try again.');
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="h-screen bg-gray-50 p-4 flex items-center justify-center">
+            <div className="max-w-3xl w-full">
+                <Card className="p-8">
+                    <div className="mb-6">
+                        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Feedback Questionnaire</h1>
+                        <p className="text-gray-600 text-sm">
+                            Please take a moment to answer the following questions about your experience.
+                        </p>
+                    </div>
+
+                    <div className="space-y-6">
+                        {/* Question 1 */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
+                                1. What is your impression of the interface, as a tool for independent learning?
+                            </label>
+                            <textarea
+                                value={question1}
+                                onChange={(e) => setQuestion1(e.target.value)}
+                                placeholder="Type your answer here..."
+                                className="w-full min-h-[100px] p-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                disabled={isSubmitting}
+                            />
+                        </div>
+
+                        {/* Question 2 */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
+                                2. What are your thoughts on the AI-generated feedback?
+                            </label>
+                            <textarea
+                                value={question2}
+                                onChange={(e) => setQuestion2(e.target.value)}
+                                placeholder="Type your answer here..."
+                                className="w-full min-h-[100px] p-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                disabled={isSubmitting}
+                            />
+                        </div>
+
+                        {/* Question 3 */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-900 mb-2">
+                                3. Please share any general feedback you have about the application as a tool for learning?
+                            </label>
+                            <textarea
+                                value={question3}
+                                onChange={(e) => setQuestion3(e.target.value)}
+                                placeholder="Type your answer here..."
+                                className="w-full min-h-[100px] p-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                disabled={isSubmitting}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mt-8">
+                        <Button
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                            className="w-full py-3 text-base font-semibold"
+                            style={{
+                                backgroundColor: '#155dfc',
+                                color: 'white'
+                            }}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                    Submitting...
+                                </>
+                            ) : (
+                                'I am done, Please Submit!'
+                            )}
+                        </Button>
+                    </div>
+                </Card>
+            </div>
+        </div>
+    );
+}

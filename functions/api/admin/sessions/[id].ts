@@ -23,6 +23,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     'SELECT * FROM passage_attempts WHERE session_id = ? ORDER BY passage_index, attempt_number'
   ).bind(sessionId).all();
 
+  // Fetch questionnaire response if exists
+  const questionnaireResponse = await db.prepare(
+    'SELECT * FROM questionnaire_responses WHERE session_id = ?'
+  ).bind(sessionId).first();
+
   const resultsWithScreenshots = await Promise.all(
     passageResults.results.map(async (result: any) => {
       let screenshot = null;
@@ -43,7 +48,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       passageOrder: JSON.parse(session.passage_order as string)
     },
     passageResults: resultsWithScreenshots,
-    attempts: attempts.results
+    attempts: attempts.results,
+    questionnaireResponse: questionnaireResponse || undefined
   });
 };
 

@@ -57,10 +57,20 @@ export interface SessionCreateResponse {
   resultUrl: string;
 }
 
+export interface QuestionnaireResponse {
+  id: string;
+  session_id: string;
+  question_1_response?: string;
+  question_2_response?: string;
+  question_3_response?: string;
+  submitted_at: string;
+}
+
 export interface SessionData {
   session: Session;
   passageResults: PassageResult[];
   attempts: PassageAttempt[];
+  questionnaireResponse?: QuestionnaireResponse;
 }
 
 export interface AdminSession {
