@@ -441,13 +441,13 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                         >
                           {choice}
                         </Label>
-                        {showFeedback && isComplete && index === currentQuestion.correctAnswer && (
+                        {showFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC && isComplete && index === currentQuestion.correctAnswer && (
                           <CheckCircle2 className="h-4 w-4 text-green-600" />
                         )}
-                        {showFeedback && !isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
+                        {showFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC && !isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
                           <XCircle className="h-4 w-4 text-red-600" />
                         )}
-                        {showFeedback && isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
+                        {showFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC && isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
                           <XCircle className="h-4 w-4 text-red-600" />
                         )}
                       </div>
