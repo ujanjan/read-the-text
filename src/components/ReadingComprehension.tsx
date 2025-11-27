@@ -409,9 +409,14 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                               : "2px solid #ef4444" // red border for wrong answer
                             : "none",
                           opacity: !trackingEnabled ? 0.5 : 1,
-                          cursor: !trackingEnabled ? "not-allowed" : "pointer"
+                          cursor: (!trackingEnabled || showingFeedback || isComplete) ? "not-allowed" : "pointer"
                         }}
                         className="flex items-center space-x-2 p-3 rounded-md text-xs min-w-0 transition-all hover:bg-[#E8E8E8]"
+                        onClick={() => {
+                          if (trackingEnabled && !showingFeedback && !isComplete) {
+                            setSelectedAnswer(index.toString());
+                          }
+                        }}
                         onMouseEnter={(e) => {
                           if (trackingEnabled && !showingFeedback && !isChosen) {
                             e.currentTarget.style.backgroundColor = "#E8E8E8";
@@ -431,8 +436,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                         />
                         <Label
                           htmlFor={`choice-${index}`}
-                          className="flex-1 cursor-pointer font-bold text-xs text-gray-900 break-words min-w-0 max-w-full"
-                          style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                          className="flex-1 font-bold text-xs text-gray-900 break-words min-w-0 max-w-full pointer-events-none"
+                          style={{ wordBreak: 'break-word', overflowWrap: 'break-word', cursor: 'inherit' }}
                         >
                           {choice}
                         </Label>
