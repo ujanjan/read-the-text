@@ -392,26 +392,21 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                       <div
                         key={index}
                         style={{
-                          backgroundColor: showingFeedback && isComplete
-                            ? isCorrect
-                              ? "#f0fdf4" // green-50
+                          backgroundColor: showingFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC
+                            ? isChosen
+                              ? currentSubmissionCorrect
+                                ? "#f0fdf4" // green-50 (user's correct answer)
+                                : "#fef2f2" // red-50 (user's wrong answer)
+                              : "#F5F5F5" // lighter gray for all other options (never reveal correct answer)
+                            : !trackingEnabled
+                              ? "#F5F5F5"
                               : isChosen
-                                ? "#fef2f2" // red-50
-                                : "#F5F5F5" // lighter gray for unchosen
-                            : showingFeedback && !isComplete && isChosen
-                              ? "#fee2e2" // red-100
-                              : !trackingEnabled
-                                ? "#F5F5F5"
-                                : isChosen
-                                  ? "#dbeafe" // blue-100
-                                  : "#F5F5F5", // lighter gray default
-                          border: showingFeedback && (
-                            (isComplete && isCorrect) ||
-                            (isChosen && !isCorrect)
-                          )
-                            ? isCorrect
-                              ? "2px solid #22c55e"
-                              : "2px solid #ef4444"
+                                ? "#dbeafe" // blue-100 (selected, including during loading)
+                                : "#F5F5F5", // lighter gray default
+                          border: showingFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC && isChosen
+                            ? currentSubmissionCorrect
+                              ? "2px solid #22c55e" // green border for correct answer
+                              : "2px solid #ef4444" // red border for wrong answer
                             : "none",
                           opacity: !trackingEnabled ? 0.5 : 1,
                           cursor: !trackingEnabled ? "not-allowed" : "pointer"
@@ -460,9 +455,11 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                 <>
                   {/* Original feedback (JSON-based) - TOP */}
                   <div
-                    className={`p-3 rounded-md mt-3 text-sm min-w-0 max-w-full ${currentSubmissionCorrect
-                      ? "bg-green-50 text-green-800"
-                      : "bg-red-50 text-red-800"
+                    className={`p-3 rounded-md mt-3 text-sm min-w-0 max-w-full ${isLoadingFeedback
+                      ? "bg-gray-100 text-gray-700"
+                      : currentSubmissionCorrect
+                        ? "bg-green-50 text-green-800"
+                        : "bg-red-50 text-red-800"
                       }`}
                   >
                     <div className="text-xs font-semibold mb-1 opacity-60">Response A</div>
@@ -492,9 +489,11 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
 
                   {/* Heatmap feedback - MIDDLE */}
                   <div
-                    className={`p-3 rounded-md text-sm min-w-0 max-w-full ${currentSubmissionCorrect
-                      ? "bg-green-50 text-green-800"
-                      : "bg-red-50 text-red-800"
+                    className={`p-3 rounded-md text-sm min-w-0 max-w-full ${isLoadingFeedbackHeatmap
+                      ? "bg-gray-100 text-gray-700"
+                      : currentSubmissionCorrect
+                        ? "bg-green-50 text-green-800"
+                        : "bg-red-50 text-red-800"
                       }`}
                   >
                     <div className="text-xs font-semibold mb-1 opacity-60">Response B</div>
@@ -524,9 +523,11 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
 
                   {/* Variant C feedback - BOTTOM */}
                   <div
-                    className={`p-3 rounded-md text-sm min-w-0 max-w-full ${currentSubmissionCorrect
-                      ? "bg-green-50 text-green-800"
-                      : "bg-red-50 text-red-800"
+                    className={`p-3 rounded-md text-sm min-w-0 max-w-full ${isLoadingFeedbackVariantC
+                      ? "bg-gray-100 text-gray-700"
+                      : currentSubmissionCorrect
+                        ? "bg-green-50 text-green-800"
+                        : "bg-red-50 text-red-800"
                       }`}
                   >
                     <div className="text-xs font-semibold mb-1 opacity-60">Response C</div>
@@ -570,31 +571,43 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                 >
                   Submit Answer
                 </Button>
-              ) : isComplete ? (
-                // State 4 (correct - green "Good Job - Next Question")
+              ) : (isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC) ? (
+                // Loading state - keep blue button while waiting for feedback
+                <Button
+                  disabled
+                  style={{
+                    backgroundColor: '#155dfc',
+                    color: 'white',
+                    opacity: 0.7,
+                    cursor: 'not-allowed'
+                  }}
+                  className="flex-1 text-sm py-3 font-semibold rounded-lg transition-all"
+                >
+                  Loading feedback...
+                </Button>
+              ) : currentSubmissionCorrect ? (
+                // State 4 (correct - green "Good Job - Next Question") - only show after feedback loaded
                 <Button
                   onClick={onNextPassage}
-                  disabled={isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC || !hasNext}
+                  disabled={!hasNext}
                   style={{
                     backgroundColor: '#00a63e',
                     color: 'white',
-                    opacity: (isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC || !hasNext) ? 0.5 : 1,
-                    cursor: (isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC || !hasNext) ? 'not-allowed' : 'pointer'
+                    opacity: !hasNext ? 0.5 : 1,
+                    cursor: !hasNext ? 'not-allowed' : 'pointer'
                   }}
                   className="flex-1 text-sm py-3 font-semibold rounded-lg transition-all"
                 >
                   Good Job - Next Question
                 </Button>
               ) : (
-                // State 3 (wrong - red "Submit Again")
+                // State 3 (wrong - red "Submit Again") - only show after feedback loaded
                 <Button
                   onClick={handleTryAgain}
-                  disabled={isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC}
                   style={{
                     backgroundColor: '#e7000b',
                     color: 'white',
-                    opacity: (isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC) ? 0.5 : 1,
-                    cursor: (isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC) ? 'not-allowed' : 'pointer'
+                    opacity: 1
                   }}
                   className="flex-1 text-sm py-3 font-semibold rounded-lg transition-all"
                 >
