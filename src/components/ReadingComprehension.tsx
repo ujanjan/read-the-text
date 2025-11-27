@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
 import { CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight, Info } from "lucide-react";
-import { getPersonalizedQuestionFeedback, getPersonalizedQuestionFeedbackWithHeatmap, getPersonalizedQuestionFeedbackVariantC, CursorData } from "../services/geminiService";
+import { getPersonalizedQuestionFeedbackVariantC, CursorData } from "../services/geminiService";
 import { apiService } from "../services/apiService";
 import { ReadingSummary, summarizeCursorSession, computeSentenceRects } from "../summarizeCursor";
 
@@ -83,10 +83,6 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     const [showFeedback, setShowFeedback] = useState(initialIsComplete);
     const [feedbackText, setFeedbackText] = useState<string>(initialFeedback);
     const [isLoadingFeedback, setIsLoadingFeedback] = useState(false);
-    const [feedbackTextHeatmap, setFeedbackTextHeatmap] = useState<string>('');
-    const [isLoadingFeedbackHeatmap, setIsLoadingFeedbackHeatmap] = useState(false);
-    const [feedbackTextVariantC, setFeedbackTextVariantC] = useState<string>('');
-    const [isLoadingFeedbackVariantC, setIsLoadingFeedbackVariantC] = useState(false);
     const [currentSubmissionCorrect, setCurrentSubmissionCorrect] = useState<boolean>(initialIsComplete);
     const [wrongAttempts, setWrongAttempts] = useState(0);
     const [isComplete, setIsComplete] = useState(initialIsComplete);
@@ -101,14 +97,10 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       setShowFeedback(initialIsComplete);
       // Always restore feedback from initialFeedback for completed passages
       setFeedbackText(initialFeedback);
-      setFeedbackTextHeatmap('');
-      setFeedbackTextVariantC('');
       setCurrentSubmissionCorrect(initialIsComplete);
       setIsComplete(initialIsComplete);
       setWrongAttempts(0);
       setIsLoadingFeedback(false);
-      setIsLoadingFeedbackHeatmap(false);
-      setIsLoadingFeedbackVariantC(false);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPassageIndex, initialIsComplete, initialSelectedAnswer, initialFeedback]);
 
@@ -121,11 +113,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         setSelectedAnswer("");
         setShowFeedback(false);
         setFeedbackText("");
-        setFeedbackTextHeatmap("");
-        setFeedbackTextVariantC("");
         setIsLoadingFeedback(false);
-        setIsLoadingFeedbackHeatmap(false);
-        setIsLoadingFeedbackVariantC(false);
         setCurrentSubmissionCorrect(false);
         setWrongAttempts(0);
         setIsComplete(false);
@@ -151,8 +139,6 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       setCurrentSubmissionCorrect(isCorrect);
       setShowFeedback(true);
       setIsLoadingFeedback(true);
-      setIsLoadingFeedbackHeatmap(true);
-      setIsLoadingFeedbackVariantC(true);
 
       // Always capture a fresh screenshot to include latest cursor movements
       // This ensures the heatmap reflects all cursor activity up to this point
@@ -179,7 +165,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       const passageLength = passage.length;
       const cursorPoints = cursorHistory.length;
       console.log('═══════════════════════════════════════════════════════');
-      console.log('📤 [GEMINI API CALLS] Personalized Question Feedback - ALL 3 VARIANTS');
+      console.log('📤 [GEMINI API CALL] Personalized Question Feedback - VARIANT C ONLY');
       console.log('═══════════════════════════════════════════════════════');
       console.log(`📍 Passage Index: ${currentPassageIndex}`);
       console.log(`📊 Cursor History: ${cursorPoints} points (tracked locally, NOT sent to Gemini)`);
@@ -206,54 +192,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         readingSummaryJson = JSON.stringify(readingSummary);
       }
 
-      // Call all API variants in parallel
-      const originalPromise = getPersonalizedQuestionFeedback(
-        title || '',
-        passage,
-        currentScreenshot,
-        currentQuestion.question,
-        selectedAnswerText,
-        correctAnswerText,
-        isCorrect,
-        readingSummaryJson
-      ).then(result => {
-        console.log('🤖 [GEMINI RESPONSE - ORIGINAL]:', result.feedback);
-        console.log('🤖 [GEMINI RESPONSE LENGTH - ORIGINAL]:', result.feedback.length);
-        setFeedbackText(result.feedback);
-        setIsLoadingFeedback(false);
-        console.log('✅ [STATE UPDATE] setFeedbackText called with:', result.feedback.substring(0, 50) + '...');
-        return result;
-      }).catch(error => {
-        console.error('Failed to get personalized feedback (original):', error);
-        const fallback = isCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.';
-        setFeedbackText(fallback);
-        setIsLoadingFeedback(false);
-        return { feedback: fallback, error: error.message };
-      });
-
-      const heatmapPromise = getPersonalizedQuestionFeedbackWithHeatmap(
-        title || '',
-        passage,
-        currentScreenshot,
-        currentQuestion.question,
-        selectedAnswerText,
-        correctAnswerText,
-        isCorrect
-      ).then(result => {
-        console.log('🤖 [GEMINI RESPONSE - HEATMAP]:', result.feedback);
-        console.log('🤖 [GEMINI RESPONSE LENGTH - HEATMAP]:', result.feedback.length);
-        setFeedbackTextHeatmap(result.feedback);
-        setIsLoadingFeedbackHeatmap(false);
-        return result;
-      }).catch(error => {
-        console.error('Failed to get personalized feedback (heatmap):', error);
-        const fallback = isCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.';
-        setFeedbackTextHeatmap(fallback);
-        setIsLoadingFeedbackHeatmap(false);
-        return { feedback: fallback, error: error.message };
-      });
-
-      const variantCPromise = getPersonalizedQuestionFeedbackVariantC(
+      // Call only Variant C (strategy-focused feedback)
+      const feedbackResult = await getPersonalizedQuestionFeedbackVariantC(
         title || '',
         passage,
         currentScreenshot,
@@ -265,27 +205,25 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       ).then(result => {
         console.log('🤖 [GEMINI RESPONSE - VARIANT C]:', result.feedback);
         console.log('🤖 [GEMINI RESPONSE LENGTH - VARIANT C]:', result.feedback.length);
-        setFeedbackTextVariantC(result.feedback);
-        setIsLoadingFeedbackVariantC(false);
+        setFeedbackText(result.feedback);
+        setIsLoadingFeedback(false);
+        console.log('✅ [STATE UPDATE] setFeedbackText called with:', result.feedback.substring(0, 50) + '...');
         return result;
       }).catch(error => {
         console.error('Failed to get personalized feedback (Variant C):', error);
         const fallback = isCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.';
-        setFeedbackTextVariantC(fallback);
-        setIsLoadingFeedbackVariantC(false);
+        setFeedbackText(fallback);
+        setIsLoadingFeedback(false);
         return { feedback: fallback, error: error.message };
       });
 
-      // Wait for all variants to complete before recording to DB
-      const [originalResult] = await Promise.all([originalPromise, heatmapPromise, variantCPromise]);
-
-      // Record attempt in cloud if we have a session (only store original feedback)
+      // Record attempt in cloud if we have a session
       if (sessionId) {
         try {
           await apiService.recordAttempt(sessionId, currentPassageIndex, {
             selectedAnswer: selectedAnswerText,
             isCorrect,
-            geminiResponse: originalResult.feedback,
+            geminiResponse: feedbackResult.feedback,
             screenshot: currentScreenshot || undefined
           });
         } catch (err) {
@@ -299,7 +237,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         if (onPassageComplete) {
           const selectedAnswerText = currentQuestion.choices[parseInt(selectedAnswer)];
           // Pass the feedback text to the parent so it can be stored in passageData
-          onPassageComplete(wrongAttempts, selectedAnswerText, originalResult.feedback);
+          onPassageComplete(wrongAttempts, selectedAnswerText, feedbackResult.feedback);
         }
       }
     };
@@ -307,12 +245,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     const handleTryAgain = () => {
       setShowFeedback(false);
       setFeedbackText("");
-      setFeedbackTextHeatmap("");
-      setFeedbackTextVariantC("");
       setSelectedAnswer("");
       setIsLoadingFeedback(false);
-      setIsLoadingFeedbackHeatmap(false);
-      setIsLoadingFeedbackVariantC(false);
       setCurrentSubmissionCorrect(false);
     };
 
@@ -393,7 +327,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                       <div
                         key={index}
                         style={{
-                          backgroundColor: showingFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC
+                          backgroundColor: showingFeedback && !isLoadingFeedback
                             ? isChosen
                               ? currentSubmissionCorrect
                                 ? "#f0fdf4" // green-50 (user's correct answer)
@@ -406,11 +340,11 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                               : isChosen
                                 ? "#dbeafe" // blue-100 (selected, including during loading)
                                 : "#F5F5F5", // lighter gray default
-                          border: showingFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC && isChosen
+                          border: showingFeedback && !isLoadingFeedback && isChosen
                             ? currentSubmissionCorrect
                               ? "2px solid #22c55e" // green border for correct answer
                               : "2px solid #ef4444" // red border for wrong answer
-                            : isComplete && isCorrect && showingFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC
+                            : isComplete && isCorrect && showingFeedback && !isLoadingFeedback
                               ? "2px solid #22c55e" // green border for correct answer on completed passages
                               : "none",
                           opacity: !trackingEnabled ? 0.5 : 1,
@@ -446,13 +380,13 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                         >
                           {choice}
                         </Label>
-                        {showFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC && isComplete && index === currentQuestion.correctAnswer && (
+                        {showFeedback && !isLoadingFeedback && isComplete && index === currentQuestion.correctAnswer && (
                           <CheckCircle2 className="h-4 w-4 text-green-600" />
                         )}
-                        {showFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC && !isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
+                        {showFeedback && !isLoadingFeedback && !isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
                           <XCircle className="h-4 w-4 text-red-600" />
                         )}
-                        {showFeedback && !isLoadingFeedback && !isLoadingFeedbackHeatmap && !isLoadingFeedbackVariantC && isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
+                        {showFeedback && !isLoadingFeedback && isComplete && selectedAnswer === index.toString() && index !== currentQuestion.correctAnswer && (
                           <XCircle className="h-4 w-4 text-red-600" />
                         )}
                       </div>
@@ -462,106 +396,34 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
               </div>
 
               {showFeedback && (
-                <>
-                  {/* Original feedback (JSON-based) - TOP */}
-                  <div
-                    className={`p-3 rounded-md mt-3 text-sm min-w-0 max-w-full ${isLoadingFeedback
-                      ? "bg-gray-100 text-gray-700"
-                      : currentSubmissionCorrect
-                        ? "bg-green-50 text-green-800"
-                        : "bg-red-50 text-red-800"
-                      }`}
-                  >
-                    <div className="text-xs font-semibold mb-1 opacity-60">Response A</div>
-                    {isLoadingFeedback ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-xs">
-                          Generating personalized feedback...
-                        </span>
-                      </div>
-                    ) : (
-                      <div className={`flex items-start gap-2 min-w-0 w-full ${currentSubmissionCorrect ? 'items-center' : ''}`}>
-                        {currentSubmissionCorrect ? (
-                          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-                        ) : (
-                          <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        )}
-                        <span className="text-xs break-words min-w-0 max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                          {feedbackText || (currentSubmissionCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Separator */}
-                  <div style={{ margin: '4px 0', height: '4px' }}></div>
-
-                  {/* Heatmap feedback - MIDDLE */}
-                  <div
-                    className={`p-3 rounded-md text-sm min-w-0 max-w-full ${isLoadingFeedbackHeatmap
-                      ? "bg-gray-100 text-gray-700"
-                      : currentSubmissionCorrect
-                        ? "bg-green-50 text-green-800"
-                        : "bg-red-50 text-red-800"
-                      }`}
-                  >
-                    <div className="text-xs font-semibold mb-1 opacity-60">Response B</div>
-                    {isLoadingFeedbackHeatmap ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-xs">
-                          Generating personalized feedback...
-                        </span>
-                      </div>
-                    ) : (
-                      <div className={`flex items-start gap-2 min-w-0 w-full ${currentSubmissionCorrect ? 'items-center' : ''}`}>
-                        {currentSubmissionCorrect ? (
-                          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-                        ) : (
-                          <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        )}
-                        <span className="text-xs break-words min-w-0 max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                          {feedbackTextHeatmap || (currentSubmissionCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Separator */}
-                  <div style={{ margin: '4px 0', height: '4px' }}></div>
-
-                  {/* Variant C feedback - BOTTOM */}
-                  <div
-                    className={`p-3 rounded-md text-sm min-w-0 max-w-full ${isLoadingFeedbackVariantC
-                      ? "bg-gray-100 text-gray-700"
-                      : currentSubmissionCorrect
-                        ? "bg-green-50 text-green-800"
-                        : "bg-red-50 text-red-800"
-                      }`}
-                  >
-                    <div className="text-xs font-semibold mb-1 opacity-60">Response C</div>
-                    {isLoadingFeedbackVariantC ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span className="text-xs">
-                          Generating personalized feedback...
-                        </span>
-                      </div>
-                    ) : (
-                      <div className={`flex items-start gap-2 min-w-0 w-full ${currentSubmissionCorrect ? 'items-center' : ''}`}>
-                        {currentSubmissionCorrect ? (
-                          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-                        ) : (
-                          <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                        )}
-                        <span className="text-xs break-words min-w-0 max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-                          {feedbackTextVariantC || (currentSubmissionCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.')}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </>
+                <div
+                  className={`p-3 rounded-md mt-3 text-sm min-w-0 max-w-full ${isLoadingFeedback
+                    ? "bg-gray-100 text-gray-700"
+                    : currentSubmissionCorrect
+                      ? "bg-green-50 text-green-800"
+                      : "bg-red-50 text-red-800"
+                    }`}
+                >
+                  {isLoadingFeedback ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-xs">
+                        Generating personalized feedback...
+                      </span>
+                    </div>
+                  ) : (
+                    <div className={`flex items-start gap-2 min-w-0 w-full ${currentSubmissionCorrect ? 'items-center' : ''}`}>
+                      {currentSubmissionCorrect ? (
+                        <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                      )}
+                      <span className="text-xs break-words min-w-0 max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                        {feedbackText || (currentSubmissionCorrect ? 'Correct!' : 'Try again! Focus on the passage to find the answer.')}
+                      </span>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
@@ -581,7 +443,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                 >
                   Submit Answer
                 </Button>
-              ) : (isLoadingFeedback || isLoadingFeedbackHeatmap || isLoadingFeedbackVariantC) ? (
+              ) : isLoadingFeedback ? (
                 // Loading state - keep blue button while waiting for feedback
                 <Button
                   disabled
