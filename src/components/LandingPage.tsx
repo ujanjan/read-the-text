@@ -12,9 +12,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
     const [email, setEmail] = useState('');
     const [age, setAge] = useState('');
     const [university, setUniversity] = useState<'yes' | 'no' | 'currently_attending' | ''>('');
-    const [englishFluency, setEnglishFluency] = useState<'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language' | ''>('');
-    const [firstLanguage, setFirstLanguage] = useState('');
-    const [swesat, setSwesat] = useState<'yes' | 'no' | 'unsure' | ''>('');
+    const [englishFluency, setEnglishFluency] = useState<'native' | 'c1_c2' | 'b2' | 'b1' | 'a1_a2' | ''>('');
+    const [swesat, setSwesat] = useState<'yes' | 'no' | ''>('');
     const [agreed, setAgreed] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -76,7 +75,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
         if (!age || isNaN(ageNum) || ageNum < 18 || ageNum > 99) return false;
         if (!university) return false;
         if (!englishFluency) return false;
-        if (englishFluency !== 'first_language' && !firstLanguage.trim()) return false;
         if (!swesat) return false;
         return true;
     };
@@ -107,9 +105,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                 const demographics: UserDemographics = {
                     age: parseInt(age),
                     hasAttendedUniversity: university as 'yes' | 'no' | 'currently_attending',
-                    englishFluency: englishFluency as 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language',
-                    firstLanguage: englishFluency === 'first_language' ? 'English' : firstLanguage.trim(),
-                    completedSwesat: swesat as 'yes' | 'no' | 'unsure'
+                    englishFluency: englishFluency as 'native' | 'c1_c2' | 'b2' | 'b1' | 'a1_a2',
+                    completedSwesat: swesat as 'yes' | 'no'
                 };
                 const newSession = await apiService.createSession(email.trim(), demographics);
 
@@ -151,9 +148,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
             const demographics: UserDemographics = {
                 age: parseInt(age),
                 hasAttendedUniversity: university as 'yes' | 'no' | 'currently_attending',
-                englishFluency: englishFluency as 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language',
-                firstLanguage: englishFluency === 'first_language' ? 'English' : firstLanguage.trim(),
-                completedSwesat: swesat as 'yes' | 'no' | 'unsure'
+                englishFluency: englishFluency as 'native' | 'c1_c2' | 'b2' | 'b1' | 'a1_a2',
+                completedSwesat: swesat as 'yes' | 'no'
             };
             const newSession = await apiService.createSession(email.trim(), demographics);
 
@@ -340,37 +336,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                             <label className="block text-gray-700 mb-2 text-xs font-medium">English Fluency:</label>
                             <select
                                 value={englishFluency}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEnglishFluency(e.target.value as 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language' | '')}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEnglishFluency(e.target.value as 'native' | 'c1_c2' | 'b2' | 'b1' | 'a1_a2' | '')}
                                 required
                                 disabled={loading}
                                 className="w-full px-4 py-3 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none bg-white disabled:bg-gray-50"
                                 style={{ border: '1.5px solid #9ca3af' }}
                             >
                                 <option value="">Select an option</option>
-                                <option value="first_language">English is my first language</option>
-                                <option value="young_age">Learned at a young age</option>
-                                <option value="high_school">Learned in high school</option>
-                                <option value="university">Learned at university</option>
-                                <option value="not_at_all">Not fluent</option>
+                                <option value="native">Native speaker</option>
+                                <option value="c1_c2">Fluent (C1-C2)</option>
+                                <option value="b2">Advanced (B2)</option>
+                                <option value="b1">Intermediate (B1)</option>
+                                <option value="a1_a2">Beginner (A1-A2)</option>
                             </select>
                         </div>
-
-                        {englishFluency && englishFluency !== 'first_language' && (
-                            <div>
-                                <label className="block text-gray-700 mb-2 text-xs font-medium">What is your first language?</label>
-                                <input
-                                    type="text"
-                                    value={firstLanguage}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstLanguage(e.target.value)}
-                                    placeholder="e.g., Swedish, Spanish..."
-                                    required
-                                    disabled={loading}
-                                    maxLength={100}
-                                    className="w-full px-4 py-3 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
-                                    style={{ border: '1.5px solid #9ca3af' }}
-                                />
-                            </div>
-                        )}
 
                         <div>
                             <label className="block text-gray-700 mb-3 text-xs font-medium">Have you previously taken the SWSAT (Högskoleprovet)?</label>
@@ -381,7 +360,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                                         name="swesat"
                                         value="yes"
                                         checked={swesat === 'yes'}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSwesat(e.target.value as 'yes' | 'no' | 'unsure')}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSwesat(e.target.value as 'yes' | 'no')}
                                         required
                                         disabled={loading}
                                         className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
@@ -394,7 +373,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                                         name="swesat"
                                         value="no"
                                         checked={swesat === 'no'}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSwesat(e.target.value as 'yes' | 'no' | 'unsure')}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSwesat(e.target.value as 'yes' | 'no')}
                                         required
                                         disabled={loading}
                                         className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
@@ -449,7 +428,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                         </div>
 
                         <div className="text-xs text-gray-500">
-                            Questions? <a href="mailto:user@kth.se" className="text-blue-600 hover:underline">user@kth.se</a> | <a href="https://www.kth.se/student/kurser/kurs/DM2730?l=en" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Course Info</a>
+                            Questions? <a href="mailto:robp@kth.se" className="text-blue-600 hover:underline">robp@kth.se</a> | <a href="https://www.kth.se/student/kurser/kurs/DM2730?l=en" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Course Info</a>
                         </div>
                     </form>
                 </div>
