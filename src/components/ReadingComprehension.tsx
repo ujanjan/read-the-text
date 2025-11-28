@@ -485,7 +485,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
                   }}
                   className="flex-1 text-sm py-3 font-semibold rounded-lg transition-all"
                 >
-                  Submit Again
+                  Try Again
                 </Button>
               )}
             </div>
