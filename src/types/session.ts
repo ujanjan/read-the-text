@@ -13,6 +13,7 @@ export interface Session {
   has_attended_university?: 'yes' | 'no' | 'currently_attending';
   english_fluency?: 'native' | 'c1_c2' | 'b2' | 'b1' | 'a1_a2';
   completed_swesat?: 'yes' | 'no';
+  first_language?: string;
 }
 
 export interface PassageResult {
@@ -27,6 +28,7 @@ export interface PassageResult {
   time_spent_ms: number;
   final_selected_answer?: string;
   screenshot?: string; // base64 when fetched
+  cursor_history?: any[]; // Loaded from R2
 }
 
 export interface PassageAttempt {

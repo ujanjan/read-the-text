@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import type { SessionData, PassageAttempt } from '../types/session';
+import { Download } from 'lucide-react';
 
 export const ResultsPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -97,8 +98,61 @@ export const ResultsPage: React.FC = () => {
   return (
     <div className="results-page">
       <div className="results-container">
-        <h1>Quiz Results</h1>
-        <p className="email-display">Participant: {session.email}</p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1>Quiz Results</h1>
+            <p className="email-display">Participant: {session.email}</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                // Create summary JSON (excluding heavy cursor history)
+                const summaryData = {
+                  ...sessionData,
+                  passageResults: sessionData.passageResults.map(({ cursor_history, ...rest }) => rest)
+                };
+                const blob = new Blob([JSON.stringify(summaryData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `summary_${session.id}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            >
+              <Download className="h-4 w-4" />
+              Download Summary
+            </button>
+            <button
+              onClick={() => {
+                // Create cursor data JSON
+                const cursorData = sessionData.passageResults.reduce((acc, result) => {
+                  if (result.cursor_history) {
+                    acc[`passage_${result.passage_index}`] = result.cursor_history;
+                  }
+                  return acc;
+                }, {} as Record<string, any[]>);
+
+                const blob = new Blob([JSON.stringify(cursorData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `cursor_data_${session.id}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium"
+            >
+              <Download className="h-4 w-4" />
+              Download Cursor Data
+            </button>
+          </div>
+        </div>
 
         {/* Demographics Section */}
         {hasDemographics && (

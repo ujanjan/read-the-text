@@ -23,25 +23,38 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     'SELECT * FROM passage_attempts WHERE session_id = ? ORDER BY passage_index, attempt_number'
   ).bind(sessionId).all();
 
-  // Get screenshots from R2 for passage results
+  // Get screenshots and cursor history from R2 for passage results
   const resultsWithScreenshots = await Promise.all(
     passageResults.results.map(async (result: any) => {
       let screenshot = null;
+      let cursor_history = null;
+
+      // Fetch screenshot
       if (result.screenshot_r2_key) {
-        console.log('Fetching screenshot:', result.screenshot_r2_key);
         try {
           const obj = await storage.get(result.screenshot_r2_key);
-          console.log('R2 get result:', obj ? 'found' : 'null');
           if (obj) {
             const buffer = await obj.arrayBuffer();
             screenshot = `data:image/jpeg;base64,${arrayBufferToBase64(buffer)}`;
-            console.log('Screenshot loaded, size:', buffer.byteLength);
           }
         } catch (err) {
-          console.error('R2 get error:', err);
+          console.error('R2 get error (screenshot):', err);
         }
       }
-      return { ...result, screenshot };
+
+      // Fetch cursor history
+      if (result.cursor_history_r2_key) {
+        try {
+          const obj = await storage.get(result.cursor_history_r2_key);
+          if (obj) {
+            cursor_history = await obj.json();
+          }
+        } catch (err) {
+          console.error('R2 get error (cursor):', err);
+        }
+      }
+
+      return { ...result, screenshot, cursor_history };
     })
   );
 
