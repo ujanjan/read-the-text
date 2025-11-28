@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { apiService } from '../services/apiService';
-import type { AdminSession, SessionData, PassageAttempt } from '../types/session';
+import type { AdminSession } from '../types/session';
+import { useNavigate } from 'react-router-dom';
 
 export const AdminPage: React.FC = () => {
+  const navigate = useNavigate();
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('');
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
-  const [sessionDetail, setSessionDetail] = useState<SessionData | null>(null);
-  const [selectedPassage, setSelectedPassage] = useState<number | null>(null);
 
   useEffect(() => {
     fetchSessions();
@@ -37,27 +36,6 @@ export const AdminPage: React.FC = () => {
       console.error('Failed to delete session:', err);
     }
   };
-
-  const handleViewDetails = async (sessionId: string) => {
-    try {
-      const data = await apiService.getAdminSessionDetail(sessionId);
-      setSessionDetail(data);
-      setSelectedSession(sessionId);
-    } catch (err) {
-      console.error('Failed to fetch session details:', err);
-    }
-  };
-
-  // Group attempts by passage for detail view
-  const attemptsByPassage: Record<number, PassageAttempt[]> = {};
-  if (sessionDetail) {
-    sessionDetail.attempts.forEach((attempt) => {
-      if (!attemptsByPassage[attempt.passage_index]) {
-        attemptsByPassage[attempt.passage_index] = [];
-      }
-      attemptsByPassage[attempt.passage_index].push(attempt);
-    });
-  }
 
   return (
     <div className="admin-page">
@@ -93,7 +71,7 @@ export const AdminPage: React.FC = () => {
             </thead>
             <tbody>
               {sessions.map((session) => (
-                <tr key={session.id} onClick={() => handleViewDetails(session.id)}>
+                <tr key={session.id} onClick={() => navigate(`/results/${session.id}`)} className="cursor-pointer hover:bg-gray-50">
                   <td>{session.email}</td>
                   <td>
                     <span className={`status-badge ${session.status}`}>
@@ -115,99 +93,6 @@ export const AdminPage: React.FC = () => {
               ))}
             </tbody>
           </table>
-        )}
-
-        {/* Session detail modal */}
-        {selectedSession && sessionDetail && (
-          <div className="modal-overlay" onClick={() => {
-            setSelectedSession(null);
-            setSelectedPassage(null);
-          }}>
-            <div className="modal large" onClick={(e) => e.stopPropagation()}>
-              <h2>{sessionDetail.session.email}'s Session</h2>
-
-              <div className="session-stats">
-                <p><strong>Status:</strong> {sessionDetail.session.status}</p>
-                <p><strong>Total Time:</strong> {formatTime(sessionDetail.session.total_time_ms)}</p>
-                <p><strong>Created:</strong> {new Date(sessionDetail.session.created_at).toLocaleString()}</p>
-              </div>
-
-              <h3>Passages</h3>
-              <div className="passage-list">
-                {sessionDetail.session.passageOrder.map((passageId: number, index: number) => {
-                  const result = sessionDetail.passageResults.find((r) => r.passage_index === index);
-
-                  return (
-                    <div
-                      key={index}
-                      className={`passage-item ${result?.is_complete ? 'complete' : 'incomplete'}`}
-                      onClick={() => setSelectedPassage(selectedPassage === index ? null : index)}
-                    >
-                      <div className="passage-header">
-                        <span>Passage {index + 1}</span>
-                        {result?.is_complete && (
-                          <span className="passage-stats">
-                            {result.wrong_attempts} wrong | {formatTime(result.time_spent_ms)}
-                          </span>
-                        )}
-                      </div>
-
-                      {selectedPassage === index && (
-                        <div className="passage-details">
-                          {result?.screenshot && (
-                            <img src={result.screenshot} alt="Heatmap" className="detail-screenshot" />
-                          )}
-                          <div className="attempts-section">
-                            <h4>Attempts</h4>
-                            {attemptsByPassage[index]?.map((attempt, idx) => (
-                              <div key={idx} className={`attempt-item ${attempt.is_correct ? 'correct' : 'wrong'}`}>
-                                <p><strong>#{attempt.attempt_number}:</strong> {attempt.selected_answer}</p>
-                                {attempt.gemini_response && (
-                                  <p className="feedback">{attempt.gemini_response}</p>
-                                )}
-                              </div>
-                            )) || <p>No attempts</p>}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Questionnaire Responses */}
-              {sessionDetail.questionnaireResponse && (
-                <>
-                  <h3>Questionnaire Responses</h3>
-                  <div className="questionnaire-section">
-                    <div className="questionnaire-item">
-                      <p className="question"><strong>1. What is your impression of the interface, as a tool for independent learning?</strong></p>
-                      <p className="answer">{sessionDetail.questionnaireResponse.question_1_response || '(No response)'}</p>
-                    </div>
-                    <div className="questionnaire-item">
-                      <p className="question"><strong>2. What are your thoughts on the AI-generated feedback?</strong></p>
-                      <p className="answer">{sessionDetail.questionnaireResponse.question_2_response || '(No response)'}</p>
-                    </div>
-                    <div className="questionnaire-item">
-                      <p className="question"><strong>3. Please share any general feedback you have about the application as a tool for learning?</strong></p>
-                      <p className="answer">{sessionDetail.questionnaireResponse.question_3_response || '(No response)'}</p>
-                    </div>
-                    <p className="submitted-at"><em>Submitted: {new Date(sessionDetail.questionnaireResponse.submitted_at).toLocaleString()}</em></p>
-                  </div>
-                </>
-              )}
-
-              <button
-                onClick={() => {
-                  setSelectedSession(null);
-                  setSelectedPassage(null);
-                }}
-                className="close-button"
-              >
-                Close
-              </button>
-            </div>
-          </div>
         )}
       </div>
     </div>
