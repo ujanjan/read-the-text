@@ -33,6 +33,7 @@ interface ReadingComprehensionProps {
   onPreviousPassage?: () => void;
   hasPrevious?: boolean;
   hasNext?: boolean;
+  onFinishQuiz?: () => void;
 }
 
 export interface ReadingComprehensionHandle {
@@ -78,6 +79,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
     onPreviousPassage,
     hasPrevious = false,
     hasNext = false,
+    onFinishQuiz,
   }, ref) {
     const [selectedAnswer, setSelectedAnswer] = useState<string>(initialSelectedAnswer);
     const [showFeedback, setShowFeedback] = useState(initialIsComplete);
@@ -462,17 +464,17 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
               ) : currentSubmissionCorrect ? (
                 // State 4 (correct - green "Good Job - Next Question") - only show after feedback loaded
                 <Button
-                  onClick={onNextPassage}
-                  disabled={!hasNext}
+                  onClick={hasNext ? onNextPassage : onFinishQuiz}
+                  disabled={!hasNext && !onFinishQuiz}
                   style={{
                     backgroundColor: '#00a63e',
                     color: 'white',
-                    opacity: !hasNext ? 0.5 : 1,
-                    cursor: !hasNext ? 'not-allowed' : 'pointer'
+                    opacity: 1,
+                    cursor: 'pointer'
                   }}
                   className="flex-1 text-sm py-3 font-semibold rounded-lg transition-all"
                 >
-                  Good Job - Next Question
+                  {hasNext ? "Good Job - Next Question" : "Finish The Quiz"}
                 </Button>
               ) : (
                 // State 3 (wrong - red "Submit Again") - only show after feedback loaded

@@ -861,6 +861,7 @@ export default function App() {
               onPreviousPassage={handlePreviousPassage}
               hasPrevious={currentPassageIndex > 0}
               hasNext={currentPassageIndex < passages.length - 1}
+              onFinishQuiz={handleFinishQuiz}
             />
           </div>
 
