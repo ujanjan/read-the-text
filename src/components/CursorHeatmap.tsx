@@ -15,7 +15,7 @@ export interface CursorHeatmapHandle {
 }
 
 export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>(
-  function CursorHeatmap({ cursorHistory, opacity = 0.6, radius = 40, containerRef, visible = true }, ref) {
+  function CursorHeatmap({ cursorHistory, opacity = 0.6, radius = 40, visible = true }, ref) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [canvasStyle, setCanvasStyle] = useState<React.CSSProperties>({
       position: 'fixed',
@@ -25,7 +25,7 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
       height: '100%',
       pointerEvents: 'none',
       zIndex: 9998,
-      opacity: opacity
+      opacity: visible ? opacity : 0
     });
 
     useImperativeHandle(ref, () => ({
@@ -61,19 +61,9 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Get container bounds if provided, otherwise use full viewport
-      let width = window.innerWidth;
-      let height = window.innerHeight;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
 
-      if (containerRef?.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        width = rect.width;
-        height = rect.height;
-      }
-
-      const pixelRatio = window.devicePixelRatio || 1;
-      canvas.width = width * pixelRatio;
-      canvas.height = height * pixelRatio;
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -81,29 +71,15 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
 
       // Create temp canvas at device pixel resolution
       const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = width * pixelRatio;
-      tempCanvas.height = height * pixelRatio;
+      tempCanvas.width = window.innerWidth;
+      tempCanvas.height = window.innerHeight;
       const tempCtx = tempCanvas.getContext('2d');
       if (!tempCtx) return;
 
-      // Scale the temp context so we can work in CSS pixels
-      tempCtx.scale(pixelRatio, pixelRatio);
-      
-      // Filter cursor points to only those within the container bounds
-      const pointsInBounds = cursorHistory.filter(point => {
-        return point.x >= 0 &&
-              point.x <= width &&
-              point.y >= 0 &&
-              point.y <= height;
-      });
-
-      pointsInBounds.forEach(point => {
-        const relativeX = point.x;
-        const relativeY = point.y;
-
+      cursorHistory.forEach(point => {
         const gradient = tempCtx.createRadialGradient(
-          relativeX, relativeY, 0,
-          relativeX, relativeY, radius
+          point.x, point.y, 0,
+          point.x, point.y, radius
         );
 
         const intensity = 0.05;
@@ -112,7 +88,7 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
         tempCtx.fillStyle = gradient;
-        tempCtx.fillRect(relativeX - radius, relativeY - radius, radius * 2, radius * 2);
+        tempCtx.fillRect(point.x - radius, point.y - radius, radius * 2, radius * 2);
       });
 
       // Get image data at device pixel resolution
@@ -163,79 +139,20 @@ export const CursorHeatmap = forwardRef<CursorHeatmapHandle, CursorHeatmapProps>
       // Put image data directly (at device pixel resolution)
       ctx.putImageData(imageData, 0, 0);
 
-    }, [cursorHistory, radius, containerRef]);
+    }, [cursorHistory, radius]);
 
     useEffect(() => {
-      const updateCanvasSizeAndPosition = () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        let containerBounds = {
-          left: 0,
-          top: 0,
-          width: window.innerWidth,
-          height: window.innerHeight
-        };
-
-        if (containerRef?.current) {
-          const rect = containerRef.current.getBoundingClientRect();
-          containerBounds = {
-            left: rect.left,
-            top: rect.top,
-            width: rect.width,
-            height: rect.height
-          };
-        }
-
-        // Use device pixel ratio for accurate rendering
-        const pixelRatio = window.devicePixelRatio || 1;
-        canvas.width = containerBounds.width * pixelRatio;
-        canvas.height = containerBounds.height * pixelRatio;
-
-        // Update canvas style position
-        // When not visible, use opacity 0 to hide from user but keep rendering for screenshots
-        setCanvasStyle({
-          position: 'fixed',
-          top: containerBounds.top,
-          left: containerBounds.left,
-          width: containerBounds.width,
-          height: containerBounds.height,
-          pointerEvents: 'none',
-          zIndex: 9998,
-          opacity: visible ? opacity : 0
-        });
-      };
-
       const resize = () => {
-        updateCanvasSizeAndPosition();
-      };
-
-      // Use ResizeObserver to watch for container size changes
-      let resizeObserver: ResizeObserver | null = null;
-      if (containerRef?.current) {
-        resizeObserver = new ResizeObserver(() => {
-          updateCanvasSizeAndPosition();
-        });
-        resizeObserver.observe(containerRef.current);
-      }
-
-      // Also update on scroll to handle position changes
-      const handleScroll = () => {
-        updateCanvasSizeAndPosition();
+        const canvas = canvasRef.current;
+        if (canvas) {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+        }
       };
 
       window.addEventListener('resize', resize);
-      window.addEventListener('scroll', handleScroll, true);
-      updateCanvasSizeAndPosition();
-
-      return () => {
-        window.removeEventListener('resize', resize);
-        window.removeEventListener('scroll', handleScroll, true);
-        if (resizeObserver) {
-          resizeObserver.disconnect();
-        }
-      };
-    }, [containerRef, opacity, visible]);
+      return () => window.removeEventListener('resize', resize);
+    }, []);
 
     return (
       <canvas

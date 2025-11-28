@@ -126,5 +126,22 @@ export const apiService = {
       body: JSON.stringify({ email })
     });
     return res.json();
+  },
+
+  // Questionnaire
+  async submitQuestionnaire(
+    sessionId: string,
+    responses: {
+      question1: string;
+      question2: string;
+      question3: string;
+    }
+  ): Promise<{ success: boolean }> {
+    const res = await fetch(`${API_BASE}/questionnaire/${sessionId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(responses)
+    });
+    return res.json();
   }
 };

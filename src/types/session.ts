@@ -11,9 +11,8 @@ export interface Session {
   // Demographics
   age?: number;
   has_attended_university?: 'yes' | 'no' | 'currently_attending';
-  english_fluency?: 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language';
-  first_language?: string;
-  completed_swesat?: 'yes' | 'no' | 'unsure';
+  english_fluency?: 'native' | 'c1_c2' | 'b2' | 'b1' | 'a1_a2';
+  completed_swesat?: 'yes' | 'no';
 }
 
 export interface PassageResult {
@@ -57,10 +56,20 @@ export interface SessionCreateResponse {
   resultUrl: string;
 }
 
+export interface QuestionnaireResponse {
+  id: string;
+  session_id: string;
+  question_1_response?: string;
+  question_2_response?: string;
+  question_3_response?: string;
+  submitted_at: string;
+}
+
 export interface SessionData {
   session: Session;
   passageResults: PassageResult[];
   attempts: PassageAttempt[];
+  questionnaireResponse?: QuestionnaireResponse;
 }
 
 export interface AdminSession {
@@ -79,7 +88,6 @@ export interface AdminSession {
 export interface UserDemographics {
   age: number;
   hasAttendedUniversity: 'yes' | 'no' | 'currently_attending';
-  englishFluency: 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language';
-  firstLanguage: string;
-  completedSwesat: 'yes' | 'no' | 'unsure';
+  englishFluency: 'native' | 'c1_c2' | 'b2' | 'b1' | 'a1_a2';
+  completedSwesat: 'yes' | 'no';
 }

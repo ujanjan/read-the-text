@@ -52,9 +52,6 @@ export function computeSentenceRects(
   container: HTMLElement,
   sentenceSelector = "[data-sentence-id]"
 ): SentenceRect[] {
-  // The container's own bounding box (for coordinate normalization)
-  const containerRect = container.getBoundingClientRect();
-
   // Get every <span data-sentence-id="...">
   const sentenceElements = Array.from(
     container.querySelectorAll<HTMLElement>(sentenceSelector)
@@ -63,14 +60,14 @@ export function computeSentenceRects(
   return sentenceElements.map((el) => {
     const r = el.getBoundingClientRect();
 
-    // Convert viewport coordinates → container-relative coordinates
+    // Use viewport coordinates directly to match global cursor coordinates
     return {
       id: parseInt(el.dataset.sentenceId || "0", 10),
       text: el.innerText,
-      left: r.left - containerRect.left,
-      top: r.top - containerRect.top,
-      right: r.right - containerRect.left,
-      bottom: r.bottom - containerRect.top,
+      left: r.left,
+      top: r.top,
+      right: r.right,
+      bottom: r.bottom,
     };
   });
 }

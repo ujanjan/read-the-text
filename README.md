@@ -489,6 +489,7 @@ The project includes SQL migrations in the `/migrations` directory:
 - **0002_add_attempt_screenshots.sql**: Adds screenshot capability to attempts
 - **0003_rename_nickname_to_email.sql**: Changes nickname field to email
 - **0004_add_user_demographics.sql**: Adds demographic data fields
+- **0005_add_questionnaire_responses.sql**: Adds post-quiz questionnaire feedback table
 
 To apply migrations locally:
 ```bash
@@ -496,6 +497,7 @@ npx wrangler d1 execute read_the_text_db --local --file=migrations/0001_initial.
 npx wrangler d1 execute read_the_text_db --local --file=migrations/0002_add_attempt_screenshots.sql
 npx wrangler d1 execute read_the_text_db --local --file=migrations/0003_rename_nickname_to_email.sql
 npx wrangler d1 execute read_the_text_db --local --file=migrations/0004_add_user_demographics.sql
+npx wrangler d1 execute read_the_text_db --local --file=migrations/0005_add_questionnaire_responses.sql
 ```
 
 To apply migrations to production:

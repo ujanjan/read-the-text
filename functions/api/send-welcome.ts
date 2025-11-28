@@ -22,8 +22,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const BREVO_API_KEY = context.env.BREVO_API_KEY;
     const BREVO_SENDER_EMAIL = context.env.BREVO_SENDER_EMAIL || 'noreply@example.com';
-    const BREVO_SENDER_NAME = context.env.BREVO_SENDER_NAME || 'Reading Comprehension Study';
-    
+    const BREVO_SENDER_NAME = context.env.BREVO_SENDER_NAME || 'Robin Scholle';
+
     if (!BREVO_API_KEY) {
       console.error('BREVO_API_KEY not configured');
       return jsonResponse({ error: 'Email service not configured' }, 500);
@@ -192,22 +192,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Brevo API error:', response.status, errorText);
-      return jsonResponse({ 
+      return jsonResponse({
         error: 'Failed to send welcome email',
-        details: errorText 
+        details: errorText
       }, 500);
     }
 
-    return jsonResponse({ 
-      success: true, 
-      message: 'Welcome email sent successfully' 
+    return jsonResponse({
+      success: true,
+      message: 'Welcome email sent successfully'
     });
 
   } catch (error: any) {
     console.error('Send welcome email error:', error);
-    return jsonResponse({ 
+    return jsonResponse({
       error: 'Failed to send welcome email',
-      details: error.message 
+      details: error.message
     }, 500);
   }
 };

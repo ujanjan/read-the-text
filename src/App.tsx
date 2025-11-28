@@ -5,8 +5,10 @@ import { CursorTracker, CursorData } from './components/CursorTracker';
 import { CursorTrackingData } from './components/CursorTrackingData';
 import { CursorHeatmap, CursorHeatmapHandle } from './components/CursorHeatmap';
 import { LandingPage } from './components/LandingPage';
+import { QuestionnairePage, QuestionnaireResponses } from './components/QuestionnairePage';
+import { ThankYouPage } from './components/ThankYouPage';
 import { Button } from './components/ui/button';
-import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Trophy, Target, Zap } from 'lucide-react';
+import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Trophy, Target, Zap, Info } from 'lucide-react';
 import { toCanvas } from 'html-to-image';
 import { getPassages } from './services/passageService';
 import { apiService } from './services/apiService';
@@ -41,6 +43,10 @@ export default function App() {
   const [showLanding, setShowLanding] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [passageOrder, setPassageOrder] = useState<number[]>([]);
+
+  // Questionnaire flow
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false);
 
   // Per-passage data storage
   const [passageData, setPassageData] = useState<Record<number, PassageData>>({});
@@ -138,8 +144,14 @@ export default function App() {
         setCurrentPassageIndex(state.currentPassageIndex);
         setPassageData(state.passageData || {});
         setShowLanding(false);
-        setTrackingEnabled(true);
-        passageStartTimeRef.current = Date.now();
+        // Restore questionnaire state if it was saved
+        if (state.showQuestionnaire) {
+          setShowQuestionnaire(true);
+          setTrackingEnabled(false);
+        } else {
+          setTrackingEnabled(true);
+          passageStartTimeRef.current = Date.now();
+        }
       } catch (err) {
         console.error('Failed to restore session from storage:', err);
         sessionStorage.removeItem(SESSION_STORAGE_KEY);
@@ -154,11 +166,12 @@ export default function App() {
         sessionId,
         passageOrder,
         currentPassageIndex,
-        passageData
+        passageData,
+        showQuestionnaire
       };
       sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state));
     }
-  }, [sessionId, passageOrder, currentPassageIndex, passageData, showLanding]);
+  }, [sessionId, passageOrder, currentPassageIndex, passageData, showLanding, showQuestionnaire]);
 
   // Handle starting quiz from landing page
   const handleStartQuiz = (
@@ -217,9 +230,10 @@ export default function App() {
 
   const handleToggleTracking = () => {
     if (trackingEnabled) {
-      // When stopping, accumulate time and stop tracking
+      // When stopping, accumulate time, stop tracking, and go to questionnaire
       accumulateTimeForCurrentPassage();
       setTrackingEnabled(false);
+      setShowQuestionnaire(true);
     } else {
       // When starting fresh, start timer
       passageStartTimeRef.current = Date.now();
@@ -243,6 +257,33 @@ export default function App() {
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
     // Go back to landing
     setShowLanding(true);
+  };
+
+  // Resume quiz from questionnaire page - returns to exact passage where they stopped
+  const handleResumeQuiz = () => {
+    setShowQuestionnaire(false);
+    setTrackingEnabled(true);
+    // Restart timer for current passage if not complete
+    if (!currentData.isComplete) {
+      passageStartTimeRef.current = Date.now();
+    }
+  };
+
+  // Restart quiz from questionnaire page - clears all progress and starts from passage 1
+  const handleRestartQuizFromQuestionnaire = () => {
+    // Reset the quiz component state
+    if (readingComprehensionRef.current) {
+      readingComprehensionRef.current.reset();
+    }
+    // Clear all passage data but keep session info
+    setPassageData({});
+    setCurrentPassageIndex(0);
+    setShowQuestionnaire(false);
+    setTrackingEnabled(true);
+    // Clear session storage
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    // Start timer for first passage
+    passageStartTimeRef.current = Date.now();
   };
 
   // Navigation between passages
@@ -301,7 +342,7 @@ export default function App() {
   };
 
   // Handle passage completion (correct answer)
-  const handlePassageComplete = async (wrongAttempts: number, selectedAnswer: string) => {
+  const handlePassageComplete = async (wrongAttempts: number, selectedAnswer: string, feedbackText: string) => {
     // Capture screenshot with heatmap before marking complete
     const screenshot = await handleCaptureScreenshot();
 
@@ -318,7 +359,9 @@ export default function App() {
       screenshot: screenshot || passageData[currentPassageIndex]?.screenshot || null,
       isComplete: true,
       wrongAttempts,
-      timeSpent: finalTimeSpent
+      timeSpent: finalTimeSpent,
+      selectedAnswer,
+      feedbackText // Store the feedback text!
     };
 
     setPassageData(prev => ({
@@ -351,7 +394,8 @@ export default function App() {
     if (allComplete) {
       setTrackingEnabled(false);
 
-      // Mark session complete in cloud and redirect to results
+      // Mark session complete in cloud but DON'T redirect
+      // User will click "Finish The Quiz" to proceed to questionnaire
       if (sessionId) {
         const totalTime = Object.values(passageData).reduce(
           (sum, data) => sum + (data?.timeSpent || 0), 0
@@ -359,16 +403,9 @@ export default function App() {
 
         try {
           await apiService.completeSession(sessionId, totalTime);
-          // Clear session storage on completion
-          sessionStorage.removeItem(SESSION_STORAGE_KEY);
-          // Redirect to results page
-          navigate(`/results/${sessionId}`);
+          console.log('✅ Session marked complete in cloud');
         } catch (err) {
           console.error('Failed to complete session:', err);
-          // Clear session storage on completion
-          sessionStorage.removeItem(SESSION_STORAGE_KEY);
-          // Still redirect even if API fails - data is saved
-          navigate(`/results/${sessionId}`);
         }
       } else {
         // No session - show local summary (fallback)
@@ -401,20 +438,20 @@ export default function App() {
             // The heatmap canvas is already sized to match the container exactly
             // and contains only container-relative coordinates (0,0 to width,height)
             // So we can draw it directly without cropping
-            
+
             // However, we need to account for pixel ratio differences
             // The screenshot canvas might be at a different scale than the heatmap canvas
             const screenshotWidth = canvas.width;
             const screenshotHeight = canvas.height;
             const heatmapWidth = heatmapCanvas.width;
             const heatmapHeight = heatmapCanvas.height;
-            
+
             // Save the current context state
             ctx.save();
-            
+
             // Apply the heatmap opacity (0.6) when compositing
             ctx.globalAlpha = 0.6;
-            
+
             // Draw the entire heatmap canvas onto the screenshot
             // Scale it to match the screenshot dimensions exactly
             ctx.drawImage(
@@ -422,7 +459,7 @@ export default function App() {
               0, 0, heatmapWidth, heatmapHeight, // Source: entire heatmap canvas
               0, 0, screenshotWidth, screenshotHeight // Destination: full screenshot canvas
             );
-            
+
             // Restore the context state
             ctx.restore();
           }
@@ -454,6 +491,55 @@ export default function App() {
       return null;
     }
   };
+
+  // Handle "Finish The Quiz" button click
+  const handleFinishQuiz = () => {
+    // Clear session storage
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    // Show questionnaire
+    setShowQuestionnaire(true);
+  };
+
+  // Handle questionnaire submission
+  const handleQuestionnaireSubmit = async (responses: QuestionnaireResponses) => {
+    if (!sessionId) {
+      console.error('No session ID available');
+      return;
+    }
+
+    try {
+      await apiService.submitQuestionnaire(sessionId, responses);
+      console.log('✅ Questionnaire submitted successfully');
+      // Show thank you page
+      setShowQuestionnaire(false);
+      setShowThankYou(true);
+    } catch (error) {
+      console.error('Failed to submit questionnaire:', error);
+      throw error; // Let the component handle the error
+    }
+  };
+
+  // Show thank you page
+  if (showThankYou) {
+    return <ThankYouPage />;
+  }
+
+  // Show questionnaire page
+  if (showQuestionnaire && sessionId) {
+    // Check if all passages are complete
+    const allPassagesComplete = passages.length > 0 && passages.every((_, index) =>
+      passageData[index]?.isComplete === true
+    );
+
+    return (
+      <QuestionnairePage
+        sessionId={sessionId}
+        onSubmit={handleQuestionnaireSubmit}
+        onResumeQuiz={!allPassagesComplete ? handleResumeQuiz : undefined}
+        onRestartQuiz={!allPassagesComplete ? handleRestartQuizFromQuestionnaire : undefined}
+      />
+    );
+  }
 
   // Show landing page first
   if (showLanding) {
@@ -573,11 +659,10 @@ export default function App() {
                           </span>
                         </div>
                         {/* Performance badge */}
-                        <div className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                          isPerfect
-                            ? 'bg-green-500 text-white'
-                            : 'bg-yellow-500 text-white'
-                        }`}>
+                        <div className={`absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium ${isPerfect
+                          ? 'bg-green-500 text-white'
+                          : 'bg-yellow-500 text-white'
+                          }`}>
                           {isPerfect ? 'Perfect' : `${attempts}x`}
                         </div>
                       </div>
@@ -586,11 +671,10 @@ export default function App() {
                     {/* Passage Info */}
                     <div className="p-2.5">
                       <div className="flex items-start gap-2">
-                        <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                          isPerfect
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-yellow-100 text-yellow-700'
-                        }`}>
+                        <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isPerfect
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                          }`}>
                           {index + 1}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -598,9 +682,8 @@ export default function App() {
                             {passage.title}
                           </h3>
                           <div className="flex items-center gap-2 text-[10px]">
-                            <span className={`inline-flex items-center gap-0.5 ${
-                              isPerfect ? 'text-green-600' : 'text-yellow-600'
-                            }`}>
+                            <span className={`inline-flex items-center gap-0.5 ${isPerfect ? 'text-green-600' : 'text-yellow-600'
+                              }`}>
                               {isPerfect ? (
                                 <CheckCircle2 className="h-3 w-3" />
                               ) : (
@@ -671,18 +754,15 @@ export default function App() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Passage navigation */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePreviousPassage}
-              disabled={currentPassageIndex === 0 || !trackingEnabled}
-              className="text-xs"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
+          {/* Eyeline reminder box - centered in header */}
+          <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex items-center gap-2">
+            <Info className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
+            <span className="text-xs text-red-900">
+              <span className="font-semibold">Remember!</span> Show your eyeline with your cursor
+            </span>
+          </div>
 
+          <div className="flex items-center gap-2">
             {/* Passage completion indicators */}
             <div className="flex items-center gap-1 px-2">
               {passages.map((_, idx) => (
@@ -696,39 +776,27 @@ export default function App() {
                     }
                   }}
                   disabled={!trackingEnabled}
-                  className={`w-2.5 h-2.5 rounded-full transition-all ${
-                    idx === currentPassageIndex
-                      ? 'ring-2 ring-blue-400 ring-offset-1'
-                      : ''
-                  } ${
-                    passageData[idx]?.isComplete
+                  className={`w-2.5 h-2.5 rounded-full transition-all ${idx === currentPassageIndex
+                    ? 'ring-2 ring-blue-400 ring-offset-1'
+                    : ''
+                    } ${passageData[idx]?.isComplete
                       ? 'bg-green-500'
                       : 'bg-gray-300'
-                  } ${trackingEnabled ? 'cursor-pointer hover:scale-125' : 'cursor-default'}`}
+                    } ${trackingEnabled ? 'cursor-pointer hover:scale-125' : 'cursor-default'}`}
                   title={`Passage ${idx + 1}${passageData[idx]?.isComplete ? ' (completed)' : ''}`}
                 />
               ))}
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNextPassage}
-              disabled={currentPassageIndex === passages.length - 1 || !trackingEnabled}
-              className="text-xs"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-
             {allPassagesComplete ? (
               <Button
                 variant="default"
                 size="sm"
-                onClick={() => sessionId && navigate(`/results/${sessionId}`)}
+                onClick={handleFinishQuiz}
                 className="text-xs bg-green-600 hover:bg-green-700"
               >
                 <Trophy className="h-4 w-4 mr-1" />
-                See Results
+                Finish The Quiz
               </Button>
             ) : (
               <Button
@@ -771,7 +839,7 @@ export default function App() {
             </Button>
           </div>
         </div>
-        
+
         <div className="flex-1 min-h-0 flex gap-3 min-w-0">
           <div className="flex-1 min-h-0 min-w-0">
             <ReadingComprehension
@@ -789,9 +857,13 @@ export default function App() {
               initialIsComplete={currentData.isComplete}
               initialSelectedAnswer={currentData.selectedAnswer}
               initialFeedback={currentData.feedbackText}
+              onNextPassage={handleNextPassage}
+              onPreviousPassage={handlePreviousPassage}
+              hasPrevious={currentPassageIndex > 0}
+              hasNext={currentPassageIndex < passages.length - 1}
             />
           </div>
-          
+
           {showSidebar && (
             <div className="w-80 flex-shrink-0">
               <CursorTrackingData
@@ -811,10 +883,9 @@ export default function App() {
         </div>
       </div>
 
-      <CursorTracker 
+      <CursorTracker
         onCursorData={handleCursorData}
         enabled={trackingEnabled}
-        getContainer={() => passageRef.current}
       />
 
       {trackingEnabled && (
@@ -824,7 +895,6 @@ export default function App() {
           opacity={0.6}
           radius={40}
           visible={debugMode}
-          containerRef={passageRef}
         />
       )}
     </div>

@@ -5,9 +5,8 @@ interface CreateSessionRequest {
   email: string;
   age?: number;
   hasAttendedUniversity?: 'yes' | 'no' | 'currently_attending';
-  englishFluency?: 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language';
-  firstLanguage?: string;
-  completedSwesat?: 'yes' | 'no' | 'unsure';
+  englishFluency?: 'native' | 'c1_c2' | 'b2' | 'b1' | 'a1_a2';
+  completedSwesat?: 'yes' | 'no';
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -17,7 +16,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     age,
     hasAttendedUniversity,
     englishFluency,
-    firstLanguage,
     completedSwesat
   } = requestData;
 
@@ -43,7 +41,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   }
 
   if (englishFluency !== undefined) {
-    if (!['not_at_all', 'young_age', 'high_school', 'university', 'first_language'].includes(englishFluency)) {
+    if (!['native', 'c1_c2', 'b2', 'b1', 'a1_a2'].includes(englishFluency)) {
       return Response.json(
         { error: 'Invalid English fluency level' },
         { status: 400 }
@@ -51,15 +49,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
   }
 
-  if (firstLanguage !== undefined && firstLanguage.length > 100) {
-    return Response.json(
-      { error: 'First language must be 100 characters or less' },
-      { status: 400 }
-    );
-  }
 
   if (completedSwesat !== undefined) {
-    if (!['yes', 'no', 'unsure'].includes(completedSwesat)) {
+    if (!['yes', 'no'].includes(completedSwesat)) {
       return Response.json(
         { error: 'Invalid SWESAT status' },
         { status: 400 }
@@ -80,10 +72,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       age,
       has_attended_university,
       english_fluency,
-      first_language,
       completed_swesat
     )
-    VALUES (?, ?, ?, 10, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, 10, ?, ?, ?, ?)
   `).bind(
     sessionId,
     email,
@@ -91,7 +82,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     age || null,
     hasAttendedUniversity || null,
     englishFluency || null,
-    firstLanguage || null,
     completedSwesat || null
   ).run();
 
