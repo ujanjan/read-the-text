@@ -29,6 +29,7 @@ import { onRequestGet as sessionGet, onRequestDelete as sessionDelete } from './
 import { onRequestPost as sessionCompletePost } from './api/sessions/[id]/complete';
 import { onRequestPut as passageResultPut } from './api/passages/[sessionId]/[passageIndex]';
 import { onRequestPost as passageAttemptPost } from './api/passages/[sessionId]/[passageIndex]/attempts';
+import { onRequestPost as adminAuthPost } from './api/admin/auth';
 import { onRequestGet as adminSessionsGet } from './api/admin/sessions';
 import { onRequestGet as adminSessionGet, onRequestDelete as adminSessionDelete } from './api/admin/sessions/[id]';
 import { onRequestPost as sendLinkPost } from './api/send-link';
@@ -173,6 +174,15 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
     }
 
     // Admin routes
+    console.log('Checking admin auth route...');
+    console.log('path === "/api/admin/auth":', path === '/api/admin/auth');
+    console.log('method === "POST":', method === 'POST');
+    if (path === '/api/admin/auth' && method === 'POST') {
+      console.log('Auth route matched! Calling handler...');
+      console.log('adminAuthPost:', typeof adminAuthPost);
+      return await adminAuthPost(createContext());
+    }
+
     if (path === '/api/admin/sessions' && method === 'GET') {
       return await adminSessionsGet(createContext());
     }

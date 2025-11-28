@@ -8,10 +8,14 @@ export const AdminPage: React.FC = () => {
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
-    fetchSessions();
-  }, [filter]);
+    if (isAuthenticated) {
+      fetchSessions();
+    }
+  }, [filter, isAuthenticated]);
 
   const fetchSessions = async () => {
     setLoading(true);
@@ -36,6 +40,53 @@ export const AdminPage: React.FC = () => {
       console.error('Failed to delete session:', err);
     }
   };
+
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await apiService.adminLogin(password);
+      if (response.success && response.token) {
+        localStorage.setItem('admin_token', response.token);
+        setIsAuthenticated(true);
+      } else {
+        alert(response.error || 'Incorrect password');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      alert('Authentication failed. Please try again.');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <form onSubmit={handleLogin} className="bg-white p-8 rounded-lg shadow-md w-96">
+          <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Admin Access</h2>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              placeholder="Enter password"
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          >
+            Login
+          </button>
+        </form>
+      </div>
+    );
+  }
+
 
   return (
     <div className="admin-page">

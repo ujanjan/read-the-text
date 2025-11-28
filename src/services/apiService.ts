@@ -88,24 +88,57 @@ export const apiService = {
     return res.json();
   },
 
+  // Admin Authentication
+  async adminLogin(password: string): Promise<{ success: boolean; token?: string; error?: string }> {
+    const res = await fetch(`${API_BASE}/admin/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    return res.json();
+  },
+
   // Admin
   async getAdminSessions(status?: string): Promise<{ sessions: AdminSession[] }> {
+    const token = localStorage.getItem('admin_token');
     const url = status
       ? `${API_BASE}/admin/sessions?status=${status}`
       : `${API_BASE}/admin/sessions`;
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error('Unauthorized');
+    }
     return res.json();
   },
 
   async getAdminSessionDetail(sessionId: string): Promise<SessionData> {
-    const res = await fetch(`${API_BASE}/admin/sessions/${sessionId}`);
+    const token = localStorage.getItem('admin_token');
+    const res = await fetch(`${API_BASE}/admin/sessions/${sessionId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error('Unauthorized');
+    }
     return res.json();
   },
 
   async deleteAdminSession(sessionId: string): Promise<{ success: boolean }> {
+    const token = localStorage.getItem('admin_token');
     const res = await fetch(`${API_BASE}/admin/sessions/${sessionId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
+    if (!res.ok) {
+      throw new Error('Unauthorized');
+    }
     return res.json();
   },
 

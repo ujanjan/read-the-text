@@ -1,6 +1,16 @@
 import type { Env } from '../../types';
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
+  // Check for authorization token
+  const authHeader = context.request.headers.get('Authorization');
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return Response.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
   const db = context.env.read_the_text_db;
   const url = new URL(context.request.url);
   const status = url.searchParams.get('status');

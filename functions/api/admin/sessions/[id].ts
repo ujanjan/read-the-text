@@ -3,6 +3,16 @@ import { arrayBufferToBase64 } from '../../../types';
 
 // GET session details
 export const onRequestGet: PagesFunction<Env> = async (context) => {
+  // Check for authorization token
+  const authHeader = context.request.headers.get('Authorization');
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return Response.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
   const sessionId = context.params.id as string;
   const db = context.env.read_the_text_db;
   const storage = context.env.read_the_text_storage;
@@ -55,6 +65,16 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
 // DELETE session
 export const onRequestDelete: PagesFunction<Env> = async (context) => {
+  // Check for authorization token
+  const authHeader = context.request.headers.get('Authorization');
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return Response.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
   const sessionId = context.params.id as string;
   const db = context.env.read_the_text_db;
   const storage = context.env.read_the_text_storage;

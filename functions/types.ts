@@ -6,6 +6,7 @@ export interface Env {
   BREVO_API_KEY: string;
   BREVO_SENDER_EMAIL?: string;
   BREVO_SENDER_NAME?: string;
+  ADMIN_PASSWORD: string;
   // Note: ASSETS binding removed - not available in Workers deployment
   // Static assets are served by Cloudflare's platform before worker executes
 }
