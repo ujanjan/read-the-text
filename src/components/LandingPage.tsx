@@ -260,8 +260,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
             <div className="w-full max-w-6xl mx-auto grid grid-cols-2 gap-16">
                 {/* Left Column - Form */}
                 <div className="flex flex-col">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Information</h2>
-
                     <form id="user-info-form" onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <label className="block text-gray-700 mb-2 text-xs font-medium">Enter your email:</label>
@@ -272,11 +270,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                                 placeholder="e.g., john@example.com"
                                 required
                                 disabled={loading}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
+                                className="w-full px-4 py-3 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
+                                style={{ border: '1.5px solid #9ca3af' }}
                             />
-                            <p className="text-xs text-gray-400 mt-2">
-                                Tip: You can continue a past session or view your results by entering your previous email.
-                            </p>
                         </div>
 
                         <div>
@@ -290,7 +286,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                                 placeholder="Enter your age"
                                 required
                                 disabled={loading}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
+                                className="w-full px-4 py-3 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
+                                style={{ border: '1.5px solid #9ca3af' }}
                             />
                         </div>
 
@@ -346,7 +343,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setEnglishFluency(e.target.value as 'not_at_all' | 'young_age' | 'high_school' | 'university' | 'first_language' | '')}
                                 required
                                 disabled={loading}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none bg-white disabled:bg-gray-50"
+                                className="w-full px-4 py-3 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none bg-white disabled:bg-gray-50"
+                                style={{ border: '1.5px solid #9ca3af' }}
                             >
                                 <option value="">Select an option</option>
                                 <option value="first_language">English is my first language</option>
@@ -368,7 +366,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                                     required
                                     disabled={loading}
                                     maxLength={100}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
+                                    className="w-full px-4 py-3 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs disabled:bg-gray-50"
+                                    style={{ border: '1.5px solid #9ca3af' }}
                                 />
                             </div>
                         )}
@@ -433,7 +432,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                             <p className="text-xs text-gray-500">
                                 We collect reading patterns, answers, and demographics for research purposes. All data is anonymized and stored securely. <button
                                     onClick={() => setShowDataDetails(!showDataDetails)}
-                                    className="text-blue-600 hover:underline"
+                                    className="text-xs text-blue-600 hover:underline"
                                 >
                                     {showDataDetails ? 'Hide Details' : 'Show Details'}
                                 </button>
@@ -450,7 +449,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                         </div>
 
                         <div className="text-xs text-gray-500">
-                            Questions? <a href="mailto:robp@kth.se" className="text-blue-600 hover:underline">robp@kth.se</a> | <a href="https://www.kth.se/student/kurser/kurs/DM2730?l=en" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Course Info</a>
+                            Questions? <a href="mailto:user@kth.se" className="text-blue-600 hover:underline">user@kth.se</a> | <a href="https://www.kth.se/student/kurser/kurs/DM2730?l=en" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Course Info</a>
                         </div>
                     </form>
                 </div>
