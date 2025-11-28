@@ -34,6 +34,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const studyUrl = origin;
 
     // Use Brevo (Sendinblue) API
+    console.log(`[MOCK] Email sending disabled. Would send to ${email}`);
+    return jsonResponse({
+      success: true,
+      message: 'Email sent successfully'
+    });
+    /*
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -106,6 +112,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         details: errorText
       }, 500);
     }
+    */
 
     return jsonResponse({
       success: true,
