@@ -442,34 +442,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
             </p>
           </div>
 
-          <div className="space-y-4 mb-8">
-            <div className="flex gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <BookOpen className="w-6 h-6 text-blue-600" />
+          <div className="space-y-6 mb-8">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <BookOpen className="w-5 h-5 text-blue-600" strokeWidth={2} />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">Read & Answer</p>
-                <p className="text-gray-500 text-xs">10 short texts</p>
+                <p className="font-semibold text-gray-900 text-base">Read & Answer</p>
+                <p className="text-gray-500 text-sm">10 short texts</p>
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Clock className="w-6 h-6 text-blue-600" />
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 text-blue-600" strokeWidth={2} />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">~25 Minutes</p>
-                <p className="text-gray-500 text-xs">Complete in one sitting</p>
+                <p className="font-semibold text-gray-900 text-base">~25 Minutes</p>
+                <p className="text-gray-500 text-sm">Complete in one sitting</p>
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Monitor className="w-6 h-6 text-blue-600" />
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center flex-shrink-0">
+                <Monitor className="w-5 h-5 text-blue-600" strokeWidth={2} />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">Desktop Only</p>
-                <p className="text-gray-500 text-xs">Mouse recommended</p>
+                <p className="font-semibold text-gray-900 text-base">Desktop Only</p>
+                <p className="text-gray-500 text-sm">Mouse recommended</p>
               </div>
             </div>
           </div>
