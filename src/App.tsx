@@ -825,19 +825,22 @@ export default function App() {
               </Button>
             )}
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSidebar(!showSidebar)}
-              className="text-xs"
-              title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
-            >
-              {showSidebar ? (
-                <PanelRightClose className="h-4 w-4" />
-              ) : (
-                <PanelRightOpen className="h-4 w-4" />
-              )}
-            </Button>
+            {/* Only show sidebar toggle if debug=true is in URL */}
+            {new URLSearchParams(window.location.search).get('debug') === 'true' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSidebar(!showSidebar)}
+                className="text-xs"
+                title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
+              >
+                {showSidebar ? (
+                  <PanelRightClose className="h-4 w-4" />
+                ) : (
+                  <PanelRightOpen className="h-4 w-4" />
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
