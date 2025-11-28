@@ -1,8 +1,13 @@
 import React from 'react';
 import { Card } from './ui/card';
-import { CheckCircle2 } from 'lucide-react';
+import { Button } from './ui/button';
+import { CheckCircle2, Home } from 'lucide-react';
 
-export function ThankYouPage() {
+interface ThankYouPageProps {
+    onReturnToLanding: () => void;
+}
+
+export function ThankYouPage({ onReturnToLanding }: ThankYouPageProps) {
     return (
         <div className="h-screen bg-gray-50 p-4 flex items-center justify-center">
             <div className="max-w-2xl w-full">
@@ -17,9 +22,17 @@ export function ThankYouPage() {
                         Thank you for your feedback!
                     </h1>
 
-                    <p className="text-gray-600 text-base">
+                    <p className="text-gray-600 text-base mb-8">
                         Your responses have been recorded.
                     </p>
+
+                    <Button
+                        onClick={onReturnToLanding}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                    >
+                        <Home className="w-4 h-4 mr-2" />
+                        Return to Home
+                    </Button>
                 </Card>
             </div>
         </div>

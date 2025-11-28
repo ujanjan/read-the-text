@@ -250,6 +250,7 @@ export default function App() {
     setPassageData({});
     setCurrentPassageIndex(0);
     setShowSummary(false);
+    setShowThankYou(false);
     setTrackingEnabled(false);
     setSessionId(null);
     setPassageOrder([]);
@@ -521,7 +522,7 @@ export default function App() {
 
   // Show thank you page
   if (showThankYou) {
-    return <ThankYouPage />;
+    return <ThankYouPage onReturnToLanding={handleRestartQuiz} />;
   }
 
   // Show questionnaire page
