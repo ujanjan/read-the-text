@@ -37,12 +37,12 @@ export function QuestionnairePage({ sessionId, onSubmit, onResumeQuiz, onRestart
         }
     };
 
-    const showQuizButtons = onResumeQuiz && onRestartQuiz;
+    const showHeader = onResumeQuiz && onRestartQuiz;
 
     return (
         <div className="h-screen bg-gray-50 flex flex-col">
             {/* Header with Resume/Restart buttons (only shown if quiz incomplete) */}
-            {showQuizButtons && (
+            {showHeader && (
                 <div className="bg-white border-b border-gray-200 px-4 py-3">
                     <div className="max-w-3xl mx-auto flex items-center justify-between">
                         <h2 className="text-sm font-medium text-gray-700">
@@ -93,7 +93,7 @@ export function QuestionnairePage({ sessionId, onSubmit, onResumeQuiz, onRestart
                                     value={question1}
                                     onChange={(e) => setQuestion1(e.target.value)}
                                     placeholder="Type your answer here..."
-                                    className="w-full min-h-[100px] p-3 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    className="w-full min-h-[100px] p-5 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
                                     style={{ border: '1.5px solid #9ca3af' }}
                                     disabled={isSubmitting}
                                 />
@@ -108,7 +108,7 @@ export function QuestionnairePage({ sessionId, onSubmit, onResumeQuiz, onRestart
                                     value={question2}
                                     onChange={(e) => setQuestion2(e.target.value)}
                                     placeholder="Type your answer here..."
-                                    className="w-full min-h-[100px] p-3 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    className="w-full min-h-[100px] p-5 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
                                     style={{ border: '1.5px solid #9ca3af' }}
                                     disabled={isSubmitting}
                                 />
@@ -123,7 +123,7 @@ export function QuestionnairePage({ sessionId, onSubmit, onResumeQuiz, onRestart
                                     value={question3}
                                     onChange={(e) => setQuestion3(e.target.value)}
                                     placeholder="Type your answer here..."
-                                    className="w-full min-h-[100px] p-3 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    className="w-full min-h-[100px] p-5 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
                                     style={{ border: '1.5px solid #9ca3af' }}
                                     disabled={isSubmitting}
                                 />

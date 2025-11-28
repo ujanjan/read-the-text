@@ -10,8 +10,8 @@ interface ThankYouPageProps {
 export function ThankYouPage({ onReturnToLanding }: ThankYouPageProps) {
     return (
         <div className="h-screen bg-gray-50 p-4 flex items-center justify-center">
-            <div className="max-w-2xl w-full">
-                <Card className="p-12 text-center">
+            <div className="w-[90%] md:w-[60%] mx-auto">
+                <Card className="p-12 text-center flex flex-col items-center">
                     <div className="flex justify-center mb-6">
                         <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
                             <CheckCircle2 className="h-12 w-12 text-green-600" />
@@ -28,7 +28,8 @@ export function ThankYouPage({ onReturnToLanding }: ThankYouPageProps) {
 
                     <Button
                         onClick={onReturnToLanding}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                        variant="outline"
+                        className="mt-4 border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
                         <Home className="w-4 h-4 mr-2" />
                         Return to Home
