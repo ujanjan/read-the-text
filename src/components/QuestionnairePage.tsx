@@ -74,7 +74,7 @@ export function QuestionnairePage({ sessionId, onSubmit, onResumeQuiz, onRestart
 
             {/* Main content */}
             <div className="flex-1 p-4 flex items-center justify-center overflow-y-auto">
-                <div className="max-w-3xl w-full">
+                <div className="w-[90%] md:w-[60%] mx-auto">
                     <Card className="p-8">
                         <div className="mb-6">
                             <h1 className="text-2xl font-semibold text-gray-900 mb-2">Feedback Questionnaire</h1>
