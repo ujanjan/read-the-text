@@ -501,11 +501,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
                         disabled={!isFormValid() || loading}
                         className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors"
                     >
-                        {loading ? 'Loading...' : (
-                            <>
-                                <span className="mr-2">📊</span> Start the Study
-                            </>
-                        )}
+                        {loading ? 'Loading...' : 'Start the Study'}
                     </button>
                 </div>
             </div>

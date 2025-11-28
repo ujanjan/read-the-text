@@ -47,6 +47,8 @@
     --color-green-500: oklch(.723 .219 149.579);
     --color-green-600: oklch(.627 .194 149.214);
     --color-green-800: oklch(.448 .119 151.328);
+    --color-blue-100: #dbeafe;
+    --color-blue-500: #3b82f6;
     --color-blue-600: oklch(.546 .245 262.881);
     --color-gray-50: oklch(.985 .002 247.839);
     --color-gray-100: oklch(.967 .003 264.542);
@@ -435,6 +437,14 @@
 }
 
 @layer utilities {
+  .bg-blue-100 {
+    background-color: var(--color-blue-100);
+  }
+
+  .bg-blue-500 {
+    background-color: var(--color-blue-500);
+  }
+
   .\@container\/card-header {
     container: card-header / inline-size;
   }
