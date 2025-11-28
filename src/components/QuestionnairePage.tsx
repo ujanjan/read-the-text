@@ -93,7 +93,8 @@ export function QuestionnairePage({ sessionId, onSubmit, onResumeQuiz, onRestart
                                     value={question1}
                                     onChange={(e) => setQuestion1(e.target.value)}
                                     placeholder="Type your answer here..."
-                                    className="w-full min-h-[100px] p-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    className="w-full min-h-[100px] p-3 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    style={{ border: '1.5px solid #9ca3af' }}
                                     disabled={isSubmitting}
                                 />
                             </div>
@@ -107,7 +108,8 @@ export function QuestionnairePage({ sessionId, onSubmit, onResumeQuiz, onRestart
                                     value={question2}
                                     onChange={(e) => setQuestion2(e.target.value)}
                                     placeholder="Type your answer here..."
-                                    className="w-full min-h-[100px] p-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    className="w-full min-h-[100px] p-3 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    style={{ border: '1.5px solid #9ca3af' }}
                                     disabled={isSubmitting}
                                 />
                             </div>
@@ -121,7 +123,8 @@ export function QuestionnairePage({ sessionId, onSubmit, onResumeQuiz, onRestart
                                     value={question3}
                                     onChange={(e) => setQuestion3(e.target.value)}
                                     placeholder="Type your answer here..."
-                                    className="w-full min-h-[100px] p-3 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    className="w-full min-h-[100px] p-3 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    style={{ border: '1.5px solid #9ca3af' }}
                                     disabled={isSubmitting}
                                 />
                             </div>
