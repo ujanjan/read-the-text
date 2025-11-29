@@ -102,6 +102,7 @@ BREVO_API_KEY=xkeysib-your-brevo-api-key-here
 BREVO_SENDER_EMAIL=your-verified-email@example.com
 BREVO_SENDER_NAME=Reading Comprehension Study
 ADMIN_PASSWORD=your-secure-password
+VITE_GEMINI_API_KEY=your_gemini_api_key_here
 
 ```
 
@@ -299,6 +300,18 @@ npm run build
 
 The production build will be created in the `dist/` directory.
 
+### Troubleshooting CSS Issues
+
+If you encounter issues where Tailwind CSS classes (like gradients or specific spacing) seem to be ignored or stripped in production builds, consider adding **inline styles** as a fallback.
+
+**Why this happens:**
+- Tailwind's JIT (Just-In-Time) compiler might not detect classes if they are constructed dynamically or if there are configuration conflicts.
+- PostCSS processing or minification steps might occasionally discard complex rules.
+- Browser specificity wars can override utility classes.
+
+**Solution:**
+Always provide a `style={{ ... }}` prop with standard CSS properties for critical UI elements (like primary buttons) to ensure they look correct even if the utility classes fail.
+
 ### Build Process Details
 
 The build process handles a key challenge: **SPA routing on Cloudflare Workers**.
@@ -318,6 +331,25 @@ When users navigate to routes like `/admin` or `/results/:sessionId`, the Cloudf
 - `dist/functions/_worker.ts` - Built file with actual HTML content (generated each build)
 - `scripts/inject-index-html.js` - Build script that performs the injection
 - `wrangler.toml` - Points to `dist/functions/_worker.ts` for deployment
+
+### Important: Adding New API Routes
+
+This project uses a manual routing setup in `functions/_worker.ts` to handle SPA routing correctly on Cloudflare Workers.
+
+**If you add a new API endpoint (e.g., `functions/api/new-endpoint.ts`), you MUST also register it in `functions/_worker.ts`:**
+
+1.  Import the handler:
+    ```typescript
+    import { onRequestPost as newEndpointPost } from './api/new-endpoint';
+    ```
+2.  Add the route matcher in `handleApiRequest`:
+    ```typescript
+    if (path === '/api/new-endpoint' && method === 'POST') {
+      return await newEndpointPost(createContext());
+    }
+    ```
+
+Simply creating the file in `functions/api/` is **not sufficient** because `_worker.ts` intercepts all requests.
 
 This approach ensures:
 - ✅ Source files stay clean and version-controllable

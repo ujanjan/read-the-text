@@ -35,6 +35,7 @@ import { onRequestGet as adminSessionGet, onRequestDelete as adminSessionDelete 
 import { onRequestPost as sendLinkPost } from './api/send-link';
 import { onRequestPost as sendWelcomePost } from './api/send-welcome';
 import { onRequestPost as questionnairePost } from './api/questionnaire/[sessionId]';
+import { onRequestGet as reportGet } from './api/report/[id]';
 
 
 export default {
@@ -203,6 +204,13 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
     if (questionnaireMatch && method === 'POST') {
       const sessionId = questionnaireMatch[1];
       return await questionnairePost(createContext({ sessionId }));
+    }
+
+    // Report route
+    const reportMatch = path.match(/^\/api\/report\/([^\/]+)$/);
+    if (reportMatch && method === 'GET') {
+      const sessionId = reportMatch[1];
+      return await reportGet(createContext({ id: sessionId }));
     }
 
     // Send link (email) route
