@@ -41,6 +41,7 @@ export interface PassageAttempt {
   gemini_response?: string;
   screenshot_r2_key?: string;
   screenshot?: string; // base64 when fetched
+  reading_summary?: string; // JSON string of sentence-level reading analytics
   created_at: string;
 }
 

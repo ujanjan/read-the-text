@@ -7,11 +7,12 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const db = context.env.read_the_text_db;
   const storage = context.env.read_the_text_storage;
 
-  const { selectedAnswer, isCorrect, geminiResponse, screenshot } = await context.request.json() as {
+  const { selectedAnswer, isCorrect, geminiResponse, screenshot, readingSummary } = await context.request.json() as {
     selectedAnswer: string;
     isCorrect: boolean;
     geminiResponse: string;
     screenshot?: string;
+    readingSummary?: string;
   };
 
   // Get current attempt number
@@ -35,11 +36,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   await db.prepare(`
     INSERT INTO passage_attempts (
       id, session_id, passage_index, attempt_number,
-      selected_answer, is_correct, gemini_response, screenshot_r2_key
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      selected_answer, is_correct, gemini_response, screenshot_r2_key, reading_summary
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     generateUUID(), sessionId, passageIndex, attemptNumber,
-    selectedAnswer, isCorrect ? 1 : 0, geminiResponse, screenshotKey
+    selectedAnswer, isCorrect ? 1 : 0, geminiResponse, screenshotKey, readingSummary || null
   ).run();
 
   return Response.json({ success: true, attemptNumber });

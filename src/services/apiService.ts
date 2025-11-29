@@ -78,6 +78,7 @@ export const apiService = {
       isCorrect: boolean;
       geminiResponse: string;
       screenshot?: string;
+      readingSummary?: string;
     }
   ): Promise<{ success: boolean; attemptNumber: number }> {
     const res = await fetch(`${API_BASE}/passages/${sessionId}/${passageIndex}/attempts`, {
@@ -87,6 +88,7 @@ export const apiService = {
     });
     return res.json();
   },
+
 
   // Admin Authentication
   async adminLogin(password: string): Promise<{ success: boolean; token?: string; error?: string }> {

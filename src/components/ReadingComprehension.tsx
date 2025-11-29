@@ -228,7 +228,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
             selectedAnswer: selectedAnswerText,
             isCorrect,
             geminiResponse: feedbackResult.feedback,
-            screenshot: currentScreenshot || undefined
+            screenshot: currentScreenshot || undefined,
+            readingSummary: readingSummaryJson
           });
         } catch (err) {
           console.error('Failed to record attempt:', err);

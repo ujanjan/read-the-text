@@ -64,6 +64,13 @@ export const PassageDetailPage: React.FC = () => {
     const hasNext = passageIndexNum < 9; // 0-9 = 10 passages
 
     const handleDownloadSummary = () => {
+        // Map attempts to replace screenshot base64 with R2 keys
+        const attemptsWithKeys = passageAttempts.map(attempt => ({
+            ...attempt,
+            screenshot: undefined, // Remove base64 data
+            screenshot_r2_key: attempt.screenshot_r2_key, // Keep the R2 key (path)
+        }));
+
         const summaryData = {
             session: {
                 id: session.id,
@@ -73,8 +80,10 @@ export const PassageDetailPage: React.FC = () => {
             passageResult: {
                 ...passageResult,
                 cursor_history: undefined, // Exclude cursor history from summary
+                screenshot: undefined, // Remove base64 data
+                screenshot_r2_key: passageResult.screenshot_r2_key, // Keep the R2 key (path)
             },
-            attempts: passageAttempts,
+            attempts: attemptsWithKeys,
         };
 
         const blob = new Blob([JSON.stringify(summaryData, null, 2)], { type: 'application/json' });
@@ -222,8 +231,8 @@ export const PassageDetailPage: React.FC = () => {
                                         </span>
                                         <span
                                             className={`px-3 py-1 rounded-full text-sm font-medium ${attempt.is_correct
-                                                    ? 'bg-green-600 text-white'
-                                                    : 'bg-red-600 text-white'
+                                                ? 'bg-green-600 text-white'
+                                                : 'bg-red-600 text-white'
                                                 }`}
                                         >
                                             {attempt.is_correct ? 'Correct' : 'Wrong'}
@@ -250,6 +259,36 @@ export const PassageDetailPage: React.FC = () => {
                                             <p className="text-sm text-gray-700">{attempt.gemini_response}</p>
                                         </div>
                                     )}
+
+                                    {attempt.reading_summary && (() => {
+                                        try {
+                                            const summary = JSON.parse(attempt.reading_summary);
+                                            return (
+                                                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                                    <p className="text-sm font-semibold text-gray-900 mb-2">📊 Reading Summary</p>
+                                                    <div className="text-xs text-gray-600 mb-2">
+                                                        <strong>Total Time:</strong> {Math.round(summary.total_time_ms / 1000)}s
+                                                    </div>
+                                                    <div className="space-y-2 max-h-60 overflow-y-auto">
+                                                        {summary.sentences?.map((sentence: any, idx: number) => (
+                                                            <div key={idx} className="bg-white p-2 rounded border border-gray-200">
+                                                                <p className="text-xs text-gray-700 mb-1">
+                                                                    <strong>Sentence {sentence.index + 1}:</strong> {sentence.text.substring(0, 80)}...
+                                                                </p>
+                                                                <div className="flex gap-3 text-xs text-gray-600">
+                                                                    <span>⏱️ {Math.round(sentence.dwell_ms / 1000)}s</span>
+                                                                    <span>👁️ {sentence.visits} visits</span>
+                                                                    <span>📍 Order: {sentence.first_visit_order + 1}</span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        } catch (e) {
+                                            return null;
+                                        }
+                                    })()}
                                 </div>
                             ))}
                         </div>
