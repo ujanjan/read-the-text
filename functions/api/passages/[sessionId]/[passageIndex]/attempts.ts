@@ -55,17 +55,29 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       const passageOrder = JSON.parse(session.passage_order as string);
       const passageId = passageOrder[passageIndex];
 
-      // For wrong attempts, upsert passage_results with current wrong attempt count
+      // Extract time from reading_summary if available
+      let timeSpentMs = 0;
+      if (readingSummary) {
+        try {
+          const summary = JSON.parse(readingSummary);
+          timeSpentMs = summary.total_time_ms || 0;
+        } catch (e) {
+          console.error('Failed to parse reading_summary:', e);
+        }
+      }
+
+      // For wrong attempts, upsert passage_results with current wrong attempt count and time
       await db.prepare(`
         INSERT INTO passage_results (
           id, session_id, passage_index, passage_id,
           is_complete, wrong_attempts, time_spent_ms
-        ) VALUES (?, ?, ?, ?, 0, ?, 0)
+        ) VALUES (?, ?, ?, ?, 0, ?, ?)
         ON CONFLICT(session_id, passage_index) DO UPDATE SET
           wrong_attempts = excluded.wrong_attempts,
+          time_spent_ms = excluded.time_spent_ms,
           updated_at = datetime('now')
       `).bind(
-        generateUUID(), sessionId, passageIndex, passageId, attemptNumber
+        generateUUID(), sessionId, passageIndex, passageId, attemptNumber, timeSpentMs
       ).run();
     }
   }
