@@ -300,6 +300,18 @@ npm run build
 
 The production build will be created in the `dist/` directory.
 
+### Troubleshooting CSS Issues
+
+If you encounter issues where Tailwind CSS classes (like gradients or specific spacing) seem to be ignored or stripped in production builds, consider adding **inline styles** as a fallback.
+
+**Why this happens:**
+- Tailwind's JIT (Just-In-Time) compiler might not detect classes if they are constructed dynamically or if there are configuration conflicts.
+- PostCSS processing or minification steps might occasionally discard complex rules.
+- Browser specificity wars can override utility classes.
+
+**Solution:**
+Always provide a `style={{ ... }}` prop with standard CSS properties for critical UI elements (like primary buttons) to ensure they look correct even if the utility classes fail.
+
 ### Build Process Details
 
 The build process handles a key challenge: **SPA routing on Cloudflare Workers**.

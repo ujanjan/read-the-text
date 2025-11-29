@@ -146,13 +146,23 @@ export const ResultsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-12">
           <Link
             to={`/report/${sessionId}`}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+            className="group relative inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full font-semibold text-base shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
+            style={{
+              backgroundColor: '#4f46e5', // Fallback color (indigo-600)
+              color: 'white',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '9999px',
+              fontWeight: 600,
+              fontSize: '1rem',
+              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+              transition: 'all 0.2s ease-in-out'
+            }}
           >
-            <span className="text-xl">✨</span>
-            Generate My Reading Insights Report
+            <span className="text-lg">✨</span>
+            <span>Generate Reading Insights Report</span>
           </Link>
         </div>
 
