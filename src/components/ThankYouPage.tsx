@@ -28,7 +28,7 @@ export function ThankYouPage({ onReturnToLanding }: ThankYouPageProps) {
                     <p className="text-gray-600 text-lg mb-20">
                         Your responses have been recorded.
                     </p>
-
+                    <br></br>
                     <Button
                         onClick={onReturnToLanding}
                         className="mt-16 px-10 py-7 text-xl rounded-lg shadow-md transition-colors hover:bg-blue-700"
