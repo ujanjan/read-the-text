@@ -171,8 +171,18 @@ export const ResultsPage: React.FC = () => {
                       </p>
                       <p className="time">{formatTime(result.time_spent_ms)}</p>
                     </>
+                  ) : result ? (
+                    <>
+                      <p className="incomplete-text">In progress</p>
+                      {result.wrong_attempts > 0 && (
+                        <p className="attempts">{result.wrong_attempts} attempts so far</p>
+                      )}
+                      {result.time_spent_ms > 0 && (
+                        <p className="time">{formatTime(result.time_spent_ms)}</p>
+                      )}
+                    </>
                   ) : (
-                    <p className="incomplete-text">Not completed</p>
+                    <p className="incomplete-text">Not started</p>
                   )}
                 </div>
               </Link>

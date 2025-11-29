@@ -43,5 +43,32 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     selectedAnswer, isCorrect ? 1 : 0, geminiResponse, screenshotKey, readingSummary || null
   ).run();
 
+  // Update passage_results to track progress even for incomplete passages
+  // This allows the overview page to show attempt counts and time spent
+  if (!isCorrect) {
+    // Fetch the session to get the passage_id from passage_order
+    const session = await db.prepare(`
+      SELECT passage_order FROM sessions WHERE id = ?
+    `).bind(sessionId).first();
+
+    if (session) {
+      const passageOrder = JSON.parse(session.passage_order as string);
+      const passageId = passageOrder[passageIndex];
+
+      // For wrong attempts, upsert passage_results with current wrong attempt count
+      await db.prepare(`
+        INSERT INTO passage_results (
+          id, session_id, passage_index, passage_id,
+          is_complete, wrong_attempts, time_spent_ms
+        ) VALUES (?, ?, ?, ?, 0, ?, 0)
+        ON CONFLICT(session_id, passage_index) DO UPDATE SET
+          wrong_attempts = excluded.wrong_attempts,
+          updated_at = datetime('now')
+      `).bind(
+        generateUUID(), sessionId, passageIndex, passageId, attemptNumber
+      ).run();
+    }
+  }
+
   return Response.json({ success: true, attemptNumber });
 };
