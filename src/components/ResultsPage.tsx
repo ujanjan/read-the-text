@@ -146,6 +146,16 @@ export const ResultsPage: React.FC = () => {
           </div>
         </div>
 
+        <div className="flex justify-center mb-8">
+          <Link
+            to={`/report/${sessionId}`}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+          >
+            <span className="text-xl">✨</span>
+            Generate My Reading Insights Report
+          </Link>
+        </div>
+
         <h2>Reading Pattern Analysis</h2>
         <div className="passage-grid">
           {session.passageOrder.map((passageId: number, index: number) => {
