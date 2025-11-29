@@ -278,7 +278,7 @@ export const PassageDetailPage: React.FC = () => {
                                                                 <div className="flex gap-3 text-xs text-gray-600">
                                                                     <span>⏱️ {Math.round(sentence.dwell_ms / 1000)}s</span>
                                                                     <span>👁️ {sentence.visits} visits</span>
-                                                                    <span>📍 Order: {sentence.first_visit_order + 1}</span>
+                                                                    <span>📍 Reading Order: {sentence.first_visit_order !== null ? sentence.first_visit_order + 1 : '-'}</span>
                                                                 </div>
                                                             </div>
                                                         ))}
