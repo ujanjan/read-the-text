@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
-import type { SessionData, PassageAttempt } from '../types/session';
-import { Download } from 'lucide-react';
+import type { SessionData } from '../types/session';
 
 export const ResultsPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedPassage, setSelectedPassage] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -44,21 +42,12 @@ export const ResultsPage: React.FC = () => {
     );
   }
 
-  const { session, passageResults, attempts } = sessionData;
+  const { session, passageResults, questionnaireResponse } = sessionData;
 
   // Calculate stats
   const completedPassages = passageResults.filter((p) => p.is_complete).length;
   const perfectPassages = passageResults.filter((p) => p.wrong_attempts === 0 && p.is_complete).length;
   const totalTime = passageResults.reduce((sum, p) => sum + (p.time_spent_ms || 0), 0);
-
-  // Group attempts by passage
-  const attemptsByPassage: Record<number, PassageAttempt[]> = {};
-  attempts.forEach((attempt) => {
-    if (!attemptsByPassage[attempt.passage_index]) {
-      attemptsByPassage[attempt.passage_index] = [];
-    }
-    attemptsByPassage[attempt.passage_index].push(attempt);
-  });
 
   // Helper function to format demographic labels
   const formatUniversity = (value?: string) => {
@@ -98,60 +87,9 @@ export const ResultsPage: React.FC = () => {
   return (
     <div className="results-page">
       <div className="results-container">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1>Quiz Results</h1>
-            <p className="email-display">Participant: {session.email}</p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                // Create summary JSON (excluding heavy cursor history)
-                const summaryData = {
-                  ...sessionData,
-                  passageResults: sessionData.passageResults.map(({ cursor_history, ...rest }) => rest)
-                };
-                const blob = new Blob([JSON.stringify(summaryData, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `summary_${session.id}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-            >
-              <Download className="h-4 w-4" />
-              Download Summary
-            </button>
-            <button
-              onClick={() => {
-                // Create cursor data JSON
-                const cursorData = sessionData.passageResults.reduce((acc, result) => {
-                  if (result.cursor_history) {
-                    acc[`passage_${result.passage_index}`] = result.cursor_history;
-                  }
-                  return acc;
-                }, {} as Record<string, any[]>);
-
-                const blob = new Blob([JSON.stringify(cursorData, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `cursor_data_${session.id}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-              }}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium"
-            >
-              <Download className="h-4 w-4" />
-              Download Cursor Data
-            </button>
-          </div>
+        <div className="mb-6">
+          <h1>Quiz Results</h1>
+          <p className="email-display">Participant: {session.email}</p>
         </div>
 
         {/* Demographics Section */}
@@ -214,10 +152,12 @@ export const ResultsPage: React.FC = () => {
             const result = passageResults.find((r) => r.passage_index === index);
 
             return (
-              <div
+              <Link
                 key={index}
+                to={`/results/${sessionId}/${index + 1}`}
                 className={`passage-card ${result?.is_complete ? 'complete' : 'incomplete'}`}
-                onClick={() => setSelectedPassage(index)}
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 {result?.screenshot && (
                   <img src={result.screenshot} alt={`Passage ${index + 1}`} />
@@ -235,58 +175,46 @@ export const ResultsPage: React.FC = () => {
                     <p className="incomplete-text">Not completed</p>
                   )}
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
 
-        {/* Detailed view modal */}
-        {selectedPassage !== null && (
-          <div className="modal-overlay" onClick={() => setSelectedPassage(null)}>
-            <div className="modal large" onClick={(e) => e.stopPropagation()}>
-              <h2>Passage {selectedPassage + 1} Details</h2>
-
-              {/* Screenshot */}
-              {passageResults.find((r) => r.passage_index === selectedPassage)?.screenshot && (
-                <img
-                  src={passageResults.find((r) => r.passage_index === selectedPassage)!.screenshot}
-                  alt="Heatmap"
-                  className="full-screenshot"
-                />
+        {/* Questionnaire Responses Section */}
+        {questionnaireResponse && (
+          <div className="questionnaire-section">
+            <h2>Your Feedback</h2>
+            <div className="questionnaire-responses">
+              {questionnaireResponse.question_1_response && (
+                <div className="questionnaire-item">
+                  <h3 className="questionnaire-question">
+                    1. What is your impression of the interface, as a tool for independent learning?
+                  </h3>
+                  <p className="questionnaire-answer">
+                    {questionnaireResponse.question_1_response}
+                  </p>
+                </div>
               )}
-
-              {/* All attempts with Gemini responses */}
-              <div className="attempts-list">
-                <h3>Your Attempts</h3>
-                {attemptsByPassage[selectedPassage]?.map((attempt, idx) => (
-                  <div key={idx} className={`attempt-card ${attempt.is_correct ? 'correct' : 'wrong'}`}>
-                    <div className="attempt-header">
-                      <span>Attempt {attempt.attempt_number}</span>
-                      <span className={attempt.is_correct ? 'correct-badge' : 'wrong-badge'}>
-                        {attempt.is_correct ? 'Correct' : 'Wrong'}
-                      </span>
-                    </div>
-                    {attempt.screenshot && (
-                      <img
-                        src={attempt.screenshot}
-                        alt={`Attempt ${attempt.attempt_number} heatmap`}
-                        className="attempt-screenshot"
-                      />
-                    )}
-                    <p><strong>Selected:</strong> {attempt.selected_answer}</p>
-                    {attempt.gemini_response && (
-                      <div className="gemini-feedback">
-                        <strong>Feedback:</strong>
-                        <p>{attempt.gemini_response}</p>
-                      </div>
-                    )}
-                  </div>
-                )) || <p>No attempts recorded</p>}
-              </div>
-
-              <button onClick={() => setSelectedPassage(null)} className="close-button">
-                Close
-              </button>
+              {questionnaireResponse.question_2_response && (
+                <div className="questionnaire-item">
+                  <h3 className="questionnaire-question">
+                    2. What are your thoughts on the AI-generated feedback?
+                  </h3>
+                  <p className="questionnaire-answer">
+                    {questionnaireResponse.question_2_response}
+                  </p>
+                </div>
+              )}
+              {questionnaireResponse.question_3_response && (
+                <div className="questionnaire-item">
+                  <h3 className="questionnaire-question">
+                    3. Please share any general feedback you have about the application as a tool for learning?
+                  </h3>
+                  <p className="questionnaire-answer">
+                    {questionnaireResponse.question_3_response}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -1906,7 +1906,53 @@
   font-size: 0.875rem;
 }
 
+/* Questionnaire Section Styles */
+.questionnaire-section {
+  margin-top: 3rem;
+  background: white;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.questionnaire-section h2 {
+  margin-bottom: 1.5rem;
+  color: #1a1a1a;
+}
+
+.questionnaire-responses {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.questionnaire-item {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.questionnaire-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.questionnaire-question {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.questionnaire-answer {
+  font-size: 0.9375rem;
+  color: #4b5563;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 /* Admin Page Styles */
+
 .admin-page {
   min-height: 100vh;
   background: #f5f7fa;
