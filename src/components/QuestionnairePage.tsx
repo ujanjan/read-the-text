@@ -122,8 +122,8 @@ export function QuestionnairePage({
                                     value={responses.question1}
                                     onChange={(e) => handleChange('question1', e.target.value)}
                                     placeholder="Type your answer here..."
-                                    className="w-full min-h-[100px] p-5 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
-                                    style={{ border: '1.5px solid #9ca3af' }}
+                                    className="w-full min-h-[200px] p-4 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    style={{ border: '1.5px solid #9ca3af', padding: '16px', minHeight: '120px' }}
                                     disabled={isSubmitting}
                                 />
                             </div>
@@ -137,8 +137,8 @@ export function QuestionnairePage({
                                     value={responses.question2}
                                     onChange={(e) => handleChange('question2', e.target.value)}
                                     placeholder="Type your answer here..."
-                                    className="w-full min-h-[100px] p-5 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
-                                    style={{ border: '1.5px solid #9ca3af' }}
+                                    className="w-full min-h-[200px] p-4 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    style={{ border: '1.5px solid #9ca3af', padding: '16px', minHeight: '120px' }}
                                     disabled={isSubmitting}
                                 />
                             </div>
@@ -152,8 +152,8 @@ export function QuestionnairePage({
                                     value={responses.question3}
                                     onChange={(e) => handleChange('question3', e.target.value)}
                                     placeholder="Type your answer here..."
-                                    className="w-full min-h-[100px] p-5 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
-                                    style={{ border: '1.5px solid #9ca3af' }}
+                                    className="w-full min-h-[200px] p-4 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                                    style={{ border: '1.5px solid #9ca3af', padding: '16px', minHeight: '120px' }}
                                     disabled={isSubmitting}
                                 />
                             </div>
