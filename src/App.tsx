@@ -160,6 +160,9 @@ export default function App() {
         if (state.showQuestionnaire) {
           setShowQuestionnaire(true);
           setTrackingEnabled(false);
+        } else if (state.showThankYou) {
+          setShowThankYou(true);
+          setTrackingEnabled(false);
         } else {
           setTrackingEnabled(true);
           passageStartTimeRef.current = Date.now();
@@ -180,11 +183,12 @@ export default function App() {
         currentPassageIndex,
         passageData,
         showQuestionnaire,
+        showThankYou,
         questionnaireResponses
       };
       sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state));
     }
-  }, [sessionId, passageOrder, currentPassageIndex, passageData, showLanding, showQuestionnaire, questionnaireResponses]);
+  }, [sessionId, passageOrder, currentPassageIndex, passageData, showLanding, showQuestionnaire, showThankYou, questionnaireResponses]);
 
   // Handle starting quiz from landing page
   const handleStartQuiz = (

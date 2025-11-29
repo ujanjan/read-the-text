@@ -77,13 +77,19 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     })
   );
 
+  // Fetch questionnaire response if exists
+  const questionnaireResponse = await db.prepare(
+    'SELECT * FROM questionnaire_responses WHERE session_id = ?'
+  ).bind(sessionId).first();
+
   return Response.json({
     session: {
       ...session,
       passageOrder: JSON.parse(session.passage_order as string)
     },
     passageResults: resultsWithScreenshots,
-    attempts: attemptsWithScreenshots
+    attempts: attemptsWithScreenshots,
+    questionnaireResponse: questionnaireResponse || undefined
   });
 };
 
