@@ -8,7 +8,7 @@ import { LandingPage } from './components/LandingPage';
 import { QuestionnairePage, QuestionnaireResponses } from './components/QuestionnairePage';
 import { ThankYouPage } from './components/ThankYouPage';
 import { Button } from './components/ui/button';
-import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Trophy, Target, Zap, Info } from 'lucide-react';
+import { MousePointer2, MousePointerClick, PanelRightClose, PanelRightOpen, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Clock, Trophy, Target, Zap, Info, Flag } from 'lucide-react';
 import { toCanvas } from 'html-to-image';
 import { getPassages } from './services/passageService';
 import { apiService } from './services/apiService';
@@ -824,7 +824,7 @@ export default function App() {
               >
                 {trackingEnabled ? (
                   <>
-                    <MousePointerClick className="h-4 w-4 mr-1" />
+                    <Flag className="h-4 w-4 mr-1" />
                     Stop The Quiz
                   </>
                 ) : hasStarted ? (
