@@ -11,6 +11,32 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     );
   }
 
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = atob(token);
+    const [prefix, timestamp] = decoded.split(':');
+
+    if (prefix !== 'admin') {
+      throw new Error('Invalid token');
+    }
+
+    const tokenTime = parseInt(timestamp, 10);
+    const now = Date.now();
+    const fourHours = 4 * 60 * 60 * 1000;
+
+    if (isNaN(tokenTime) || now - tokenTime > fourHours) {
+      return Response.json(
+        { error: 'Unauthorized' }, // Token expired
+        { status: 401 }
+      );
+    }
+  } catch (e) {
+    return Response.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
   const db = context.env.read_the_text_db;
   const url = new URL(context.request.url);
   const status = url.searchParams.get('status');

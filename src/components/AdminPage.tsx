@@ -12,6 +12,13 @@ export const AdminPage: React.FC = () => {
   const [password, setPassword] = useState('');
 
   useEffect(() => {
+    const token = localStorage.getItem('admin_token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  useEffect(() => {
     if (isAuthenticated) {
       fetchSessions();
     }
@@ -24,6 +31,10 @@ export const AdminPage: React.FC = () => {
       setSessions(data.sessions);
     } catch (err) {
       console.error('Failed to fetch sessions:', err);
+      if (err instanceof Error && err.message === 'Unauthorized') {
+        localStorage.removeItem('admin_token');
+        setIsAuthenticated(false);
+      }
     } finally {
       setLoading(false);
     }
@@ -38,6 +49,10 @@ export const AdminPage: React.FC = () => {
       fetchSessions();
     } catch (err) {
       console.error('Failed to delete session:', err);
+      if (err instanceof Error && err.message === 'Unauthorized') {
+        localStorage.removeItem('admin_token');
+        setIsAuthenticated(false);
+      }
     }
   };
 
@@ -56,6 +71,11 @@ export const AdminPage: React.FC = () => {
       console.error('Login error:', err);
       alert('Authentication failed. Please try again.');
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    setIsAuthenticated(false);
   };
 
   if (!isAuthenticated) {
@@ -91,7 +111,15 @@ export const AdminPage: React.FC = () => {
   return (
     <div className="admin-page">
       <div className="admin-container">
-        <h1>Admin Dashboard</h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1>Admin Dashboard</h1>
+          <button
+            onClick={handleLogout}
+            className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded"
+          >
+            Logout
+          </button>
+        </div>
 
         <div className="admin-controls">
           <select value={filter} onChange={(e) => setFilter(e.target.value)}>
