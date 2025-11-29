@@ -47,6 +47,11 @@ export default function App() {
   // Questionnaire flow
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [questionnaireResponses, setQuestionnaireResponses] = useState<QuestionnaireResponses>({
+    question1: '',
+    question2: '',
+    question3: ''
+  });
 
   // Per-passage data storage
   const [passageData, setPassageData] = useState<Record<number, PassageData>>({});
@@ -144,6 +149,12 @@ export default function App() {
         setCurrentPassageIndex(state.currentPassageIndex);
         setPassageData(state.passageData || {});
         setShowLanding(false);
+
+        // Restore questionnaire responses
+        if (state.questionnaireResponses) {
+          setQuestionnaireResponses(state.questionnaireResponses);
+        }
+
         // Restore questionnaire state if it was saved
         if (state.showQuestionnaire) {
           setShowQuestionnaire(true);
@@ -167,11 +178,12 @@ export default function App() {
         passageOrder,
         currentPassageIndex,
         passageData,
-        showQuestionnaire
+        showQuestionnaire,
+        questionnaireResponses
       };
       sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(state));
     }
-  }, [sessionId, passageOrder, currentPassageIndex, passageData, showLanding, showQuestionnaire]);
+  }, [sessionId, passageOrder, currentPassageIndex, passageData, showLanding, showQuestionnaire, questionnaireResponses]);
 
   // Handle starting quiz from landing page
   const handleStartQuiz = (
@@ -536,8 +548,11 @@ export default function App() {
       <QuestionnairePage
         sessionId={sessionId}
         onSubmit={handleQuestionnaireSubmit}
-        onResumeQuiz={!allPassagesComplete ? handleResumeQuiz : undefined}
+        onResumeQuiz={handleResumeQuiz}
         onRestartQuiz={!allPassagesComplete ? handleRestartQuizFromQuestionnaire : undefined}
+        responses={questionnaireResponses}
+        onResponseChange={setQuestionnaireResponses}
+        isQuizComplete={allPassagesComplete || false}
       />
     );
   }
