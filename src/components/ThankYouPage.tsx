@@ -11,27 +11,30 @@ export function ThankYouPage({ onReturnToLanding }: ThankYouPageProps) {
     return (
         <div className="h-screen bg-gray-50 p-4 flex items-center justify-center">
             <div className="w-[90%] md:w-[60%] mx-auto">
-                <Card className="p-12 text-center flex flex-col items-center">
-                    <div className="flex justify-center mb-6">
-                        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
-                            <CheckCircle2 className="h-12 w-12 text-green-600" />
+                <Card
+                    className="text-center flex flex-col items-center gap-0 !p-20"
+                    style={{ padding: '80px' }}
+                >
+                    <div className="flex justify-center mb-12">
+                        <div className="w-24 h-24 rounded-full bg-green-100 flex items-center justify-center">
+                            <CheckCircle2 className="h-14 w-14 text-green-600" />
                         </div>
                     </div>
 
-                    <h1 className="text-2xl font-semibold text-gray-900 mb-3">
+                    <h1 className="text-3xl font-semibold text-gray-900 mb-8">
                         Thank you for your feedback!
                     </h1>
 
-                    <p className="text-gray-600 text-base mb-8">
+                    <p className="text-gray-600 text-lg mb-20">
                         Your responses have been recorded.
                     </p>
 
                     <Button
                         onClick={onReturnToLanding}
-                        variant="outline"
-                        className="mt-4 border-gray-300 text-gray-700 hover:bg-gray-50"
+                        className="mt-16 px-10 py-7 text-xl rounded-lg shadow-md transition-colors hover:bg-blue-700"
+                        style={{ backgroundColor: '#2563eb', color: '#ffffff' }}
                     >
-                        <Home className="w-4 h-4 mr-2" />
+                        <Home className="w-6 h-6 mr-3" />
                         Return to Home
                     </Button>
                 </Card>
