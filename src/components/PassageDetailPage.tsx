@@ -161,20 +161,23 @@ export const PassageDetailPage: React.FC = () => {
 
                 {/* Download buttons */}
                 <div className="mb-6 flex gap-3">
-                    <button
+                    <Button
                         onClick={handleDownloadSummary}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        className="text-white"
+                        style={{ backgroundColor: '#2563eb', color: 'white' }}
                     >
-                        <Download className="h-4 w-4" />
+                        <Download className="h-4 w-4 mr-2" />
                         Download Summary
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         onClick={handleDownloadCursorData}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors text-sm font-medium"
+                        variant="outline"
+                        className="text-white border-transparent hover:border-transparent"
+                        style={{ backgroundColor: '#1f2937', color: 'white' }}
                     >
-                        <Download className="h-4 w-4" />
+                        <Download className="h-4 w-4 mr-2" />
                         Download Cursor Data
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Passage stats */}
