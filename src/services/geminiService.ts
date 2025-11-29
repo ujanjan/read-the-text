@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { debugLog } from '../utils/logger';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
@@ -117,10 +118,10 @@ End with one concrete strategy suggestion (e.g., re-checking key sentences, summ
     ];
 
     // Log data being sent to Gemini
-    console.log('📊 Sending to Gemini for personalized feedback (VARIANT C - STRATEGY):');
-    console.log(`  - Passage text: ${passage.length} characters`);
-    console.log(`  - Screenshot with heatmap: ${screenshot ? 'Yes' : 'No'}`);
-    console.log(`  - Sentence-level reading summary JSON: ${readingSummaryJson ? 'Included' : 'Not included'}`);
+    debugLog('📊 Sending to Gemini for personalized feedback (VARIANT C - STRATEGY):');
+    debugLog(`  - Passage text: ${passage.length} characters`);
+    debugLog(`  - Screenshot with heatmap: ${screenshot ? 'Yes' : 'No'}`);
+    debugLog(`  - Sentence-level reading summary JSON: ${readingSummaryJson ? 'Included' : 'Not included'}`);
 
     // Add screenshot if available (always include for this variant)
     if (screenshot) {
@@ -132,25 +133,25 @@ End with one concrete strategy suggestion (e.g., re-checking key sentences, summ
             data: imageData.data,
           },
         });
-        console.log(`  ✅ Screenshot with heatmap added (${imageData.mimeType}, ${Math.round(imageData.data.length / 1024)}KB)`);
+        debugLog(`  ✅ Screenshot with heatmap added (${imageData.mimeType}, ${Math.round(imageData.data.length / 1024)}KB)`);
       } catch (error) {
         console.warn('Failed to process screenshot for Gemini:', error);
       }
     } else {
-      console.log('  ⚠️ No screenshot available - feedback will be based on text only');
+      debugLog('  ⚠️ No screenshot available - feedback will be based on text only');
     }
 
     const result = await model.generateContent(parts);
     const response = await result.response;
     const text = response.text().trim();
 
-    console.log('═══════════════════════════════════════════════════════');
-    console.log('📥 [GEMINI RAW RESPONSE - VARIANT C]');
-    console.log('═══════════════════════════════════════════════════════');
-    console.log('Raw text length:', response.text().length);
-    console.log('Trimmed text length:', text.length);
-    console.log('First 200 chars:', text.substring(0, 200));
-    console.log('═══════════════════════════════════════════════════════');
+    debugLog('═══════════════════════════════════════════════════════');
+    debugLog('📥 [GEMINI RAW RESPONSE - VARIANT C]');
+    debugLog('═══════════════════════════════════════════════════════');
+    debugLog('Raw text length:', response.text().length);
+    debugLog('Trimmed text length:', text.length);
+    debugLog('First 200 chars:', text.substring(0, 200));
+    debugLog('═══════════════════════════════════════════════════════');
 
     return {
       feedback: text || (isCorrect ? 'Correct! I love you.' : 'Try again! Focus on the passage to find the answer.'),

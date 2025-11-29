@@ -14,6 +14,7 @@ import { getPassages } from './services/passageService';
 import { apiService } from './services/apiService';
 import { Passage } from './types/passage';
 import type { SessionData } from './types/session';
+import { debugLog } from './utils/logger';
 
 // Session storage key for persisting quiz state on refresh
 const SESSION_STORAGE_KEY = 'quiz_session_state';
@@ -82,7 +83,7 @@ export default function App() {
   const handleCursorData = (data: CursorData) => {
     const newLength = currentData.cursorHistory.length + 1;
     if (newLength % 100 === 0 || newLength === 1) {
-      console.log(`📊 [Passage ${currentPassageIndex}] Cursor history size: ${newLength} points`);
+      debugLog(`📊 [Passage ${currentPassageIndex}] Cursor history size: ${newLength} points`);
     }
     setPassageData(prev => ({
       ...prev,
@@ -304,13 +305,13 @@ export default function App() {
     if (currentPassageIndex > 0) {
       // Accumulate time for current passage before leaving
       accumulateTimeForCurrentPassage();
-      console.log(`🔄 [Navigation] Leaving Passage ${currentPassageIndex} (${currentData.cursorHistory.length} cursor points) → Going to Passage ${currentPassageIndex - 1}`);
+      debugLog(`🔄 [Navigation] Leaving Passage ${currentPassageIndex} (${currentData.cursorHistory.length} cursor points) → Going to Passage ${currentPassageIndex - 1}`);
       // Reset the component for the new passage
       if (readingComprehensionRef.current) {
         readingComprehensionRef.current.reset();
       }
       const targetPassageData = passageData[currentPassageIndex - 1];
-      console.log(`🔄 [Navigation] Passage ${currentPassageIndex - 1} currently has ${targetPassageData?.cursorHistory?.length || 0} cursor points`);
+      debugLog(`🔄 [Navigation] Passage ${currentPassageIndex - 1} currently has ${targetPassageData?.cursorHistory?.length || 0} cursor points`);
       setCurrentPassageIndex(currentPassageIndex - 1);
       // Start timer for new passage (only if it's not complete)
       const prevPassageData = passageData[currentPassageIndex - 1];
@@ -331,13 +332,13 @@ export default function App() {
     if (currentPassageIndex < passages.length - 1) {
       // Accumulate time for current passage before leaving
       accumulateTimeForCurrentPassage();
-      console.log(`🔄 [Navigation] Leaving Passage ${currentPassageIndex} (${currentData.cursorHistory.length} cursor points) → Going to Passage ${currentPassageIndex + 1}`);
+      debugLog(`🔄 [Navigation] Leaving Passage ${currentPassageIndex} (${currentData.cursorHistory.length} cursor points) → Going to Passage ${currentPassageIndex + 1}`);
       // Reset the component for the new passage
       if (readingComprehensionRef.current) {
         readingComprehensionRef.current.reset();
       }
       const targetPassageData = passageData[currentPassageIndex + 1];
-      console.log(`🔄 [Navigation] Passage ${currentPassageIndex + 1} currently has ${targetPassageData?.cursorHistory?.length || 0} cursor points`);
+      debugLog(`🔄 [Navigation] Passage ${currentPassageIndex + 1} currently has ${targetPassageData?.cursorHistory?.length || 0} cursor points`);
       setCurrentPassageIndex(currentPassageIndex + 1);
       // Start timer for new passage (only if it's not complete)
       const nextPassageData = passageData[currentPassageIndex + 1];
@@ -416,7 +417,7 @@ export default function App() {
 
         try {
           await apiService.completeSession(sessionId, totalTime);
-          console.log('✅ Session marked complete in cloud');
+          debugLog('✅ Session marked complete in cloud');
         } catch (err) {
           console.error('Failed to complete session:', err);
         }
@@ -487,7 +488,7 @@ export default function App() {
 
       // Log size for monitoring
       const sizeKB = Math.round((dataUrl.length * 0.75) / 1024); // Approximate base64 to bytes
-      console.log(`📸 Screenshot captured: ${sizeKB}KB (JPEG quality 0.70, pixelRatio ${pixelRatio.toFixed(1)})`);
+      debugLog(`📸 Screenshot captured: ${sizeKB}KB (JPEG quality 0.70, pixelRatio ${pixelRatio.toFixed(1)})`);
 
       // Store screenshot per-passage
       setPassageData(prev => ({
@@ -522,7 +523,7 @@ export default function App() {
 
     try {
       await apiService.submitQuestionnaire(sessionId, responses);
-      console.log('✅ Questionnaire submitted successfully');
+      debugLog('✅ Questionnaire submitted successfully');
       // Show thank you page
       setShowQuestionnaire(false);
       setShowThankYou(true);

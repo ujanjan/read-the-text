@@ -7,6 +7,7 @@ import { CheckCircle2, XCircle, Loader2, ChevronLeft, ChevronRight, Info } from 
 import { getPersonalizedQuestionFeedbackVariantC, CursorData } from "../services/geminiService";
 import { apiService } from "../services/apiService";
 import { ReadingSummary, summarizeCursorSession, computeSentenceRects } from "../summarizeCursor";
+import { debugLog } from "../utils/logger";
 
 interface Question {
   id: number;
@@ -92,8 +93,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
 
     // Reset state when props change (navigating between passages)
     useEffect(() => {
-      console.log(`🔄 [Passage Change] Switching to passage ${currentPassageIndex}`);
-      console.log(`   └─ Cursor history for this passage: ${cursorHistory?.length || 0} points`);
+      debugLog(`🔄 [Passage Change] Switching to passage ${currentPassageIndex}`);
+      debugLog(`   └─ Cursor history for this passage: ${cursorHistory?.length || 0} points`);
 
       setSelectedAnswer(initialSelectedAnswer);
       setShowFeedback(initialIsComplete);
@@ -148,7 +149,7 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       if (onCaptureScreenshot) {
         try {
           currentScreenshot = await onCaptureScreenshot();
-          console.log('📸 Screenshot captured for personalized feedback:', currentScreenshot ? 'Success' : 'Failed');
+          debugLog('📸 Screenshot captured for personalized feedback:', currentScreenshot ? 'Success' : 'Failed');
         } catch (error) {
           console.warn('Failed to capture screenshot for feedback:', error);
           // Fallback to existing screenshot if capture fails
@@ -166,24 +167,24 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
       const screenshotSizeKB = currentScreenshot ? Math.round((currentScreenshot.length * 0.75) / 1024) : 0;
       const passageLength = passage.length;
       const cursorPoints = cursorHistory.length;
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('📤 [GEMINI API CALL] Personalized Question Feedback - VARIANT C ONLY');
-      console.log('═══════════════════════════════════════════════════════');
-      console.log(`📍 Passage Index: ${currentPassageIndex}`);
-      console.log(`📊 Cursor History: ${cursorPoints} points (tracked locally, NOT sent to Gemini)`);
-      console.log(`📸 Screenshot: ${currentScreenshot ? `Yes (${screenshotSizeKB} KB) - includes visual heatmap` : 'No'}`);
-      console.log(`📝 Passage Length: ${passageLength} characters`);
-      console.log(`✅ Answer Correct: ${isCorrect}`);
-      console.log(`🔢 Attempt Number: ${wrongAttempts + 1}`);
-      console.log('═══════════════════════════════════════════════════════');
+      debugLog('═══════════════════════════════════════════════════════');
+      debugLog('📤 [GEMINI API CALL] Personalized Question Feedback - VARIANT C ONLY');
+      debugLog('═══════════════════════════════════════════════════════');
+      debugLog(`📍 Passage Index: ${currentPassageIndex}`);
+      debugLog(`📊 Cursor History: ${cursorPoints} points (tracked locally, NOT sent to Gemini)`);
+      debugLog(`📸 Screenshot: ${currentScreenshot ? `Yes (${screenshotSizeKB} KB) - includes visual heatmap` : 'No'}`);
+      debugLog(`📝 Passage Length: ${passageLength} characters`);
+      debugLog(`✅ Answer Correct: ${isCorrect}`);
+      debugLog(`🔢 Attempt Number: ${wrongAttempts + 1}`);
+      debugLog('═══════════════════════════════════════════════════════');
 
       const container = passageRef.current;
       let readingSummaryJson: string | undefined = undefined;
 
-      console.log('═══════════════════════════════════════════════════════');
-      console.log('🔍 [ReadingComprehension] Submit debug:');
-      console.log('  - Container exists:', !!container);
-      console.log('  - Cursor history length:', cursorHistory.length);
+      debugLog('═══════════════════════════════════════════════════════');
+      debugLog('🔍 [ReadingComprehension] Submit debug:');
+      debugLog('  - Container exists:', !!container);
+      debugLog('  - Cursor history length:', cursorHistory.length);
 
       if (container && cursorHistory.length > 0) {
         const sentenceRects = computeSentenceRects(container, "[data-sentence-id]");
@@ -192,8 +193,8 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
           sentenceRects
         );
         readingSummaryJson = JSON.stringify(readingSummary);
-        console.log('📊 [SENTENCE-LEVEL READING SUMMARY]:');
-        console.log(readingSummaryJson);
+        debugLog('📊 [SENTENCE-LEVEL READING SUMMARY]:');
+        debugLog(readingSummaryJson);
       }
 
       // Call only Variant C (strategy-focused feedback)
@@ -207,11 +208,11 @@ export const ReadingComprehension = forwardRef<ReadingComprehensionHandle, Readi
         isCorrect,
         readingSummaryJson
       ).then(result => {
-        console.log('🤖 [GEMINI RESPONSE - VARIANT C]:', result.feedback);
-        console.log('🤖 [GEMINI RESPONSE LENGTH - VARIANT C]:', result.feedback.length);
+        debugLog('🤖 [GEMINI RESPONSE - VARIANT C]:', result.feedback);
+        debugLog('🤖 [GEMINI RESPONSE LENGTH - VARIANT C]:', result.feedback.length);
         setFeedbackText(result.feedback);
         setIsLoadingFeedback(false);
-        console.log('✅ [STATE UPDATE] setFeedbackText called with:', result.feedback.substring(0, 50) + '...');
+        debugLog('✅ [STATE UPDATE] setFeedbackText called with:', result.feedback.substring(0, 50) + '...');
         return result;
       }).catch(error => {
         console.error('Failed to get personalized feedback (Variant C):', error);
