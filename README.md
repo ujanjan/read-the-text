@@ -20,7 +20,10 @@ The original design is available at [Figma](https://www.figma.com/design/KIRnobZ
 - **Mobile Warning**: Detects mobile devices and shows a warning that the study requires a desktop browser
   - Users can copy the study link to share or save for later
   - Users can enter their email to receive the study link (powered by Brevo/Sendinblue)
-- **Session Management**: Start, stop, and restart quiz sessions with data persistence per passage
+- **Session Management**: 
+  - Start, stop, and restart quiz sessions with data persistence per passage
+  - Restarting creates a new session ID to ensure data integrity for research
+
 - **Navigation**: Move between passages while preserving individual progress
 - **Analytics Dashboard**: Collapsible sidebar showing cursor data, heatmap controls, and reading insights
 - **Summary Screen**: Comprehensive performance summary with:
@@ -30,6 +33,8 @@ The original design is available at [Figma](https://www.figma.com/design/KIRnobZ
   - Average time per passage
   - Visual heatmap gallery for all completed passages
 - **Screenshot Capture**: Automatically captures reading sessions with integrated heatmap overlay
+- **Admin Dashboard**: Password-protected interface to view session data, demographics, and completion rates
+
 
 ### Research & Data Collection
 - **Demographic Data Collection**: Collects participant background information for research analysis:
@@ -38,6 +43,10 @@ The original design is available at [Figma](https://www.figma.com/design/KIRnobZ
   - English fluency level (first language, learned at young age, high school, university, not at all)
   - First language (if English is not first language)
   - SWESAT (Högskoleprovet) experience
+- **Reading Behavior**: Collects detailed reading metrics including:
+  - Dwell times (time spent on specific sections)
+  - Visit order (sequence of reading)
+  - Cursor tracking data (x, y coordinates with timestamps)
 - **Data Storage**: All demographic data stored securely alongside reading behavior data
 - **Research Context**: Part of DM2730 Technology Enhanced Learning course at KTH
 - **Privacy**: Comprehensive data collection notice and informed consent on landing page
@@ -52,6 +61,7 @@ The original design is available at [Figma](https://www.figma.com/design/KIRnobZ
 - **Brevo (Sendinblue)** - Transactional email service for mobile users
 - **html-to-image** - Screenshot capture functionality
 - **Lucide React** - Icon library
+- **Recharts** - Charting library for data visualization
 
 ## Prerequisites
 
@@ -91,6 +101,8 @@ Get your Gemini API key from: https://aistudio.google.com/app/apikey
 BREVO_API_KEY=xkeysib-your-brevo-api-key-here
 BREVO_SENDER_EMAIL=your-verified-email@example.com
 BREVO_SENDER_NAME=Reading Comprehension Study
+ADMIN_PASSWORD=your-secure-password
+
 ```
 
 **Important:** Your sender email MUST be verified in Brevo:
@@ -410,6 +422,11 @@ npx wrangler secret put BREVO_SENDER_EMAIL
 # Optional: Set sender display name
 npx wrangler secret put BREVO_SENDER_NAME
 # Enter the name to show in emails (default: "Reading Comprehension Study")
+
+# Set Admin Password
+npx wrangler secret put ADMIN_PASSWORD
+# Enter a secure password for the admin dashboard
+
 ```
 
 **Before running these commands:**
@@ -476,6 +493,7 @@ Stores each answer attempt with AI feedback:
 - `is_correct` (INTEGER): Correctness (0/1)
 - `gemini_response` (TEXT): AI-generated feedback
 - `screenshot_r2_key` (TEXT): Heatmap screenshot for this attempt
+- `reading_summary` (TEXT): JSON string containing dwell times and visit orders
 - `created_at` (TEXT): Attempt timestamp
 
 #### Storage (Cloudflare R2)
