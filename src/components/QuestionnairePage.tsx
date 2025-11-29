@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
-import { Loader2, RotateCcw, PlayCircle } from 'lucide-react';
+import { Loader2, RotateCcw, PlayCircle, AlertTriangle } from 'lucide-react';
 
 interface QuestionnairePageProps {
     sessionId: string;
@@ -29,6 +29,7 @@ export function QuestionnairePage({
     isQuizComplete
 }: QuestionnairePageProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showRestartConfirm, setShowRestartConfirm] = useState(false);
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
@@ -70,7 +71,7 @@ export function QuestionnairePage({
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={onRestartQuiz}
+                                onClick={() => setShowRestartConfirm(true)}
                                 className="text-xs"
                             >
                                 <RotateCcw className="h-4 w-4 mr-1" />
@@ -182,6 +183,62 @@ export function QuestionnairePage({
                     </Card>
                 </div>
             </div>
+            {/* Restart Confirmation Modal */}
+            {showRestartConfirm && (
+                <div
+                    className="fixed inset-0 flex items-center justify-center z-50 p-4"
+                    style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
+                >
+                    <div
+                        className="rounded-lg max-w-md w-full p-6 shadow-2xl"
+                        style={{ backgroundColor: '#18181b', border: '1px solid #27272a' }}
+                    >
+                        <div className="flex items-center gap-3 mb-4" style={{ color: '#f59e0b' }}>
+                            <div className="p-2 rounded-full" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
+                                <AlertTriangle className="h-6 w-6" />
+                            </div>
+                            <h3 className="text-lg font-semibold" style={{ color: 'white' }}>Restart Quiz?</h3>
+                        </div>
+
+                        <div className="mb-6">
+                            <p style={{ color: '#d4d4d8' }}>
+                                Are you sure you want to restart? Your current progress will be reset and a new session will be started.
+                            </p>
+                            <div className="mt-4 text-sm" style={{ color: '#71717a' }}>
+                                Note: Your previous attempt will be saved as incomplete for research purposes.
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowRestartConfirm(false)}
+                                className="hover:bg-zinc-800"
+                                style={{
+                                    borderColor: '#3f3f46',
+                                    color: '#e4e4e7',
+                                    backgroundColor: 'transparent'
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    setShowRestartConfirm(false);
+                                    onRestartQuiz?.();
+                                }}
+                                style={{
+                                    backgroundColor: '#d97706',
+                                    color: 'white',
+                                    border: 'none'
+                                }}
+                            >
+                                Yes, Restart Quiz
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

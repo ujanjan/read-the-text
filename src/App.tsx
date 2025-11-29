@@ -283,21 +283,55 @@ export default function App() {
     }
   };
 
-  // Restart quiz from questionnaire page - clears all progress and starts from passage 1
-  const handleRestartQuizFromQuestionnaire = () => {
-    // Reset the quiz component state
-    if (readingComprehensionRef.current) {
-      readingComprehensionRef.current.reset();
+  // Restart quiz from questionnaire page - creates a NEW session with same demographics
+  const handleRestartQuizFromQuestionnaire = async () => {
+    if (!sessionId) return;
+
+    try {
+      // 1. Fetch current session to get email and demographics
+      const sessionData = await apiService.getSession(sessionId);
+      const { session } = sessionData;
+
+      // 2. Create NEW session with same details
+      const demographics = {
+        age: session.age || 0,
+        hasAttendedUniversity: session.has_attended_university || 'no',
+        englishFluency: session.english_fluency || 'native',
+        completedSwesat: session.completed_swesat || 'no'
+      };
+
+      // Map snake_case from DB to camelCase for API if needed, 
+      // but UserDemographics type expects specific values.
+      // We need to ensure the values from DB match the expected union types.
+      // The DB values should match because they are stored from the same enum values.
+
+      const newSession = await apiService.createSession(session.email, demographics as any);
+
+      // 3. Reset local state with NEW session
+      if (readingComprehensionRef.current) {
+        readingComprehensionRef.current.reset();
+      }
+
+      setSessionId(newSession.sessionId);
+      setPassageOrder(newSession.passageOrder);
+      setPassageData({});
+      setCurrentPassageIndex(0);
+      setShowQuestionnaire(false);
+      setTrackingEnabled(true);
+
+      // Clear old session from storage (new one will be saved by useEffect)
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+
+      // Start timer for first passage
+      passageStartTimeRef.current = Date.now();
+
+      debugLog(`🔄 [Restart] Created new session ${newSession.sessionId} from old session ${sessionId}`);
+
+    } catch (error) {
+      console.error('Failed to restart quiz with new session:', error);
+      // Fallback to full restart if something fails
+      handleRestartQuiz();
     }
-    // Clear all passage data but keep session info
-    setPassageData({});
-    setCurrentPassageIndex(0);
-    setShowQuestionnaire(false);
-    setTrackingEnabled(true);
-    // Clear session storage
-    sessionStorage.removeItem(SESSION_STORAGE_KEY);
-    // Start timer for first passage
-    passageStartTimeRef.current = Date.now();
   };
 
   // Navigation between passages
