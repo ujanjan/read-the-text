@@ -428,7 +428,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartQuiz }) => {
             </div>
 
             <div className="text-xs text-gray-500">
-              Questions? <a href="mailto:robp@kth.se" className="text-blue-600 hover:underline">robp@kth.se</a> | <a href="https://www.kth.se/student/kurser/kurs/DM2730?l=en" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Course Info</a>
+              Project authors: Elias Hedlin, Fauzan Helmi, Malin Hall, and Robin Scholle.<br></br>Questions? <a href="mailto:robp@kth.se" className="text-blue-600 hover:underline">robp@kth.se</a> | <a href="https://www.kth.se/student/kurser/kurs/DM2730?l=en" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Course Info</a>
             </div>
           </form>
         </div>
