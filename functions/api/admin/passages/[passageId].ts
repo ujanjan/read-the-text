@@ -131,6 +131,7 @@ interface ParticipantData {
     email: string;
     timeSpentMs: number;
     wrongAttempts: number;
+    totalAttempts: number; // Total attempts = wrongAttempts + 1
     isCorrect: boolean;
     latestAttemptScreenshot: string | null;
     latestGeminiResponse: string | null;
@@ -241,11 +242,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
             }
         }
 
+
         participantMap.set(result.session_id, {
             sessionId: result.session_id,
             email: result.email,
             timeSpentMs: result.time_spent_ms || 0,
             wrongAttempts: result.wrong_attempts || 0,
+            totalAttempts: sessionAttempts.length || 1, // Actual count of attempts
             isCorrect,
             latestAttemptScreenshot: latestScreenshot,
             latestGeminiResponse: latestAttempt?.gemini_response || null,

@@ -10,6 +10,7 @@ interface PassageDetailData {
         email: string;
         timeSpentMs: number;
         wrongAttempts: number;
+        totalAttempts: number;
         isCorrect: boolean;
         latestAttemptScreenshot: string | null;
         latestGeminiResponse: string | null;
@@ -100,7 +101,6 @@ export const AdminPassageDetailPage: React.FC = () => {
 
                 {/* Passage Content */}
                 <section className="admin-section">
-                    <h2>📖 Reading Passage</h2>
                     <p style={{ lineHeight: 1.7, marginBottom: '1.5rem', color: '#374151' }}>
                         {data.passage.text}
                     </p>
@@ -133,6 +133,7 @@ export const AdminPassageDetailPage: React.FC = () => {
                         </div>
                     </div>
                 </section>
+
 
                 {/* Overview Stats */}
                 <section className="admin-section">
@@ -169,7 +170,7 @@ export const AdminPassageDetailPage: React.FC = () => {
                                     <th>Email</th>
                                     <th>Time</th>
                                     <th>Wrong Attempts</th>
-                                    <th>Result</th>
+                                    <th>Total Attempts</th>
                                     <th>Detail</th>
                                 </tr>
                             </thead>
@@ -179,11 +180,7 @@ export const AdminPassageDetailPage: React.FC = () => {
                                         <td>{p.email}</td>
                                         <td>{formatTime(p.timeSpentMs)}</td>
                                         <td>{p.wrongAttempts}</td>
-                                        <td>
-                                            <span className={`status-badge ${p.isCorrect ? 'completed' : 'in_progress'}`}>
-                                                {p.isCorrect ? '✓ Correct' : '✗ Wrong'}
-                                            </span>
-                                        </td>
+                                        <td>{p.totalAttempts}</td>
                                         <td>
                                             <a
                                                 href={`/results/${p.sessionId}/${p.passageIndex + 1}`}
