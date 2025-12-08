@@ -16,7 +16,10 @@ interface PassageStats {
 
 export const AdminPage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabType>('users');
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    const saved = localStorage.getItem('admin_active_tab');
+    return (saved === 'passages' ? 'passages' : 'users') as TabType;
+  });
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [passageStats, setPassageStats] = useState<PassageStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -171,13 +174,19 @@ export const AdminPage: React.FC = () => {
         <div className="admin-tabs">
           <button
             className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`}
-            onClick={() => setActiveTab('users')}
+            onClick={() => {
+              setActiveTab('users');
+              localStorage.setItem('admin_active_tab', 'users');
+            }}
           >
             Users
           </button>
           <button
             className={`admin-tab ${activeTab === 'passages' ? 'active' : ''}`}
-            onClick={() => setActiveTab('passages')}
+            onClick={() => {
+              setActiveTab('passages');
+              localStorage.setItem('admin_active_tab', 'passages');
+            }}
           >
             Passages
           </button>
@@ -200,9 +209,6 @@ export const AdminPage: React.FC = () => {
                 />
                 Show Dirty Data
               </label>
-              <button onClick={fetchSessions} className="refresh-button">
-                Refresh
-              </button>
             </div>
 
             {loading ? (
@@ -230,7 +236,7 @@ export const AdminPage: React.FC = () => {
                     >
                       <td>
                         {session.email}
-                        {session.is_dirty && <span className="dirty-badge">Dirty</span>}
+                        {session.is_dirty ? <span className="dirty-badge">Dirty</span> : null}
                       </td>
                       <td>
                         <span className={`status-badge ${session.status}`}>
@@ -265,11 +271,6 @@ export const AdminPage: React.FC = () => {
         {/* Passages Tab Content */}
         {activeTab === 'passages' && (
           <>
-            <div className="admin-controls">
-              <button onClick={fetchPassageStats} className="refresh-button">
-                Refresh
-              </button>
-            </div>
 
             {loading ? (
               <p className="loading">Loading...</p>
