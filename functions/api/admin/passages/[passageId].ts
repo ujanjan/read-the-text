@@ -364,10 +364,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         isCorrect: idx === passage.correctAnswer
     }));
 
-    // Find most common wrong answer
+    // Find most common wrong answer (only if someone actually selected it)
     const wrongAnswers = answerDistribution.filter(a => !a.isCorrect);
-    const trapAnswer = wrongAnswers.reduce((max, curr) =>
-        curr.count > max.count ? curr : max, wrongAnswers[0] || null);
+    const trapAnswer = wrongAnswers.some(a => a.count > 0)
+        ? wrongAnswers.reduce((max, curr) => curr.count > max.count ? curr : max, wrongAnswers[0])
+        : null;
 
     // Get sample AI feedback - separate correct and wrong (latest 5 of each)
     const correctFeedbackSamples: { response: string }[] = [];
