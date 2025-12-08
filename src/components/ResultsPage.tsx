@@ -185,8 +185,6 @@ export const ResultsPage: React.FC = () => {
                 <Link
                   key={index}
                   to={`/results/${sessionId}/${index + 1}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className={`
                                         block p-4 rounded-lg border transition-all hover:shadow-md
                                         ${isComplete
