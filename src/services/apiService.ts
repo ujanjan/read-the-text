@@ -186,6 +186,47 @@ export const apiService = {
     return res.json();
   },
 
+  async getPassageDetail(passageId: string): Promise<{
+    passage: { id: string; title: string; index: number };
+    overview: { totalParticipants: number; avgTimeMs: number; firstTryRate: number; totalAttempts: number };
+    participants: Array<{
+      sessionId: string;
+      email: string;
+      timeSpentMs: number;
+      wrongAttempts: number;
+      isCorrect: boolean;
+      latestAttemptScreenshot: string | null;
+      latestGeminiResponse: string | null;
+    }>;
+    sentenceStats: Array<{
+      index: number;
+      text: string;
+      avgDwellMs: number;
+      avgVisits: number;
+      avgReadingOrder: number | null;
+      timesRead: number;
+    }>;
+    answerDistribution: Array<{
+      choice: string;
+      count: number;
+      percentage: number;
+      isCorrect: boolean;
+    }>;
+    trapAnswer: { choice: string; count: number; percentage: number } | null;
+    aiFeedbackSamples: Array<{ response: string; wasCorrect: boolean }>;
+  }> {
+    const token = localStorage.getItem('admin_token');
+    const res = await fetch(`${API_BASE}/admin/passages/${passageId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error('Unauthorized');
+    }
+    return res.json();
+  },
+
   // Email
   async sendStudyLink(email: string): Promise<{ success: boolean; message?: string; error?: string }> {
     const res = await fetch(`${API_BASE}/send-link`, {
