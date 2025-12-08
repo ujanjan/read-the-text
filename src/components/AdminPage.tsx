@@ -8,6 +8,7 @@ type TabType = 'users' | 'passages';
 interface PassageStats {
   passageId: string;
   title: string;
+  uniqueParticipants: number;
   totalAttempts: number;
   firstTryCorrectPct: number;
   eventuallyCorrectPct: number;
@@ -281,6 +282,7 @@ export const AdminPage: React.FC = () => {
                 <thead>
                   <tr>
                     <th>Title</th>
+                    <th>Participants</th>
                     <th>Attempts</th>
                     <th>First Try Correct</th>
                     <th>Eventually Correct</th>
@@ -295,6 +297,7 @@ export const AdminPage: React.FC = () => {
                       className="cursor-pointer hover:bg-gray-50"
                     >
                       <td>{passage.title}</td>
+                      <td>{passage.uniqueParticipants}</td>
                       <td>{passage.totalAttempts}</td>
                       <td>{passage.firstTryCorrectPct}%</td>
                       <td>{passage.eventuallyCorrectPct}%</td>

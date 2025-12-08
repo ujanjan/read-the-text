@@ -40,32 +40,36 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     const db = context.env.read_the_text_db;
 
-    // Get all attempts from clean sessions only
+    // Get all attempts from clean sessions, joined with passage_results to get the actual passage_id
+    // Note: passage_index is the randomized order, passage_id is the actual passage (0-9 matching PASSAGES array)
     const attemptsResult = await db.prepare(`
-    SELECT 
-      pa.passage_index,
-      pa.session_id,
-      pa.attempt_number,
-      pa.is_correct
-    FROM passage_attempts pa
-    INNER JOIN sessions s ON pa.session_id = s.id
-    WHERE s.is_dirty = 0 OR s.is_dirty IS NULL
-  `).all();
+        SELECT 
+            pa.passage_index,
+            pa.session_id,
+            pa.attempt_number,
+            pa.is_correct,
+            pr.passage_id
+        FROM passage_attempts pa
+        INNER JOIN sessions s ON pa.session_id = s.id
+        INNER JOIN passage_results pr ON pa.session_id = pr.session_id AND pa.passage_index = pr.passage_index
+        WHERE s.is_dirty = 0 OR s.is_dirty IS NULL
+    `).all();
 
     // Get passage results for average time (from clean sessions)
     const resultsData = await db.prepare(`
-    SELECT 
-      pr.passage_id,
-      pr.time_spent_ms
-    FROM passage_results pr
-    INNER JOIN sessions s ON pr.session_id = s.id
-    WHERE (s.is_dirty = 0 OR s.is_dirty IS NULL) AND pr.is_complete = 1
-  `).all();
+        SELECT 
+            pr.passage_id,
+            pr.time_spent_ms
+        FROM passage_results pr
+        INNER JOIN sessions s ON pr.session_id = s.id
+        WHERE (s.is_dirty = 0 OR s.is_dirty IS NULL) AND pr.is_complete = 1
+    `).all();
 
     // Build stats per passage
     const passageStats = PASSAGES.map((passage, index) => {
+        // Filter by passage_id (the actual passage), not passage_index (the randomized order)
         const passageAttempts = (attemptsResult.results as any[]).filter(
-            a => a.passage_index === index
+            a => a.passage_id === index
         );
 
         const totalAttempts = passageAttempts.length;
@@ -97,6 +101,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         return {
             passageId: passage.id,
             title: passage.title,
+            uniqueParticipants: sessionIds.length,
             totalAttempts,
             firstTryCorrectPct,
             eventuallyCorrectPct,
