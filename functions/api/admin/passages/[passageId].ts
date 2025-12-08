@@ -352,24 +352,35 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     for (const attempt of attempts) {
         if (attempt.attempt_number === 1) {
-            const answerText = attempt.selected_answer || '';
+            const answerText = (attempt.selected_answer || '').trim();
             // Map the full text answer to its index (0-3)
             const answerIndex = textToIndex.get(answerText);
+
             if (answerIndex !== undefined) {
                 const answerLetter = ANSWER_CHOICES[answerIndex];
                 answerCounts.set(answerLetter, (answerCounts.get(answerLetter) || 0) + 1);
+            } else if (answerText) {
+                // Counts as an attempt but didn't match A/B/C/D (e.g. slight mismatch)
+                // We'll group these as 'Unknown' so the total adds up correclty
+                answerCounts.set('Unknown', (answerCounts.get('Unknown') || 0) + 1);
             }
             totalFirstAttempts++;
         }
     }
 
-    const answerDistribution: AnswerDistribution[] = ANSWER_CHOICES.map((choice, idx) => ({
+    // Include Unknown in the distribution only if there are any
+    const displayChoices = [...ANSWER_CHOICES];
+    if (answerCounts.get('Unknown')) {
+        displayChoices.push('Unknown');
+    }
+
+    const answerDistribution: AnswerDistribution[] = displayChoices.map((choice, idx) => ({
         choice,
         count: answerCounts.get(choice) || 0,
         percentage: totalFirstAttempts > 0
             ? Math.round(((answerCounts.get(choice) || 0) / totalFirstAttempts) * 100)
             : 0,
-        isCorrect: idx === passage.correctAnswer
+        isCorrect: choice === 'Unknown' ? false : idx === passage.correctAnswer
     }));
 
     // Find most common wrong answer (only if someone actually selected it)
