@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 
 interface PassageDetailData {
-    passage: { id: string; title: string; index: number };
+    passage: { id: string; title: string; index: number; text: string; question: string; choices: string[]; correctAnswer: number };
     overview: { totalParticipants: number; avgTimeMs: number; firstTryRate: number; totalAttempts: number };
     participants: Array<{
         sessionId: string;
@@ -95,6 +95,42 @@ export const AdminPassageDetailPage: React.FC = () => {
                     <h1>{data.passage.title}</h1>
                     <Link to="/admin" className="back-link">← Back to Admin</Link>
                 </div>
+
+                {/* Passage Content */}
+                <section className="admin-section">
+                    <h2>📖 Reading Passage</h2>
+                    <p style={{ lineHeight: 1.7, marginBottom: '1.5rem', color: '#374151' }}>
+                        {data.passage.text}
+                    </p>
+                    <div style={{ background: '#f8fafc', borderRadius: '0.5rem', padding: '1rem', borderLeft: '4px solid #3b82f6' }}>
+                        <strong style={{ color: '#1f2937' }}>Question: </strong>
+                        <span style={{ color: '#374151' }}>{data.passage.question}</span>
+                        <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {data.passage.choices.map((choice, idx) => (
+                                <div key={idx} style={{
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    gap: '0.5rem',
+                                    padding: '0.5rem',
+                                    borderRadius: '0.25rem',
+                                    background: idx === data.passage.correctAnswer ? '#ecfdf5' : 'transparent'
+                                }}>
+                                    <span style={{
+                                        fontWeight: 600,
+                                        color: idx === data.passage.correctAnswer ? '#10b981' : '#6b7280',
+                                        minWidth: '1.5rem'
+                                    }}>
+                                        {['A', 'B', 'C', 'D'][idx]}
+                                    </span>
+                                    <span style={{ color: '#374151' }}>
+                                        {choice}
+                                        {idx === data.passage.correctAnswer && <span style={{ color: '#10b981', marginLeft: '0.5rem' }}>✓</span>}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
 
                 {/* Overview Stats */}
                 <section className="admin-section">
@@ -214,9 +250,12 @@ export const AdminPassageDetailPage: React.FC = () => {
                     )}
                 </section>
 
-                {/* Answer Distribution */}
+                {/* First Choice Distribution */}
                 <section className="admin-section">
-                    <h2>📝 Answer Distribution</h2>
+                    <h2>📝 First Choice Distribution</h2>
+                    <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1rem' }}>
+                        Shows what each participant selected on their <strong>first attempt only</strong>. Subsequent retries are not counted.
+                    </p>
                     <div className="answer-distribution">
                         {data.answerDistribution.map((a) => (
                             <div
