@@ -101,10 +101,14 @@ export const apiService = {
   },
 
   // Admin
-  async getAdminSessions(status?: string): Promise<{ sessions: AdminSession[] }> {
+  async getAdminSessions(status?: string, includeDirty: boolean = false): Promise<{ sessions: AdminSession[] }> {
     const token = localStorage.getItem('admin_token');
-    const url = status
-      ? `${API_BASE}/admin/sessions?status=${status}`
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (includeDirty) params.set('includeDirty', 'true');
+    const queryString = params.toString();
+    const url = queryString
+      ? `${API_BASE}/admin/sessions?${queryString}`
       : `${API_BASE}/admin/sessions`;
     const res = await fetch(url, {
       headers: {
@@ -137,6 +141,22 @@ export const apiService = {
       headers: {
         'Authorization': `Bearer ${token}`
       }
+    });
+    if (!res.ok) {
+      throw new Error('Unauthorized');
+    }
+    return res.json();
+  },
+
+  async toggleSessionDirty(sessionId: string, isDirty: boolean): Promise<{ success: boolean; is_dirty: boolean }> {
+    const token = localStorage.getItem('admin_token');
+    const res = await fetch(`${API_BASE}/admin/sessions/${sessionId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ is_dirty: isDirty })
     });
     if (!res.ok) {
       throw new Error('Unauthorized');

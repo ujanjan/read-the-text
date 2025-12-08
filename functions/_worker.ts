@@ -31,7 +31,7 @@ import { onRequestPut as passageResultPut } from './api/passages/[sessionId]/[pa
 import { onRequestPost as passageAttemptPost } from './api/passages/[sessionId]/[passageIndex]/attempts';
 import { onRequestPost as adminAuthPost } from './api/admin/auth';
 import { onRequestGet as adminSessionsGet } from './api/admin/sessions';
-import { onRequestGet as adminSessionGet, onRequestDelete as adminSessionDelete } from './api/admin/sessions/[id]';
+import { onRequestGet as adminSessionGet, onRequestDelete as adminSessionDelete, onRequestPatch as adminSessionPatch } from './api/admin/sessions/[id]';
 import { onRequestPost as sendLinkPost } from './api/send-link';
 import { onRequestPost as sendWelcomePost } from './api/send-welcome';
 import { onRequestPost as questionnairePost } from './api/questionnaire/[sessionId]';
@@ -196,6 +196,9 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
       }
       if (method === 'DELETE') {
         return await adminSessionDelete(createContext({ id: sessionId }));
+      }
+      if (method === 'PATCH') {
+        return await adminSessionPatch(createContext({ id: sessionId }));
       }
     }
 

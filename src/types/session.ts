@@ -85,6 +85,7 @@ export interface AdminSession {
   completed_at?: string;
   total_time_ms: number;
   completed_passages: number;
+  is_dirty?: boolean;
 }
 
 // User demographics form data

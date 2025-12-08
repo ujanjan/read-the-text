@@ -2063,6 +2063,71 @@
   background: #fecaca;
 }
 
+.dirty-button {
+  padding: 0.25rem 0.5rem;
+  background: #fef3c7;
+  color: #b45309;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+.dirty-button:hover {
+  background: #fde68a;
+}
+
+.clean-button {
+  padding: 0.25rem 0.5rem;
+  background: #d1fae5;
+  color: #047857;
+  border: none;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin-right: 0.5rem;
+}
+
+.clean-button:hover {
+  background: #a7f3d0;
+}
+
+.dirty-badge {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  background: #fef3c7;
+  color: #b45309;
+  border-radius: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+}
+
+.dirty-row {
+  background: #fffbeb !important;
+}
+
+.dirty-row:hover {
+  background: #fef3c7 !important;
+}
+
+.show-dirty-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+  cursor: pointer;
+}
+
+.show-dirty-label input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
 .session-stats {
   background: #f8fafc;
   padding: 1rem;

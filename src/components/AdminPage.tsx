@@ -8,6 +8,7 @@ export const AdminPage: React.FC = () => {
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('');
+  const [showDirty, setShowDirty] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
 
@@ -22,12 +23,12 @@ export const AdminPage: React.FC = () => {
     if (isAuthenticated) {
       fetchSessions();
     }
-  }, [filter, isAuthenticated]);
+  }, [filter, showDirty, isAuthenticated]);
 
   const fetchSessions = async () => {
     setLoading(true);
     try {
-      const data = await apiService.getAdminSessions(filter || undefined);
+      const data = await apiService.getAdminSessions(filter || undefined, showDirty);
       setSessions(data.sessions);
     } catch (err) {
       console.error('Failed to fetch sessions:', err);
@@ -56,6 +57,19 @@ export const AdminPage: React.FC = () => {
     }
   };
 
+  const handleToggleDirty = async (sessionId: string, currentDirty: boolean, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await apiService.toggleSessionDirty(sessionId, !currentDirty);
+      fetchSessions();
+    } catch (err) {
+      console.error('Failed to toggle dirty status:', err);
+      if (err instanceof Error && err.message === 'Unauthorized') {
+        localStorage.removeItem('admin_token');
+        setIsAuthenticated(false);
+      }
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,6 +141,14 @@ export const AdminPage: React.FC = () => {
             <option value="completed">Completed</option>
             <option value="in_progress">In Progress</option>
           </select>
+          <label className="show-dirty-label">
+            <input
+              type="checkbox"
+              checked={showDirty}
+              onChange={(e) => setShowDirty(e.target.checked)}
+            />
+            Show Dirty Data
+          </label>
           <button onClick={fetchSessions} className="refresh-button">
             Refresh
           </button>
@@ -150,8 +172,15 @@ export const AdminPage: React.FC = () => {
             </thead>
             <tbody>
               {sessions.map((session) => (
-                <tr key={session.id} onClick={() => navigate(`/results/${session.id}`)} className="cursor-pointer hover:bg-gray-50">
-                  <td>{session.email}</td>
+                <tr
+                  key={session.id}
+                  onClick={() => navigate(`/results/${session.id}`)}
+                  className={`cursor-pointer hover:bg-gray-50 ${session.is_dirty ? 'dirty-row' : ''}`}
+                >
+                  <td>
+                    {session.email}
+                    {session.is_dirty && <span className="dirty-badge">Dirty</span>}
+                  </td>
                   <td>
                     <span className={`status-badge ${session.status}`}>
                       {session.status === 'in_progress' ? 'In Progress' : 'Completed'}
@@ -161,6 +190,12 @@ export const AdminPage: React.FC = () => {
                   <td>{new Date(session.created_at).toLocaleDateString()}</td>
                   <td>{session.total_time_ms ? formatTime(session.total_time_ms) : '-'}</td>
                   <td>
+                    <button
+                      onClick={(e) => handleToggleDirty(session.id, !!session.is_dirty, e)}
+                      className={session.is_dirty ? 'clean-button' : 'dirty-button'}
+                    >
+                      {session.is_dirty ? 'Mark Clean' : 'Mark Dirty'}
+                    </button>
                     <button
                       onClick={(e) => handleDelete(session.id, e)}
                       className="delete-button"
@@ -186,3 +221,4 @@ function formatTime(ms: number): string {
     ? `${minutes}m ${remainingSeconds}s`
     : `${seconds}s`;
 }
+
