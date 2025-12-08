@@ -34,16 +34,21 @@ export const PassageDetailPage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-gray-600">Loading passage details...</div>
+            <div className="admin-page">
+                <div className="admin-container">
+                    <p className="loading">Loading passage details...</p>
+                </div>
             </div>
         );
     }
 
     if (error || !sessionData) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-red-600">{error || 'No data found'}</div>
+            <div className="admin-page">
+                <div className="admin-container">
+                    <p className="text-red-500">{error || 'No data found'}</p>
+                    <Link to={`/results/${sessionId}`} className="back-link">← Back to Results</Link>
+                </div>
             </div>
         );
     }
@@ -54,8 +59,11 @@ export const PassageDetailPage: React.FC = () => {
 
     if (!passageResult) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="text-red-600">Passage not found</div>
+            <div className="admin-page">
+                <div className="admin-container">
+                    <p className="text-red-500">Passage not found</p>
+                    <Link to={`/results/${sessionId}`} className="back-link">← Back to Results</Link>
+                </div>
             </div>
         );
     }
@@ -119,20 +127,41 @@ export const PassageDetailPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8 px-4">
-            <div className="max-w-5xl mx-auto">
+        <div className="admin-page">
+            <div className="admin-container" style={{ maxWidth: '1200px' }}>
                 {/* Header with navigation */}
-                <div className="mb-6 flex items-center justify-between">
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <h1>Passage {passageIndexNum + 1} Details</h1>
+                        <p className="text-sm text-gray-500 mt-1">{session.email}</p>
+                    </div>
                     <div className="flex items-center gap-4">
-                        <Link to={`/results/${sessionId}`}>
-                            <Button variant="outline" size="sm">
-                                <ArrowLeft className="h-4 w-4 mr-2" />
-                                Back to Results
-                            </Button>
+                        <Link to={`/results/${sessionId}`} className="back-link">
+                            ← Back to Results
                         </Link>
-                        <h1 className="text-2xl font-bold text-gray-900">
-                            Passage {passageIndexNum + 1} Details
-                        </h1>
+                    </div>
+                </div>
+
+                {/* Sub-header Navigation & Actions */}
+                <div className="flex justify-between items-center mb-6">
+                    <div className="flex gap-2">
+                        <Button
+                            onClick={handleDownloadSummary}
+                            className="bg-blue-600 hover:bg-blue-700 text-white h-8 text-sm"
+                            style={{ backgroundColor: '#2563eb', color: 'white' }}
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Summary
+                        </Button>
+                        <Button
+                            onClick={handleDownloadCursorData}
+                            variant="outline"
+                            className="h-8 text-sm border-transparent hover:border-transparent"
+                            style={{ backgroundColor: '#1f2937', color: 'white' }}
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Cursor Data
+                        </Button>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -159,73 +188,48 @@ export const PassageDetailPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Download buttons */}
-                <div className="mb-6 flex gap-3">
-                    <Button
-                        onClick={handleDownloadSummary}
-                        className="text-white"
-                        style={{ backgroundColor: '#2563eb', color: 'white' }}
-                    >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Summary
-                    </Button>
-                    <Button
-                        onClick={handleDownloadCursorData}
-                        variant="outline"
-                        className="text-white border-transparent hover:border-transparent"
-                        style={{ backgroundColor: '#1f2937', color: 'white' }}
-                    >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Cursor Data
-                    </Button>
-                </div>
-
                 {/* Passage stats */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance Summary</h2>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <p className="text-sm text-gray-500">Status</p>
-                            <p className="text-lg font-semibold text-gray-900">
-                                {passageResult.is_complete ? 'Completed' : 'Incomplete'}
-                            </p>
+                <section className="admin-section">
+                    <h2>📊 Performance Summary</h2>
+                    <div className="stats-grid mt-4">
+                        <div className="stat-card">
+                            <span className="stat-value">{passageResult.is_complete ? 'Completed' : 'Incomplete'}</span>
+                            <span className="stat-label">Status</span>
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Wrong Attempts</p>
-                            <p className="text-lg font-semibold text-gray-900">
-                                {passageResult.wrong_attempts}
-                            </p>
+                        <div className="stat-card">
+                            <span className="stat-value">{passageResult.wrong_attempts}</span>
+                            <span className="stat-label">Wrong Attempts</span>
                         </div>
-                        <div>
-                            <p className="text-sm text-gray-500">Time Spent</p>
-                            <p className="text-lg font-semibold text-gray-900">
-                                {formatTime(passageResult.time_spent_ms)}
-                            </p>
+                        <div className="stat-card">
+                            <span className="stat-value">{formatTime(passageResult.time_spent_ms)}</span>
+                            <span className="stat-label">Time Spent</span>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 {/* Screenshot with heatmap */}
                 {passageResult.screenshot && (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Reading Heatmap</h2>
-                        <img
-                            src={passageResult.screenshot}
-                            alt={`Passage ${passageIndexNum + 1} heatmap`}
-                            className="w-full rounded-lg border border-gray-200"
-                        />
-                    </div>
+                    <section className="admin-section">
+                        <h2>🌡️ Reading Heatmap</h2>
+                        <div className="mt-4 rounded-lg overflow-hidden border border-gray-200">
+                            <img
+                                src={passageResult.screenshot}
+                                alt={`Passage ${passageIndexNum + 1} heatmap`}
+                                className="w-full"
+                            />
+                        </div>
+                    </section>
                 )}
 
                 {/* All attempts */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">All Attempts</h2>
-                    {passageAttempts.length > 0 ? (
-                        <div className="space-y-4">
-                            {passageAttempts.map((attempt, idx) => (
+                <section className="admin-section">
+                    <h2>📝 All Attempts</h2>
+                    <div className="space-y-12 mt-4">
+                        {passageAttempts.length > 0 ? (
+                            passageAttempts.map((attempt, idx) => (
                                 <div
                                     key={idx}
-                                    className={`border rounded-lg p-4 ${attempt.is_correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                                    className={`border rounded-lg p-4 mb-12 ${attempt.is_correct ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between mb-3">
@@ -243,11 +247,11 @@ export const PassageDetailPage: React.FC = () => {
                                     </div>
 
                                     {attempt.screenshot && (
-                                        <div className="mb-3">
+                                        <div className="mb-3 rounded overflow-hidden border border-gray-200">
                                             <img
                                                 src={attempt.screenshot}
                                                 alt={`Attempt ${attempt.attempt_number} heatmap`}
-                                                className="w-full rounded-lg border border-gray-200"
+                                                className="w-full"
                                             />
                                         </div>
                                     )}
@@ -265,16 +269,19 @@ export const PassageDetailPage: React.FC = () => {
 
                                     {attempt.reading_summary && (() => {
                                         try {
-                                            const summary = JSON.parse(attempt.reading_summary);
+                                            const summary = typeof attempt.reading_summary === 'string'
+                                                ? JSON.parse(attempt.reading_summary)
+                                                : attempt.reading_summary;
+
                                             return (
-                                                <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                                <div className="mt-3 p-3 bg-white rounded-lg border border-gray-200 shadow-sm">
                                                     <p className="text-sm font-semibold text-gray-900 mb-2">📊 Reading Summary</p>
                                                     <div className="text-xs text-gray-600 mb-2">
                                                         <strong>Total Time:</strong> {Math.round(summary.total_time_ms / 1000)}s
                                                     </div>
                                                     <div className="space-y-2 max-h-60 overflow-y-auto">
                                                         {summary.sentences?.map((sentence: any, idx: number) => (
-                                                            <div key={idx} className="bg-white p-2 rounded border border-gray-200">
+                                                            <div key={idx} className="bg-gray-50 p-2 rounded border border-gray-200">
                                                                 <p className="text-xs text-gray-700 mb-1">
                                                                     <strong>Sentence {sentence.index + 1}:</strong> {sentence.text.substring(0, 80)}...
                                                                 </p>
@@ -289,16 +296,17 @@ export const PassageDetailPage: React.FC = () => {
                                                 </div>
                                             );
                                         } catch (e) {
+                                            console.error('Failed to parse reading summary', e);
                                             return null;
                                         }
                                     })()}
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-gray-500">No attempts recorded</p>
-                    )}
-                </div>
+                            ))
+                        ) : (
+                            <p className="text-gray-500 italic">No attempts recorded</p>
+                        )}
+                    </div>
+                </section>
             </div>
         </div>
     );
