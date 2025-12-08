@@ -1,10 +1,12 @@
+
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import type { SessionData } from '../types/session';
 
 export const ResultsPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
+  const navigate = useNavigate();
   const [sessionData, setSessionData] = useState<SessionData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -28,16 +30,21 @@ export const ResultsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="results-page">
-        <div className="loading">Loading results...</div>
+      <div className="admin-page">
+        <div className="admin-container">
+          <p className="loading">Loading results...</p>
+        </div>
       </div>
     );
   }
 
   if (error || !sessionData) {
     return (
-      <div className="results-page">
-        <div className="error-message">{error || 'No data found'}</div>
+      <div className="admin-page">
+        <div className="admin-container">
+          <p className="text-red-500">{error || 'No data found'}</p>
+          <Link to="/admin" className="back-link">← Back to Admin</Link>
+        </div>
       </div>
     );
   }
@@ -63,10 +70,10 @@ export const ResultsPage: React.FC = () => {
   const formatEnglishFluency = (value?: string) => {
     if (!value) return null;
     switch (value) {
-      case 'first_language': return 'English is my first language';
-      case 'young_age': return 'Learned at a young age';
-      case 'high_school': return 'Learned in high school';
-      case 'university': return 'Learned at university';
+      case 'first_language': return 'Native/First';
+      case 'young_age': return 'Young Age';
+      case 'high_school': return 'High School';
+      case 'university': return 'University';
       case 'not_at_all': return 'Not at all';
       default: return value;
     }
@@ -85,168 +92,153 @@ export const ResultsPage: React.FC = () => {
   const hasDemographics = session.age || session.has_attended_university || session.english_fluency;
 
   return (
-    <div className="results-page">
-      <div className="results-container">
-        <div className="mb-6">
-          <h1>Quiz Results</h1>
-          <p className="email-display">Participant: {session.email}</p>
+    <div className="admin-page">
+      <div className="admin-container" style={{ maxWidth: '1200px' }}>
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1>Participant Results</h1>
+            <p className="text-sm text-gray-500 mt-1">{session.email}</p>
+          </div>
+          <Link to="/admin" className="back-link">← Back to Admin</Link>
         </div>
 
-        {/* Demographics Section */}
+        {/* Profile Section */}
         {hasDemographics && (
-          <div className="demographics-card">
-            <h2>Your Profile</h2>
-            <div className="demographics-grid">
-              {session.age && (
-                <div className="demo-item">
-                  <span className="demo-label">Age:</span>
-                  <span className="demo-value">{session.age}</span>
+          <section className="admin-section">
+            <h2>👤 Profile & Demographics</h2>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4">
+              {(session.age || 0) > 0 && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Age</span>
+                  <span className="font-semibold text-gray-800">{session.age}</span>
                 </div>
               )}
               {session.has_attended_university && (
-                <div className="demo-item">
-                  <span className="demo-label">University:</span>
-                  <span className="demo-value">{formatUniversity(session.has_attended_university)}</span>
-                </div>
-              )}
-              {session.english_fluency && (
-                <div className="demo-item">
-                  <span className="demo-label">English Fluency:</span>
-                  <span className="demo-value">{formatEnglishFluency(session.english_fluency)}</span>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">University</span>
+                  <span className="font-semibold text-gray-800">{formatUniversity(session.has_attended_university)}</span>
                 </div>
               )}
               {session.first_language && (
-                <div className="demo-item">
-                  <span className="demo-label">First Language:</span>
-                  <span className="demo-value">{session.first_language}</span>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">First Language</span>
+                  <span className="font-semibold text-gray-800">{session.first_language}</span>
+                </div>
+              )}
+              {session.english_fluency && (
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">English Fluency</span>
+                  <span className="font-semibold text-gray-800">{formatEnglishFluency(session.english_fluency)}</span>
                 </div>
               )}
               {session.completed_swesat && (
-                <div className="demo-item">
-                  <span className="demo-label">SWESAT Experience:</span>
-                  <span className="demo-value">{formatSwesat(session.completed_swesat)}</span>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">SWESAT</span>
+                  <span className="font-semibold text-gray-800">{formatSwesat(session.completed_swesat)}</span>
                 </div>
               )}
             </div>
-          </div>
+          </section>
         )}
 
-        <div className="stats-summary">
-          <div className="stat-card">
-            <span className="stat-value">{completedPassages}/10</span>
-            <span className="stat-label">Completed</span>
+        {/* Overview Stats */}
+        <section className="admin-section">
+          <div className="flex justify-between items-center mb-4">
+            <h2>📊 Performance Overview</h2>
+            <Link
+              to={`/report/${sessionId}`}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            >
+              <span>✨ Generate Reading Report</span>
+            </Link>
           </div>
-          <div className="stat-card">
-            <span className="stat-value">{Math.round((perfectPassages / 10) * 100)}%</span>
-            <span className="stat-label">Accuracy</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-value">{formatTime(totalTime)}</span>
-            <span className="stat-label">Total Time</span>
-          </div>
-        </div>
-
-        <div className="flex justify-center mb-12">
-          <Link
-            to={`/report/${sessionId}`}
-            className="group relative inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full font-semibold text-base shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
-            style={{
-              backgroundColor: '#4f46e5', // Fallback color (indigo-600)
-              color: 'white',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '9999px',
-              fontWeight: 600,
-              fontSize: '1rem',
-              boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-              transition: 'all 0.2s ease-in-out'
-            }}
-          >
-            <span className="text-lg">✨</span>
-            <span>Generate Reading Insights Report</span>
-          </Link>
-        </div>
-
-        <h2>Reading Pattern Analysis</h2>
-        <div className="passage-grid">
-          {session.passageOrder.map((passageId: number, index: number) => {
-            const result = passageResults.find((r) => r.passage_index === index);
-
-            return (
-              <Link
-                key={index}
-                to={`/results/${sessionId}/${index + 1}`}
-                className={`passage-card ${result?.is_complete ? 'complete' : 'incomplete'}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {result?.screenshot && (
-                  <img src={result.screenshot} alt={`Passage ${index + 1}`} />
-                )}
-                <div className="passage-info">
-                  <h3>Passage {index + 1}</h3>
-                  {result?.is_complete ? (
-                    <>
-                      <p className={result.wrong_attempts === 0 ? 'perfect' : 'attempts'}>
-                        {result.wrong_attempts === 0 ? 'Perfect!' : `${result.wrong_attempts} wrong attempts`}
-                      </p>
-                      <p className="time">{formatTime(result.time_spent_ms)}</p>
-                    </>
-                  ) : result ? (
-                    <>
-                      <p className="incomplete-text">In progress</p>
-                      {result.wrong_attempts > 0 && (
-                        <p className="attempts">{result.wrong_attempts} attempts so far</p>
-                      )}
-                      {result.time_spent_ms > 0 && (
-                        <p className="time">{formatTime(result.time_spent_ms)}</p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="incomplete-text">Not started</p>
-                  )}
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* Questionnaire Responses Section */}
-        {questionnaireResponse && (
-          <div className="questionnaire-section">
-            <h2>Your Feedback</h2>
-            <div className="questionnaire-responses">
-              {questionnaireResponse.question_1_response && (
-                <div className="questionnaire-item">
-                  <h3 className="questionnaire-question">
-                    1. What is your impression of the interface, as a tool for independent learning?
-                  </h3>
-                  <p className="questionnaire-answer">
-                    {questionnaireResponse.question_1_response}
-                  </p>
-                </div>
-              )}
-              {questionnaireResponse.question_2_response && (
-                <div className="questionnaire-item">
-                  <h3 className="questionnaire-question">
-                    2. What are your thoughts on the AI-generated feedback?
-                  </h3>
-                  <p className="questionnaire-answer">
-                    {questionnaireResponse.question_2_response}
-                  </p>
-                </div>
-              )}
-              {questionnaireResponse.question_3_response && (
-                <div className="questionnaire-item">
-                  <h3 className="questionnaire-question">
-                    3. Please share any general feedback you have about the application as a tool for learning?
-                  </h3>
-                  <p className="questionnaire-answer">
-                    {questionnaireResponse.question_3_response}
-                  </p>
-                </div>
-              )}
+          <div className="stats-grid">
+            <div className="stat-card">
+              <span className="stat-value">{completedPassages}/10</span>
+              <span className="stat-label">Completed</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-value">{Math.round((perfectPassages / 10) * 100)}%</span>
+              <span className="stat-label">Accuracy</span>
+            </div>
+            <div className="stat-card">
+              <span className="stat-value">{formatTime(totalTime)}</span>
+              <span className="stat-label">Total Time</span>
             </div>
           </div>
+        </section>
+
+        {/* Passage Analysis */}
+        <section className="admin-section">
+          <h2>📚 Reading Pattern Analysis</h2>
+          <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1.5rem' }}>
+            Detailed breakdown of each passage attempt. Click to view full details.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {session.passageOrder.map((passageId: number, index: number) => {
+              const result = passageResults.find((r) => r.passage_index === index);
+              const isComplete = result?.is_complete;
+              const isPerfect = isComplete && result?.wrong_attempts === 0;
+
+              return (
+                <Link
+                  key={index}
+                  to={`/results/${sessionId}/${index + 1}`}
+                  className={`
+                                        block p-4 rounded-lg border transition-all hover:shadow-md
+                                        ${isComplete
+                      ? 'bg-white border-gray-200 hover:border-blue-300'
+                      : 'bg-gray-50 border-gray-200 opacity-60'
+                    }
+                                    `}
+                  style={{ textDecoration: 'none' }}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <h3 className="font-medium text-gray-900 m-0">Passage {index + 1}</h3>
+                    {isComplete && (
+                      <span className={`
+                                                px-2 py-0.5 text-xs font-semibold rounded-full
+                                                ${isPerfect ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}
+                                            `}>
+                        {isPerfect ? 'Perfect' : `${result.wrong_attempts} attempts`}
+                      </span>
+                    )}
+                  </div>
+
+                  {result?.screenshot && (
+                    <div className="aspect-[4/3] w-full bg-gray-100 mb-3 rounded overflow-hidden">
+                      <img src={result.screenshot} alt={`Passage ${index + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center text-sm text-gray-500">
+                    <span>{isComplete ? formatTime(result.time_spent_ms) : 'Not started'}</span>
+                    {isComplete && <span className="text-blue-600">View Details →</span>}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Feedback Section */}
+        {questionnaireResponse && (
+          <section className="admin-section">
+            <h2>💬 User Feedback</h2>
+            <div className="space-y-6 mt-4">
+              {[
+                { q: "Impression as a tool for independent learning?", a: questionnaireResponse.question_1_response },
+                { q: "Thoughts on AI-generated feedback?", a: questionnaireResponse.question_2_response },
+                { q: "General feedback?", a: questionnaireResponse.question_3_response }
+              ].map((item, idx) => item.a && (
+                <div key={idx} className="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-1">{idx + 1}. {item.q}</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
       </div>
     </div>

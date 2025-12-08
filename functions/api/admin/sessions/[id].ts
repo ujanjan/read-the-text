@@ -148,3 +148,54 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
 
   return Response.json({ success: true });
 };
+
+// PATCH session - toggle is_dirty flag
+export const onRequestPatch: PagesFunction<Env> = async (context) => {
+  // Check for authorization token
+  const authHeader = context.request.headers.get('Authorization');
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return Response.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = atob(token);
+    const [prefix, timestamp] = decoded.split(':');
+
+    if (prefix !== 'admin') {
+      throw new Error('Invalid token');
+    }
+
+    const tokenTime = parseInt(timestamp, 10);
+    const now = Date.now();
+    const fourHours = 4 * 60 * 60 * 1000;
+
+    if (isNaN(tokenTime) || now - tokenTime > fourHours) {
+      return Response.json(
+        { error: 'Unauthorized' }, // Token expired
+        { status: 401 }
+      );
+    }
+  } catch (e) {
+    return Response.json(
+      { error: 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+
+  const sessionId = context.params.id as string;
+  const db = context.env.read_the_text_db;
+
+  const body = await context.request.json() as { is_dirty: boolean };
+  const isDirty = body.is_dirty ? 1 : 0;
+
+  await db.prepare('UPDATE sessions SET is_dirty = ? WHERE id = ?')
+    .bind(isDirty, sessionId)
+    .run();
+
+  return Response.json({ success: true, is_dirty: isDirty === 1 });
+};

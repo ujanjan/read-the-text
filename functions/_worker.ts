@@ -31,7 +31,9 @@ import { onRequestPut as passageResultPut } from './api/passages/[sessionId]/[pa
 import { onRequestPost as passageAttemptPost } from './api/passages/[sessionId]/[passageIndex]/attempts';
 import { onRequestPost as adminAuthPost } from './api/admin/auth';
 import { onRequestGet as adminSessionsGet } from './api/admin/sessions';
-import { onRequestGet as adminSessionGet, onRequestDelete as adminSessionDelete } from './api/admin/sessions/[id]';
+import { onRequestGet as adminSessionGet, onRequestDelete as adminSessionDelete, onRequestPatch as adminSessionPatch } from './api/admin/sessions/[id]';
+import { onRequestGet as adminAnalyticsGet } from './api/admin/analytics';
+import { onRequestGet as adminPassageDetailGet } from './api/admin/passages/[passageId]';
 import { onRequestPost as sendLinkPost } from './api/send-link';
 import { onRequestPost as sendWelcomePost } from './api/send-welcome';
 import { onRequestPost as questionnairePost } from './api/questionnaire/[sessionId]';
@@ -188,6 +190,10 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
       return await adminSessionsGet(createContext());
     }
 
+    if (path === '/api/admin/analytics' && method === 'GET') {
+      return await adminAnalyticsGet(createContext());
+    }
+
     const adminSessionMatch = path.match(/^\/api\/admin\/sessions\/([^\/]+)$/);
     if (adminSessionMatch) {
       const sessionId = adminSessionMatch[1];
@@ -197,6 +203,16 @@ async function handleApiRequest(request: Request, env: Env, ctx: ExecutionContex
       if (method === 'DELETE') {
         return await adminSessionDelete(createContext({ id: sessionId }));
       }
+      if (method === 'PATCH') {
+        return await adminSessionPatch(createContext({ id: sessionId }));
+      }
+    }
+
+    // Admin passage detail route
+    const adminPassageMatch = path.match(/^\/api\/admin\/passages\/([^\/]+)$/);
+    if (adminPassageMatch && method === 'GET') {
+      const passageId = adminPassageMatch[1];
+      return await adminPassageDetailGet(createContext({ passageId }));
     }
 
     // Questionnaire route

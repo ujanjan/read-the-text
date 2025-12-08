@@ -101,10 +101,14 @@ export const apiService = {
   },
 
   // Admin
-  async getAdminSessions(status?: string): Promise<{ sessions: AdminSession[] }> {
+  async getAdminSessions(status?: string, includeDirty: boolean = false): Promise<{ sessions: AdminSession[] }> {
     const token = localStorage.getItem('admin_token');
-    const url = status
-      ? `${API_BASE}/admin/sessions?status=${status}`
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (includeDirty) params.set('includeDirty', 'true');
+    const queryString = params.toString();
+    const url = queryString
+      ? `${API_BASE}/admin/sessions?${queryString}`
       : `${API_BASE}/admin/sessions`;
     const res = await fetch(url, {
       headers: {
@@ -134,6 +138,87 @@ export const apiService = {
     const token = localStorage.getItem('admin_token');
     const res = await fetch(`${API_BASE}/admin/sessions/${sessionId}`, {
       method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error('Unauthorized');
+    }
+    return res.json();
+  },
+
+  async toggleSessionDirty(sessionId: string, isDirty: boolean): Promise<{ success: boolean; is_dirty: boolean }> {
+    const token = localStorage.getItem('admin_token');
+    const res = await fetch(`${API_BASE}/admin/sessions/${sessionId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ is_dirty: isDirty })
+    });
+    if (!res.ok) {
+      throw new Error('Unauthorized');
+    }
+    return res.json();
+  },
+
+  async getPassageAnalytics(): Promise<{
+    passages: Array<{
+      passageId: string;
+      title: string;
+      totalAttempts: number;
+      firstTryCorrectPct: number;
+      eventuallyCorrectPct: number;
+      avgTimeMs: number;
+    }>;
+  }> {
+    const token = localStorage.getItem('admin_token');
+    const res = await fetch(`${API_BASE}/admin/analytics`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error('Unauthorized');
+    }
+    return res.json();
+  },
+
+  async getPassageDetail(passageId: string): Promise<{
+    passage: { id: string; title: string; index: number; text: string; question: string; choices: string[]; correctAnswer: number };
+    overview: { totalParticipants: number; avgTimeMs: number; firstTryRate: number; totalAttempts: number };
+    participants: Array<{
+      sessionId: string;
+      email: string;
+      timeSpentMs: number;
+      wrongAttempts: number;
+      isCorrect: boolean;
+      latestAttemptScreenshot: string | null;
+      latestGeminiResponse: string | null;
+      passageIndex: number;
+    }>;
+    sentenceStats: Array<{
+      index: number;
+      text: string;
+      avgDwellMs: number;
+      avgVisits: number;
+      avgReadingOrder: number | null;
+      timesRead: number;
+    }>;
+    answerDistribution: Array<{
+      choice: string;
+      count: number;
+      percentage: number;
+      isCorrect: boolean;
+    }>;
+    trapAnswer: { choice: string; count: number; percentage: number } | null;
+    correctFeedbackSamples: Array<{ response: string }>;
+    wrongFeedbackSamples: Array<{ response: string }>;
+  }> {
+    const token = localStorage.getItem('admin_token');
+    const res = await fetch(`${API_BASE}/admin/passages/${passageId}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
