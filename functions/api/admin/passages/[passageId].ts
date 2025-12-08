@@ -108,7 +108,7 @@ const PASSAGES = [
         question: "What can be concluded from this text?",
         choices: [
             "The result of the study is unlikely to have any practical relevance for depressed individuals",
-            "It is hardly possible to adjust treatment to individual patients' needs",
+            "It is hardly possible to adjust treatment to individual patients’ needs",
             "The two types of therapy studied turned out to be equally effective for most individuals",
             "Future care may be determined on a more individual basis than earlier"
         ]
