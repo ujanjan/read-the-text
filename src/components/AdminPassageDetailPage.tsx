@@ -42,6 +42,7 @@ export const AdminPassageDetailPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [feedbackTab, setFeedbackTab] = useState<'correct' | 'wrong'>('correct');
+    const [selectedScreenshot, setSelectedScreenshot] = useState<{ url: string; email: string } | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -235,24 +236,33 @@ export const AdminPassageDetailPage: React.FC = () => {
                 {/* Heatmap Gallery */}
                 <section className="admin-section">
                     <h2>🔥 Heatmap Gallery</h2>
+                    <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1rem' }}>
+                        Shows reading heatmaps captured during the <strong>correct attempt</strong>. Click a thumbnail to view full size.
+                    </p>
                     <div className="heatmap-gallery">
                         {data.participants
-                            .filter(p => p.latestAttemptScreenshot)
+                            .filter(p => p.latestAttemptScreenshot && p.isCorrect)
                             .slice(0, 8)
                             .map((p) => (
-                                <div key={p.sessionId} className="heatmap-card">
+                                <div
+                                    key={p.sessionId}
+                                    className="heatmap-card"
+                                    onClick={() => setSelectedScreenshot({ url: p.latestAttemptScreenshot!, email: p.email })}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     <img
                                         src={p.latestAttemptScreenshot!}
                                         alt={`Heatmap for ${p.email}`}
                                     />
                                     <div className="heatmap-label">
-                                        <span className={p.isCorrect ? 'text-green-600' : 'text-red-600'}>
-                                            {p.isCorrect ? '✓' : '✗'}
-                                        </span>
+                                        <span className="text-green-600">✓</span>
                                         {p.email.split('@')[0]}
                                     </div>
                                 </div>
                             ))}
+                        {data.participants.filter(p => p.latestAttemptScreenshot && p.isCorrect).length === 0 && (
+                            <p className="no-data">No correct answer heatmaps available</p>
+                        )}
                     </div>
                 </section>
 
@@ -329,6 +339,74 @@ export const AdminPassageDetailPage: React.FC = () => {
                     )}
                 </section>
             </div>
+
+            {/* Screenshot Modal */}
+            {selectedScreenshot && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                        padding: '2rem'
+                    }}
+                    onClick={() => setSelectedScreenshot(null)}
+                >
+                    <div
+                        style={{
+                            position: 'relative',
+                            maxWidth: '90vw',
+                            maxHeight: '90vh',
+                            backgroundColor: 'white',
+                            borderRadius: '0.75rem',
+                            overflow: 'hidden',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{
+                            padding: '0.75rem 1rem',
+                            borderBottom: '1px solid #e5e7eb',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            backgroundColor: '#f9fafb'
+                        }}>
+                            <span style={{ fontWeight: 500, color: '#374151' }}>
+                                {selectedScreenshot.email}
+                            </span>
+                            <button
+                                onClick={() => setSelectedScreenshot(null)}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '1.5rem',
+                                    cursor: 'pointer',
+                                    color: '#6b7280',
+                                    lineHeight: 1
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <img
+                            src={selectedScreenshot.url}
+                            alt={`Heatmap for ${selectedScreenshot.email}`}
+                            style={{
+                                maxWidth: '100%',
+                                maxHeight: 'calc(90vh - 60px)',
+                                display: 'block'
+                            }}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

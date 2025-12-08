@@ -230,12 +230,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     for (const result of results) {
         const sessionAttempts = attempts.filter(a => a.session_id === result.session_id);
+        const correctAttempt = sessionAttempts.find(a => a.is_correct === 1);
         const latestAttempt = sessionAttempts[sessionAttempts.length - 1];
-        const isCorrect = sessionAttempts.some(a => a.is_correct === 1);
+
+        // Prioritize screenshot from passage_results (final state), then correct attempt, then latest
+        // passage_results has screenshot_r2_key directly on the result object
+        const resultScreenshotKey = result.screenshot_r2_key;
+        const attemptScreenshotKey = (correctAttempt || latestAttempt)?.screenshot_r2_key;
+
+        const screenshotKey = resultScreenshotKey || attemptScreenshotKey;
+        const isCorrect = !!correctAttempt;
 
         let latestScreenshot = null;
-        if (latestAttempt?.screenshot_r2_key) {
-            const obj = await storage.get(latestAttempt.screenshot_r2_key);
+        if (screenshotKey) {
+            const obj = await storage.get(screenshotKey);
             if (obj) {
                 const buffer = await obj.arrayBuffer();
                 latestScreenshot = `data:image/jpeg;base64,${arrayBufferToBase64(buffer)}`;
