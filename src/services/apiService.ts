@@ -187,7 +187,7 @@ export const apiService = {
   },
 
   async getPassageDetail(passageId: string): Promise<{
-    passage: { id: string; title: string; index: number };
+    passage: { id: string; title: string; index: number; text: string; question: string; choices: string[]; correctAnswer: number };
     overview: { totalParticipants: number; avgTimeMs: number; firstTryRate: number; totalAttempts: number };
     participants: Array<{
       sessionId: string;
@@ -197,6 +197,7 @@ export const apiService = {
       isCorrect: boolean;
       latestAttemptScreenshot: string | null;
       latestGeminiResponse: string | null;
+      passageIndex: number;
     }>;
     sentenceStats: Array<{
       index: number;
@@ -213,7 +214,8 @@ export const apiService = {
       isCorrect: boolean;
     }>;
     trapAnswer: { choice: string; count: number; percentage: number } | null;
-    aiFeedbackSamples: Array<{ response: string; wasCorrect: boolean }>;
+    correctFeedbackSamples: Array<{ response: string }>;
+    wrongFeedbackSamples: Array<{ response: string }>;
   }> {
     const token = localStorage.getItem('admin_token');
     const res = await fetch(`${API_BASE}/admin/passages/${passageId}`, {

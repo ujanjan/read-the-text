@@ -13,6 +13,7 @@ interface PassageDetailData {
         isCorrect: boolean;
         latestAttemptScreenshot: string | null;
         latestGeminiResponse: string | null;
+        passageIndex: number;
     }>;
     sentenceStats: Array<{
         index: number;
@@ -29,7 +30,8 @@ interface PassageDetailData {
         isCorrect: boolean;
     }>;
     trapAnswer: { choice: string; count: number; percentage: number } | null;
-    aiFeedbackSamples: Array<{ response: string; wasCorrect: boolean }>;
+    correctFeedbackSamples: Array<{ response: string }>;
+    wrongFeedbackSamples: Array<{ response: string }>;
 }
 
 export const AdminPassageDetailPage: React.FC = () => {
@@ -38,7 +40,7 @@ export const AdminPassageDetailPage: React.FC = () => {
     const [data, setData] = useState<PassageDetailData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [expandedParticipant, setExpandedParticipant] = useState<string | null>(null);
+    const [feedbackTab, setFeedbackTab] = useState<'correct' | 'wrong'>('correct');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -168,85 +170,34 @@ export const AdminPassageDetailPage: React.FC = () => {
                                     <th>Time</th>
                                     <th>Wrong Attempts</th>
                                     <th>Result</th>
-                                    <th>Heatmap</th>
+                                    <th>Detail</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {data.participants.map((p) => (
-                                    <React.Fragment key={p.sessionId}>
-                                        <tr className="cursor-pointer hover:bg-gray-50">
-                                            <td>{p.email}</td>
-                                            <td>{formatTime(p.timeSpentMs)}</td>
-                                            <td>{p.wrongAttempts}</td>
-                                            <td>
-                                                <span className={`status-badge ${p.isCorrect ? 'completed' : 'in_progress'}`}>
-                                                    {p.isCorrect ? '✓ Correct' : '✗ Wrong'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                {p.latestAttemptScreenshot && (
-                                                    <button
-                                                        onClick={() => setExpandedParticipant(
-                                                            expandedParticipant === p.sessionId ? null : p.sessionId
-                                                        )}
-                                                        className="text-blue-600 hover:underline text-sm"
-                                                    >
-                                                        {expandedParticipant === p.sessionId ? 'Hide' : 'View'}
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                        {expandedParticipant === p.sessionId && p.latestAttemptScreenshot && (
-                                            <tr>
-                                                <td colSpan={5} className="p-4 bg-gray-50">
-                                                    <img
-                                                        src={p.latestAttemptScreenshot}
-                                                        alt={`Heatmap for ${p.email}`}
-                                                        className="w-full max-w-3xl mx-auto rounded-lg border"
-                                                    />
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </React.Fragment>
+                                    <tr key={p.sessionId} className="cursor-pointer hover:bg-gray-50">
+                                        <td>{p.email}</td>
+                                        <td>{formatTime(p.timeSpentMs)}</td>
+                                        <td>{p.wrongAttempts}</td>
+                                        <td>
+                                            <span className={`status-badge ${p.isCorrect ? 'completed' : 'in_progress'}`}>
+                                                {p.isCorrect ? '✓ Correct' : '✗ Wrong'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a
+                                                href={`/results/${p.sessionId}/${p.passageIndex + 1}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 hover:underline text-sm"
+                                            >
+                                                View →
+                                            </a>
+                                        </td>
+                                    </tr>
                                 ))}
                             </tbody>
                         </table>
-                    )}
-                </section>
-
-                {/* Sentence Analytics */}
-                <section className="admin-section">
-                    <h2>📖 Sentence Analytics</h2>
-                    {data.sentenceStats.length === 0 ? (
-                        <p className="no-data">No reading data available</p>
-                    ) : (
-                        <div className="sentence-analytics">
-                            {data.sentenceStats.map((s) => (
-                                <div key={s.index} className="sentence-stat-row">
-                                    <div className="sentence-header">
-                                        <span className="sentence-number">S{s.index + 1}</span>
-                                        <span className="sentence-text">{s.text.substring(0, 100)}...</span>
-                                    </div>
-                                    <div className="sentence-metrics">
-                                        <span title="Average dwell time">⏱️ {formatTime(s.avgDwellMs)}</span>
-                                        <span title="Average visits">👁️ {s.avgVisits} visits</span>
-                                        <span title="Average reading order">
-                                            📍 {s.avgReadingOrder !== null ? `#${Math.round(s.avgReadingOrder + 1)}` : '-'}
-                                        </span>
-                                        <span title="Times read">📊 {s.timesRead} readers</span>
-                                    </div>
-                                    <div className="dwell-bar">
-                                        <div
-                                            className="dwell-fill"
-                                            style={{
-                                                width: `${Math.min(100, (s.avgDwellMs / 10000) * 100)}%`,
-                                                backgroundColor: s.avgDwellMs > 5000 ? '#ef4444' : s.avgDwellMs > 2000 ? '#f59e0b' : '#22c55e'
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
                     )}
                 </section>
 
@@ -311,22 +262,73 @@ export const AdminPassageDetailPage: React.FC = () => {
                 {/* AI Feedback Samples */}
                 <section className="admin-section">
                     <h2>🤖 AI Feedback Samples</h2>
-                    {data.aiFeedbackSamples.length === 0 ? (
-                        <p className="no-data">No AI feedback recorded</p>
-                    ) : (
-                        <div className="ai-feedback-list">
-                            {data.aiFeedbackSamples.map((fb, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`ai-feedback-card ${fb.wasCorrect ? 'correct' : 'wrong'}`}
-                                >
-                                    <span className="feedback-badge">
-                                        {fb.wasCorrect ? '✓ After correct answer' : '✗ After wrong answer'}
-                                    </span>
-                                    <p>{fb.response}</p>
-                                </div>
-                            ))}
-                        </div>
+
+                    {/* Sub-tabs for correct/wrong */}
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <button
+                            onClick={() => setFeedbackTab('correct')}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                borderRadius: '0.375rem',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontWeight: 500,
+                                backgroundColor: feedbackTab === 'correct' ? '#22c55e' : '#e5e7eb',
+                                color: feedbackTab === 'correct' ? 'white' : '#374151'
+                            }}
+                        >
+                            ✓ Correct Responses ({data.correctFeedbackSamples.length})
+                        </button>
+                        <button
+                            onClick={() => setFeedbackTab('wrong')}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                borderRadius: '0.375rem',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontWeight: 500,
+                                backgroundColor: feedbackTab === 'wrong' ? '#ef4444' : '#e5e7eb',
+                                color: feedbackTab === 'wrong' ? 'white' : '#374151'
+                            }}
+                        >
+                            ✗ Wrong Responses ({data.wrongFeedbackSamples.length})
+                        </button>
+                    </div>
+
+                    {feedbackTab === 'correct' && (
+                        data.correctFeedbackSamples.length === 0 ? (
+                            <p className="no-data">No correct response feedback recorded</p>
+                        ) : (
+                            <div className="ai-feedback-list">
+                                {data.correctFeedbackSamples.map((fb, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="ai-feedback-card correct"
+                                    >
+                                        <span className="feedback-badge">✓ After correct answer</span>
+                                        <p>{fb.response}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {feedbackTab === 'wrong' && (
+                        data.wrongFeedbackSamples.length === 0 ? (
+                            <p className="no-data">No wrong response feedback recorded</p>
+                        ) : (
+                            <div className="ai-feedback-list">
+                                {data.wrongFeedbackSamples.map((fb, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="ai-feedback-card wrong"
+                                    >
+                                        <span className="feedback-badge">✗ After wrong answer</span>
+                                        <p>{fb.response}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )
                     )}
                 </section>
             </div>

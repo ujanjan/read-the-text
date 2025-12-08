@@ -134,6 +134,7 @@ interface ParticipantData {
     isCorrect: boolean;
     latestAttemptScreenshot: string | null;
     latestGeminiResponse: string | null;
+    passageIndex: number; // The passage_index for this user (for generating detail link)
 }
 
 interface AnswerDistribution {
@@ -247,7 +248,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
             wrongAttempts: result.wrong_attempts || 0,
             isCorrect,
             latestAttemptScreenshot: latestScreenshot,
-            latestGeminiResponse: latestAttempt?.gemini_response || null
+            latestGeminiResponse: latestAttempt?.gemini_response || null,
+            passageIndex: result.passage_index
         });
     }
 
@@ -364,19 +366,32 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     const trapAnswer = wrongAnswers.reduce((max, curr) =>
         curr.count > max.count ? curr : max, wrongAnswers[0] || null);
 
-    // Get sample AI feedback (up to 5 unique ones)
-    const aiFeedbackSamples: { response: string; wasCorrect: boolean }[] = [];
-    const seenFeedback = new Set<string>();
+    // Get sample AI feedback - separate correct and wrong (latest 5 of each)
+    const correctFeedbackSamples: { response: string }[] = [];
+    const wrongFeedbackSamples: { response: string }[] = [];
+    const seenCorrectFeedback = new Set<string>();
+    const seenWrongFeedback = new Set<string>();
 
+    // Iterate through attempts in order (they're already sorted by created_at DESC from the query)
     for (const attempt of attempts) {
-        if (attempt.gemini_response && !seenFeedback.has(attempt.gemini_response)) {
-            seenFeedback.add(attempt.gemini_response);
-            aiFeedbackSamples.push({
-                response: attempt.gemini_response,
-                wasCorrect: attempt.is_correct === 1
-            });
-            if (aiFeedbackSamples.length >= 5) break;
+        if (!attempt.gemini_response) continue;
+
+        if (attempt.is_correct === 1) {
+            // Add to correct feedback if not seen and under limit
+            if (!seenCorrectFeedback.has(attempt.gemini_response) && correctFeedbackSamples.length < 5) {
+                seenCorrectFeedback.add(attempt.gemini_response);
+                correctFeedbackSamples.push({ response: attempt.gemini_response });
+            }
+        } else {
+            // Add to wrong feedback if not seen and under limit
+            if (!seenWrongFeedback.has(attempt.gemini_response) && wrongFeedbackSamples.length < 5) {
+                seenWrongFeedback.add(attempt.gemini_response);
+                wrongFeedbackSamples.push({ response: attempt.gemini_response });
+            }
         }
+
+        // Stop if we have enough of both
+        if (correctFeedbackSamples.length >= 5 && wrongFeedbackSamples.length >= 5) break;
     }
 
     // Overview stats
@@ -409,6 +424,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         sentenceStats,
         answerDistribution,
         trapAnswer,
-        aiFeedbackSamples
+        correctFeedbackSamples,
+        wrongFeedbackSamples
     });
 };
