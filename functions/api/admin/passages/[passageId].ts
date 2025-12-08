@@ -1,18 +1,88 @@
 import type { Env } from '../../../types';
 import { arrayBufferToBase64 } from '../../../types';
 
-// Passage data for titles and correct answers
+// Passage data for titles and correct answers with choices
 const PASSAGES = [
-    { id: 'the-great-lakes', title: 'The Great Lakes', correctAnswer: 3 },
-    { id: 'american-folk-music', title: 'American Folk Music', correctAnswer: 0 },
-    { id: 'new-scotland-yard', title: 'New Scotland Yard', correctAnswer: 1 },
-    { id: 'animal-life', title: 'Animal Life', correctAnswer: 2 },
-    { id: 'saying-it-with-flowers', title: 'Saying it with Flowers', correctAnswer: 0 },
-    { id: 'tryggve-lie', title: 'Tryggve Lie', correctAnswer: 1 },
-    { id: 'men-and-women', title: 'Men and Women', correctAnswer: 1 },
-    { id: 'the-mayas', title: 'The Mayas', correctAnswer: 2 },
-    { id: 'rock-posters', title: 'Rock Posters', correctAnswer: 2 },
-    { id: 'therapy', title: 'Therapy', correctAnswer: 3 }
+    {
+        id: 'the-great-lakes', title: 'The Great Lakes', correctAnswer: 3, choices: [
+            "Measures against environmental destruction tend to be taken when it is already too late.",
+            "Environmental damage caused by chemical waste is usually very difficult to repair.",
+            "The chemical industry is unlikely to take responsibility for effects on the environment.",
+            "Predicting the consequences of actions to protect the environment can be difficult."
+        ]
+    },
+    {
+        id: 'american-folk-music', title: 'American Folk Music', correctAnswer: 0, choices: [
+            "The British melodies were retained but the lyrics were replaced.",
+            "The British folk songs developed beyond recognition.",
+            "American folk music gradually lost touch with its British roots.",
+            "American folk singers combined British lyrics with new music."
+        ]
+    },
+    {
+        id: 'new-scotland-yard', title: 'New Scotland Yard', correctAnswer: 1, choices: [
+            "The Metropolitan Police are working hard to cut down on greenhouse gases.",
+            "New Scotland Yard need to reassess their consumption of electricity.",
+            "The Metropolitan Police have never been a guiding light for people in London.",
+            "New Scotland Yard have lost the confidence of the British people."
+        ]
+    },
+    {
+        id: 'animal-life', title: 'Animal Life', correctAnswer: 2, choices: [
+            "Historically, many animals have early global warming to thank for their existence.",
+            "The extensive spread of animals across our globe millions of years ago led to global warming.",
+            "The original spread of animal life throughout the planet was probably helped by melting ice.",
+            "Millions of years ago, melting ice almost put an end to animal life on earth."
+        ]
+    },
+    {
+        id: 'saying-it-with-flowers', title: 'Saying it with Flowers', correctAnswer: 0, choices: [
+            "The traces of flowers in the ancient graves are the results of human activity",
+            "The burial ceremonies in Scotland during the Bronze Age were performed according to a strict ritual",
+            "The people buried in the excavated graves had a high and respected position in society",
+            "Pollen is a natural ingredient in the soil found at the excavated sites"
+        ]
+    },
+    {
+        id: 'tryggve-lie', title: 'Tryggve Lie', correctAnswer: 1, choices: [
+            "He was unable to cooperate with his staff",
+            "He was a very outspoken person",
+            "He was governed more by reason than by passion",
+            "He was a dishonest and self-centred leader"
+        ]
+    },
+    {
+        id: 'men-and-women', title: 'Men and Women', correctAnswer: 1, choices: [
+            "The loss of a spouse is a greater blow to a woman than to a man",
+            "Among single elderly people women are in the majority",
+            "Married people live longer than those who are unmarried",
+            "The death of your partner will shorten your life"
+        ]
+    },
+    {
+        id: 'the-mayas', title: 'The Mayas', correctAnswer: 2, choices: [
+            "The Maya civilization gradually changed from a peaceful society into a more warlike one",
+            "Thanks to the epigraphers it was possible to show that the archaeologists' theories had been correct",
+            "The Maya civilization has much more in common with ours than was originally believed",
+            "Despite recent discoveries the Mayas will always remain a mystery to us"
+        ]
+    },
+    {
+        id: 'rock-posters', title: 'Rock Posters', correctAnswer: 2, choices: [
+            "They hardly demonstrated any clear artistic awareness",
+            "They appealed to both the younger and the older generation",
+            "They can not be said to have been particularly easy to read",
+            "They were intended to be commercial rather than artistic"
+        ]
+    },
+    {
+        id: 'therapy', title: 'Therapy', correctAnswer: 3, choices: [
+            "The result of the study is unlikely to have any practical relevance for depressed individuals",
+            "It is hardly possible to adjust treatment to individual patients' needs",
+            "The two types of therapy studied turned out to be equally effective for most individuals",
+            "Future care may be determined on a more individual basis than earlier"
+        ]
+    }
 ];
 
 const ANSWER_CHOICES = ['A', 'B', 'C', 'D'];
@@ -89,20 +159,36 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         ORDER BY pr.created_at DESC
     `).bind(passageIndex).all();
 
-    // Get all attempts for this passage from clean sessions
-    // Join with passage_results to get the correct passage_index for each session
-    // since passage_index varies per session (randomized order)
-    const attemptsQuery = await db.prepare(`
-        SELECT pa.*, s.email
-        FROM passage_attempts pa
-        INNER JOIN sessions s ON pa.session_id = s.id
-        INNER JOIN passage_results pr ON pa.session_id = pr.session_id AND pa.passage_index = pr.passage_index
-        WHERE pr.passage_id = ? AND (s.is_dirty = 0 OR s.is_dirty IS NULL)
-        ORDER BY pa.session_id, pa.attempt_number
-    `).bind(passageIndex).all();
-
     const results = resultsQuery.results as any[];
-    const attempts = attemptsQuery.results as any[];
+
+    // Get session_id -> passage_index mapping from results
+    // This tells us which passage_index corresponds to this passage for each session
+    const sessionPassageMap = new Map<string, number>();
+    for (const r of results) {
+        sessionPassageMap.set(r.session_id, r.passage_index);
+    }
+
+    // Get all attempts for the sessions that have this passage
+    // We'll filter by passage_index per session after fetching
+    let attempts: any[] = [];
+    if (results.length > 0) {
+        const sessionIds = results.map(r => r.session_id);
+        const placeholders = sessionIds.map(() => '?').join(',');
+
+        const attemptsQuery = await db.prepare(`
+            SELECT pa.*, s.email
+            FROM passage_attempts pa
+            INNER JOIN sessions s ON pa.session_id = s.id
+            WHERE pa.session_id IN (${placeholders})
+            ORDER BY pa.session_id, pa.attempt_number
+        `).bind(...sessionIds).all();
+
+        // Filter to only include attempts that match the correct passage_index for each session
+        attempts = (attemptsQuery.results as any[]).filter(a => {
+            const expectedPassageIndex = sessionPassageMap.get(a.session_id);
+            return a.passage_index === expectedPassageIndex;
+        });
+    }
 
     // Build participant data with latest attempt screenshots
     const participantMap = new Map<string, ParticipantData>();
@@ -191,13 +277,25 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         .sort((a, b) => a.index - b.index);
 
     // Calculate answer distribution
+    // Note: selected_answer is stored as full text, need to map to A/B/C/D
     const answerCounts = new Map<string, number>();
     let totalFirstAttempts = 0;
 
+    // Build a map from answer text to index for this passage
+    const textToIndex = new Map<string, number>();
+    passage.choices.forEach((text, idx) => {
+        textToIndex.set(text, idx);
+    });
+
     for (const attempt of attempts) {
         if (attempt.attempt_number === 1) {
-            const answer = attempt.selected_answer || '';
-            answerCounts.set(answer, (answerCounts.get(answer) || 0) + 1);
+            const answerText = attempt.selected_answer || '';
+            // Map the full text answer to its index (0-3)
+            const answerIndex = textToIndex.get(answerText);
+            if (answerIndex !== undefined) {
+                const answerLetter = ANSWER_CHOICES[answerIndex];
+                answerCounts.set(answerLetter, (answerCounts.get(answerLetter) || 0) + 1);
+            }
             totalFirstAttempts++;
         }
     }
