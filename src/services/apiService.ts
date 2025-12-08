@@ -164,6 +164,28 @@ export const apiService = {
     return res.json();
   },
 
+  async getPassageAnalytics(): Promise<{
+    passages: Array<{
+      passageId: string;
+      title: string;
+      totalAttempts: number;
+      firstTryCorrectPct: number;
+      eventuallyCorrectPct: number;
+      avgTimeMs: number;
+    }>;
+  }> {
+    const token = localStorage.getItem('admin_token');
+    const res = await fetch(`${API_BASE}/admin/analytics`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error('Unauthorized');
+    }
+    return res.json();
+  },
+
   // Email
   async sendStudyLink(email: string): Promise<{ success: boolean; message?: string; error?: string }> {
     const res = await fetch(`${API_BASE}/send-link`, {

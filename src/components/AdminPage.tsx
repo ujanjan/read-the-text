@@ -3,9 +3,22 @@ import { apiService } from '../services/apiService';
 import type { AdminSession } from '../types/session';
 import { useNavigate } from 'react-router-dom';
 
+type TabType = 'users' | 'passages';
+
+interface PassageStats {
+  passageId: string;
+  title: string;
+  totalAttempts: number;
+  firstTryCorrectPct: number;
+  eventuallyCorrectPct: number;
+  avgTimeMs: number;
+}
+
 export const AdminPage: React.FC = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<TabType>('users');
   const [sessions, setSessions] = useState<AdminSession[]>([]);
+  const [passageStats, setPassageStats] = useState<PassageStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('');
   const [showDirty, setShowDirty] = useState(false);
@@ -21,9 +34,13 @@ export const AdminPage: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchSessions();
+      if (activeTab === 'users') {
+        fetchSessions();
+      } else {
+        fetchPassageStats();
+      }
     }
-  }, [filter, showDirty, isAuthenticated]);
+  }, [filter, showDirty, isAuthenticated, activeTab]);
 
   const fetchSessions = async () => {
     setLoading(true);
@@ -32,6 +49,22 @@ export const AdminPage: React.FC = () => {
       setSessions(data.sessions);
     } catch (err) {
       console.error('Failed to fetch sessions:', err);
+      if (err instanceof Error && err.message === 'Unauthorized') {
+        localStorage.removeItem('admin_token');
+        setIsAuthenticated(false);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPassageStats = async () => {
+    setLoading(true);
+    try {
+      const data = await apiService.getPassageAnalytics();
+      setPassageStats(data.passages);
+    } catch (err) {
+      console.error('Failed to fetch passage stats:', err);
       if (err instanceof Error && err.message === 'Unauthorized') {
         localStorage.removeItem('admin_token');
         setIsAuthenticated(false);
@@ -121,7 +154,6 @@ export const AdminPage: React.FC = () => {
     );
   }
 
-
   return (
     <div className="admin-page">
       <div className="admin-container">
@@ -135,78 +167,143 @@ export const AdminPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="admin-controls">
-          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option value="">All Sessions</option>
-            <option value="completed">Completed</option>
-            <option value="in_progress">In Progress</option>
-          </select>
-          <label className="show-dirty-label">
-            <input
-              type="checkbox"
-              checked={showDirty}
-              onChange={(e) => setShowDirty(e.target.checked)}
-            />
-            Show Dirty Data
-          </label>
-          <button onClick={fetchSessions} className="refresh-button">
-            Refresh
+        {/* Tabs */}
+        <div className="admin-tabs">
+          <button
+            className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`}
+            onClick={() => setActiveTab('users')}
+          >
+            Users
+          </button>
+          <button
+            className={`admin-tab ${activeTab === 'passages' ? 'active' : ''}`}
+            onClick={() => setActiveTab('passages')}
+          >
+            Passages
           </button>
         </div>
 
-        {loading ? (
-          <p className="loading">Loading...</p>
-        ) : sessions.length === 0 ? (
-          <p className="no-data">No sessions found</p>
-        ) : (
-          <table className="sessions-table">
-            <thead>
-              <tr>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Progress</th>
-                <th>Created</th>
-                <th>Total Time</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.map((session) => (
-                <tr
-                  key={session.id}
-                  onClick={() => navigate(`/results/${session.id}`)}
-                  className={`cursor-pointer hover:bg-gray-50 ${session.is_dirty ? 'dirty-row' : ''}`}
-                >
-                  <td>
-                    {session.email}
-                    {session.is_dirty && <span className="dirty-badge">Dirty</span>}
-                  </td>
-                  <td>
-                    <span className={`status-badge ${session.status}`}>
-                      {session.status === 'in_progress' ? 'In Progress' : 'Completed'}
-                    </span>
-                  </td>
-                  <td>{session.completed_passages}/{session.total_passages}</td>
-                  <td>{new Date(session.created_at).toLocaleDateString()}</td>
-                  <td>{session.total_time_ms ? formatTime(session.total_time_ms) : '-'}</td>
-                  <td>
-                    <button
-                      onClick={(e) => handleToggleDirty(session.id, !!session.is_dirty, e)}
-                      className={session.is_dirty ? 'clean-button' : 'dirty-button'}
+        {/* Users Tab Content */}
+        {activeTab === 'users' && (
+          <>
+            <div className="admin-controls">
+              <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+                <option value="">All Sessions</option>
+                <option value="completed">Completed</option>
+                <option value="in_progress">In Progress</option>
+              </select>
+              <label className="show-dirty-label">
+                <input
+                  type="checkbox"
+                  checked={showDirty}
+                  onChange={(e) => setShowDirty(e.target.checked)}
+                />
+                Show Dirty Data
+              </label>
+              <button onClick={fetchSessions} className="refresh-button">
+                Refresh
+              </button>
+            </div>
+
+            {loading ? (
+              <p className="loading">Loading...</p>
+            ) : sessions.length === 0 ? (
+              <p className="no-data">No sessions found</p>
+            ) : (
+              <table className="sessions-table">
+                <thead>
+                  <tr>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Progress</th>
+                    <th>Created</th>
+                    <th>Total Time</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessions.map((session) => (
+                    <tr
+                      key={session.id}
+                      onClick={() => navigate(`/results/${session.id}`)}
+                      className={`cursor-pointer hover:bg-gray-50 ${session.is_dirty ? 'dirty-row' : ''}`}
                     >
-                      {session.is_dirty ? 'Mark Clean' : 'Mark Dirty'}
-                    </button>
-                    <button
-                      onClick={(e) => handleDelete(session.id, e)}
-                      className="delete-button"
+                      <td>
+                        {session.email}
+                        {session.is_dirty && <span className="dirty-badge">Dirty</span>}
+                      </td>
+                      <td>
+                        <span className={`status-badge ${session.status}`}>
+                          {session.status === 'in_progress' ? 'In Progress' : 'Completed'}
+                        </span>
+                      </td>
+                      <td>{session.completed_passages}/{session.total_passages}</td>
+                      <td>{new Date(session.created_at).toLocaleDateString()}</td>
+                      <td>{session.total_time_ms ? formatTime(session.total_time_ms) : '-'}</td>
+                      <td>
+                        <button
+                          onClick={(e) => handleToggleDirty(session.id, !!session.is_dirty, e)}
+                          className={session.is_dirty ? 'clean-button' : 'dirty-button'}
+                        >
+                          {session.is_dirty ? 'Mark Clean' : 'Mark Dirty'}
+                        </button>
+                        <button
+                          onClick={(e) => handleDelete(session.id, e)}
+                          className="delete-button"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        )}
+
+        {/* Passages Tab Content */}
+        {activeTab === 'passages' && (
+          <>
+            <div className="admin-controls">
+              <button onClick={fetchPassageStats} className="refresh-button">
+                Refresh
+              </button>
+            </div>
+
+            {loading ? (
+              <p className="loading">Loading...</p>
+            ) : passageStats.length === 0 ? (
+              <p className="no-data">No passage data available</p>
+            ) : (
+              <table className="sessions-table">
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Attempts</th>
+                    <th>First Try Correct</th>
+                    <th>Eventually Correct</th>
+                    <th>Avg Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {passageStats.map((passage) => (
+                    <tr
+                      key={passage.passageId}
+                      onClick={() => navigate(`/admin/passages/${passage.passageId}`)}
+                      className="cursor-pointer hover:bg-gray-50"
                     >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      <td>{passage.title}</td>
+                      <td>{passage.totalAttempts}</td>
+                      <td>{passage.firstTryCorrectPct}%</td>
+                      <td>{passage.eventuallyCorrectPct}%</td>
+                      <td>{formatTime(passage.avgTimeMs)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -214,6 +311,7 @@ export const AdminPage: React.FC = () => {
 };
 
 function formatTime(ms: number): string {
+  if (!ms) return '-';
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
@@ -221,4 +319,3 @@ function formatTime(ms: number): string {
     ? `${minutes}m ${remainingSeconds}s`
     : `${seconds}s`;
 }
-
