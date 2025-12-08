@@ -1,7 +1,3 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { apiService } from '../services/apiService';
-import type { SessionData } from '../types/session';
 
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -112,7 +108,7 @@ export const ResultsPage: React.FC = () => {
           <section className="admin-section">
             <h2>👤 Profile & Demographics</h2>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4">
-              {session.age > 0 && (
+              {(session.age || 0) > 0 && (
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <span className="text-xs text-gray-500 uppercase tracking-wide block mb-1">Age</span>
                   <span className="font-semibold text-gray-800">{session.age}</span>

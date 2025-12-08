@@ -8,7 +8,7 @@ type TabType = 'users' | 'passages';
 interface PassageStats {
   passageId: string;
   title: string;
-  uniqueParticipants: number;
+  uniqueParticipants?: number;
   totalAttempts: number;
   firstTryCorrectPct: number;
   eventuallyCorrectPct: number;

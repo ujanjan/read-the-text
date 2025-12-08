@@ -10,7 +10,7 @@ interface PassageDetailData {
         email: string;
         timeSpentMs: number;
         wrongAttempts: number;
-        totalAttempts: number;
+        totalAttempts?: number;
         isCorrect: boolean;
         latestAttemptScreenshot: string | null;
         latestGeminiResponse: string | null;
