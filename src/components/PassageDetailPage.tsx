@@ -4,6 +4,7 @@ import { apiService } from '../services/apiService';
 import type { SessionData, PassageAttempt } from '../types/session';
 import { Download, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
+import { maskEmail } from '../utils/emailMask';
 
 export const PassageDetailPage: React.FC = () => {
     const { sessionId, passageIndex } = useParams<{ sessionId: string; passageIndex: string }>();
@@ -133,7 +134,7 @@ export const PassageDetailPage: React.FC = () => {
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <h1>Passage {passageIndexNum + 1} Details</h1>
-                        <p className="text-sm text-gray-500 mt-1">{session.email}</p>
+                        <p className="text-sm text-gray-500 mt-1">{maskEmail(session.email)}</p>
                     </div>
                     <div className="flex items-center gap-4">
                         <Link to={`/results/${sessionId}`} className="back-link">

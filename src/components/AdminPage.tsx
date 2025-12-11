@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { apiService } from '../services/apiService';
 import type { AdminSession } from '../types/session';
 import { useNavigate } from 'react-router-dom';
+import { maskEmail } from '../utils/emailMask';
 
 type TabType = 'users' | 'passages';
 
@@ -236,7 +237,7 @@ export const AdminPage: React.FC = () => {
                       className={`cursor-pointer hover:bg-gray-50 ${session.is_dirty ? 'dirty-row' : ''}`}
                     >
                       <td>
-                        {session.email}
+                        {maskEmail(session.email)}
                         {session.is_dirty ? <span className="dirty-badge">Dirty</span> : null}
                       </td>
                       <td>

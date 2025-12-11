@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+import { maskEmail } from '../utils/emailMask';
 
 interface PassageDetailData {
     passage: { id: string; title: string; index: number; text: string; question: string; choices: string[]; correctAnswer: number };
@@ -178,7 +179,7 @@ export const AdminPassageDetailPage: React.FC = () => {
                             <tbody>
                                 {data.participants.map((p) => (
                                     <tr key={p.sessionId} className="cursor-pointer hover:bg-gray-50">
-                                        <td>{p.email}</td>
+                                        <td>{maskEmail(p.email)}</td>
                                         <td>{formatTime(p.timeSpentMs)}</td>
                                         <td>{p.wrongAttempts}</td>
                                         <td>{p.totalAttempts}</td>
@@ -247,16 +248,16 @@ export const AdminPassageDetailPage: React.FC = () => {
                                 <div
                                     key={p.sessionId}
                                     className="heatmap-card"
-                                    onClick={() => setSelectedScreenshot({ url: p.latestAttemptScreenshot!, email: p.email })}
+                                    onClick={() => setSelectedScreenshot({ url: p.latestAttemptScreenshot!, email: maskEmail(p.email) })}
                                     style={{ cursor: 'pointer' }}
                                 >
                                     <img
                                         src={p.latestAttemptScreenshot!}
-                                        alt={`Heatmap for ${p.email}`}
+                                        alt={`Heatmap for ${maskEmail(p.email)}`}
                                     />
                                     <div className="heatmap-label">
                                         <span className="text-green-600">✓</span>
-                                        {p.email.split('@')[0]}
+                                        {maskEmail(p.email).split('@')[0]}
                                     </div>
                                 </div>
                             ))}

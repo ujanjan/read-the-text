@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import type { SessionData } from '../types/session';
+import { maskEmail } from '../utils/emailMask';
 
 export const ResultsPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -98,7 +99,7 @@ export const ResultsPage: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1>Participant Results</h1>
-            <p className="text-sm text-gray-500 mt-1">{session.email}</p>
+            <p className="text-sm text-gray-500 mt-1">{maskEmail(session.email)}</p>
           </div>
           <Link to="/admin" className="back-link">← Back to Admin</Link>
         </div>
